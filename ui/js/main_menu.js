@@ -41,16 +41,55 @@ fileInput.addEventListener('change', (e) => {
     }
 });
 
+const isValidLength = (num) => {
+    const acceptableValues = [9 , 12, 16, 25, 100];
+    return acceptableValues.includes(num);
+}
+
+const isAllNum = (text) => {
+    const characters = text.split("");
+    for (const char of characters) {
+        if (isNaN(parseInt(char))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 const isValidTextContent = (textContent) => {
-    return true; // TODO
+    const lines = textContent.split("\n");
+
+    const boardHeight = lines.length;
+    const boardWidth = lines[0].length;
+
+
+    if (boardHeight !== boardWidth || !isValidLength(boardWidth)) {
+        return false;
+    }
+    
+    for (let i = 0; i < lines.length; i ++) {
+        // Ensure texts are all numbers
+        if (!isAllNum(lines[i])) {
+            return false;
+        }
+
+        // Ensure the length of each line is consistent with the board width
+        if (lines[i].length !== boardWidth) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 const parseBoard = (boardInput) => {
-    return boardInput; // TODO
-    // return {
-    //     size: 9,
-    //     content: [
-    //         []
-    //     ]
-    // }
+    const rows = boardInput.split("\n");
+    const board = [];
+
+    for (const row of rows) {
+        board.push(row.split("").map(numStr => parseInt(numStr)));
+    }
+
+    return JSON.stringify(board);
 }
