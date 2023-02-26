@@ -1,0 +1,40 @@
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sudoku-board {
+            display: grid;
+            grid-template-columns: repeat(9, 30px);
+            grid-template-rows: repeat(9, 30px);
+            gap: 1px;
+            margin: 0 auto;
+            border: 1px solid black;
+            max-width: 281px;
+            padding: 1px;
+            box-sizing: border-box;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 308px;
+        }
+
+
+        .sudoku-board>div {
+            background-color: white;
+            border: 1px solid black;
+            text-align: center;
+        }
