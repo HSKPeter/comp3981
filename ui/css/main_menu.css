@@ -1,0 +1,39 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #c4d7e7;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#buttons-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;    
+}
+
+.title {
+    text-align: center;
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.buttonOption {
+    font-size: 16px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    background-color: white;
+    border: 1px solid black;
+    cursor: pointer;
+    margin: 24px 0;
+}
