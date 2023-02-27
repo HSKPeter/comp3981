@@ -10,8 +10,8 @@
 
 let size = localStorage.getItem("size");
 
-document.getElementById("sudoku_container").style.gridTemplateColumns = "repeat(" + size + ", " + 270/size + "px)";
-document.getElementById("sudoku_container").style.gridTemplateRows = "repeat(" + size + ", " + 270/size + "px)";
+document.getElementById("sudoku_container").style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
+document.getElementById("sudoku_container").style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
 
 var sodoku_container = document.getElementById('sudoku_container');
 

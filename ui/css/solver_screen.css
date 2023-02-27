@@ -29,7 +29,6 @@
             display: flex;
             justify-content: space-around;
             width: 100%;
-            max-width: 308px;
         }
 
 
@@ -37,8 +36,8 @@
             background-color: white;
             border: 1px solid black;
             text-align: center;
-            padding-top: 5px;
-            padding-right: 5px;
+            font-size: 8px;
+
         }
 
         button {
