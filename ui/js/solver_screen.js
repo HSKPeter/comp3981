@@ -22,4 +22,8 @@ for (let i = 0; i < size * size; i++){
     sodoku_container.appendChild(cell_to_insert);
 }   
 
+if (size > 25) {
+    document.getElementById("solve-brute-force").remove()
+}
+
 
