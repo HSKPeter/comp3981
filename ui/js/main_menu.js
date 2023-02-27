@@ -31,7 +31,9 @@ fileInput.addEventListener('change', (e) => {
         reader.onload = () => {
             const textContent = reader.result;
             if (isValidTextContent(textContent)) {
-                localStorage.setItem("board", parseBoard(textContent));
+                const {board, size} = parseBoard(textContent);
+                localStorage.setItem("board", board);
+                localStorage.setItem("size", size);
                 window.location.href = "solver_screen.html";
             } else {
                 alert("Invalid content of text file");
@@ -90,5 +92,8 @@ const parseBoard = (boardInput) => {
         board.push(row.trim().split("").map(numStr => parseInt(numStr)));
     }
 
-    return JSON.stringify(board);
+    return {
+        board,
+        size: rows.length
+    };
 }
