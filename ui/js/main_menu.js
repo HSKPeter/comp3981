@@ -67,8 +67,7 @@ const isValidTextContent = (textContent) => {
     const lines = textContent.split("\n");
 
     const boardHeight = lines.length;
-    const boardWidth = lines[0].length;
-
+    const boardWidth = lines[0].trim().length;
 
     if (boardHeight !== boardWidth || !isValidLength(boardWidth)) {
         return false;
@@ -76,12 +75,12 @@ const isValidTextContent = (textContent) => {
     
     for (let i = 0; i < lines.length; i ++) {
         // Ensure texts are all numbers
-        if (!isAllNum(lines[i])) {
+        if (!isAllNum(lines[i].trim())) {
             return false;
         }
 
         // Ensure the length of each line is consistent with the board width
-        if (lines[i].length !== boardWidth) {
+        if (lines[i].trim().length !== boardWidth) {
             return false;
         }
     }
@@ -94,7 +93,7 @@ const parseBoard = (boardInput) => {
     const board = [];
 
     for (const row of rows) {
-        board.push(row.split("").map(numStr => parseInt(numStr)));
+        board.push(row.trim().split("").map(numStr => parseInt(numStr)));
     }
 
     return {
