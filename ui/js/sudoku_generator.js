@@ -1,4 +1,4 @@
-class SudokuSolutionGenerator {
+class SudokuPuzzleGenerator {
     constructor(N) {
         this.board = Array.from(Array(N), () => new Array(N).fill(0));
         this.solver = new SudokuValidityChecker(this.board);
@@ -136,7 +136,7 @@ class SudokuValidityChecker {
 
 
 
-const sudokuGenerator = new SudokuSolutionGenerator(100); // create a 9x9 Sudoku board
+const sudokuGenerator = new SudokuPuzzleGenerator(100); // create a 9x9 Sudoku board
 console.log(sudokuGenerator.solver.squareSets)
 sudokuGenerator.printBoard()
 sudokuGenerator.generateNewSolution()
