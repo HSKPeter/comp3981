@@ -3,6 +3,10 @@ const boardSizeSelectMenu = document.querySelector("#selectBoardSize");
 const fileInput = document.querySelector("#fileInput");
 const generateButton = document.querySelector("#generate");
 
+window.addEventListener('load', () => {
+    // Ensure the file input element does not cache any value
+    document.querySelector("#fileInput").value = ""
+});
 
 exitButton.addEventListener('click', () => {
     const confirmExit = confirm("Exit program?");
