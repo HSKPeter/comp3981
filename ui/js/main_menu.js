@@ -21,7 +21,7 @@ boardSizeSelectMenu.addEventListener('change', (e) => {
 
 generateButton.addEventListener('click', (e) => {
     localStorage.setItem("size", boardSizeSelectMenu.value);
-    window.location.href = "solver_screen.html";
+    window.location.href = "solver_screen.html?source=generate";
 });
 
 fileInput.addEventListener('change', (e) => {
@@ -38,7 +38,7 @@ fileInput.addEventListener('change', (e) => {
                 const {board, size} = parseBoard(textContent);
                 localStorage.setItem("board", board);
                 localStorage.setItem("size", size);
-                window.location.href = "solver_screen.html";
+                window.location.href = "solver_screen.html?source=file";
             } else {
                 alert("Invalid content of text file");
                 e.target.value = null;

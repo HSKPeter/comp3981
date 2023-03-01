@@ -1,28 +1,41 @@
-        
-        document.getElementById("solve-brute-force").addEventListener("click", function () {
-            window.location.href = "solved_screen.html";
-        });
-        document.getElementById("solve-csp").addEventListener("click", function () {
-            window.location.href = "solved_screen.html";
-        });
-        document.getElementById("clear").addEventListener("click", function () {
-            window.location.href = "main_menu.html";
-        });
+
+import SudokuPuzzleGenerator from "./sudoku_generator.js";
+
+document.getElementById("solve-brute-force").addEventListener("click", function () {
+    window.location.href = "solved_screen.html";
+});
+document.getElementById("solve-csp").addEventListener("click", function () {
+    window.location.href = "solved_screen.html";
+});
+document.getElementById("clear").addEventListener("click", function () {
+    window.location.href = "main_menu.html";
+});
 
 
+
+const sudoku_container = document.getElementById('sudoku_container');
 const size = localStorage.getItem("size");
-const board_values = JSON.parse(localStorage.getItem("board"));
+let board_values = JSON.parse(localStorage.getItem("board"));
+const urlParams = new URLSearchParams(window.location.search);
+const source = urlParams.get('source');
 
-document.getElementById("sudoku_container").style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
-document.getElementById("sudoku_container").style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
+sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
+sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
 
-var sudoku_container = document.getElementById('sudoku_container');
+if (size > 25) {
+    document.getElementById("solve-brute-force").remove()
+}
 
+if (source === "generate") {
+    const generator = new SudokuPuzzleGenerator(+size)
+    board_values = generator.generateNewPuzzle()
+    generator.printBoard()
+}
 
 console.log(board_values)
-console.log(typeof board_values)
 
-for (let i = 0; i < size; i++){
+
+for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
         var cell_to_insert = document.createElement('div');
         cell_to_insert.setAttribute('id', 'cell ' + i + "-" + j)
@@ -31,11 +44,7 @@ for (let i = 0; i < size; i++){
 
         sudoku_container.appendChild(cell_to_insert);
     }
-    
-}   
 
-if (size > 25) {
-    document.getElementById("solve-brute-force").remove()
 }
 
 

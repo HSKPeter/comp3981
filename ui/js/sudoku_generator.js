@@ -1,10 +1,10 @@
-class SudokuPuzzleGenerator {
+export default class SudokuPuzzleGenerator {
     constructor(N) {
         this.board = Array.from(Array(N), () => new Array(N).fill(0));
         this.solver = new SudokuValidityChecker(this.board);
     }
 
-    generateNewSolution() {
+    generateNewPuzzle() {
         this.clearBoard()
         const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
         const N = this.board.length
@@ -30,6 +30,7 @@ class SudokuPuzzleGenerator {
                 }
             }
         }
+        return this.board
     }
 
 
@@ -136,8 +137,8 @@ class SudokuValidityChecker {
 
 
 
-const sudokuGenerator = new SudokuPuzzleGenerator(100); // create a 9x9 Sudoku board
-console.log(sudokuGenerator.solver.squareSets)
-sudokuGenerator.printBoard()
-sudokuGenerator.generateNewSolution()
-sudokuGenerator.printBoard()
+// const sudokuGenerator = new SudokuPuzzleGenerator(9); // create a 9x9 Sudoku board
+// console.log(sudokuGenerator.solver.squareSets)
+// sudokuGenerator.printBoard()
+// sudokuGenerator.generateNewPuzzle()
+// sudokuGenerator.printBoard()
