@@ -30,7 +30,7 @@ async function main() {
     
     if (source === "generate") {
         const generator = new SudokuPuzzleGenerator(+size)
-        board_values = await generator.generateNewPuzzle()
+        board_values = generator.generateNewPuzzle()
         generator.printBoard()
     }
     
@@ -39,12 +39,28 @@ async function main() {
     sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
     
     
+    
+    
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             var cell_to_insert = document.createElement('div');
             cell_to_insert.setAttribute('id', 'cell ' + i + "-" + j)
-            if (board_values[i][j] == 0) cell_to_insert.innerHTML = '';
-            else cell_to_insert.innerHTML = board_values[i][j]
+    
+            var set_row = parseInt(i/(Math.sqrt(size)))
+            var set_column = parseInt(j/Math.sqrt(size))
+    
+            if (board_values[i][j] == 0)
+                cell_to_insert.innerHTML = '';  
+            else 
+                cell_to_insert.innerHTML = board_values[i][j]
+            
+            
+            if ((set_row + set_column) % 2 == 1) {
+                cell_to_insert.style.backgroundColor = "#D3D3D3"
+            }
+    
+            
+    
     
             sudoku_container.appendChild(cell_to_insert);
         }
