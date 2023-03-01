@@ -97,7 +97,7 @@ const parseBoard = (boardInput) => {
     }
 
     return {
-        board,
+        board: JSON.stringify(board),
         size: rows.length
     };
 }

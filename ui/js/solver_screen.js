@@ -12,18 +12,19 @@ document.getElementById("clear").addEventListener("click", function () {
 });
 
 
-
-const sudoku_container = document.getElementById('sudoku_container');
-const size = localStorage.getItem("size");
-let board_values = JSON.parse(localStorage.getItem("board"));
 const urlParams = new URLSearchParams(window.location.search);
 const source = urlParams.get('source');
-
-sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
-sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
+const size = localStorage.getItem("size");
+const sudoku_container = document.getElementById('sudoku_container');
+let board_values;
 
 if (size > 25) {
     document.getElementById("solve-brute-force").remove()
+}
+
+
+if (source === "file") {
+    board_values = JSON.parse(localStorage.getItem("board"));
 }
 
 if (source === "generate") {
@@ -32,7 +33,11 @@ if (source === "generate") {
     generator.printBoard()
 }
 
-console.log(board_values)
+
+sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
+sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
+
+
 
 
 for (let i = 0; i < size; i++) {
