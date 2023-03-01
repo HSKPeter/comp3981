@@ -71,16 +71,12 @@ async function main() {
     
     if (source === "generate") {
         const generator = new SudokuPuzzleGenerator(+size)
-        board_values = generator.generateNewPuzzle()
+        board_values = await generator.generateNewPuzzle()
         generator.printBoard()
     }
     
-    
     sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
     sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
-    
-    
-    
     
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
@@ -99,10 +95,6 @@ async function main() {
             if ((set_row + set_column) % 2 == 1) {
                 cell_to_insert.style.backgroundColor = "#D3D3D3"
             }
-    
-            
-    
-    
             sudoku_container.appendChild(cell_to_insert);
         }
     }
