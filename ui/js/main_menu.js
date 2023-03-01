@@ -64,40 +64,49 @@ const isAllNum = (text) => {
 }
 
 const isValidTextContent = (textContent) => {
-    const lines = textContent.split("\n");
+    // const board = JSON.parse(textContent);
 
-    const boardHeight = lines.length;
-    const boardWidth = lines[0].trim().length;
+    // const lines = textContent.split("\n");
 
-    if (boardHeight !== boardWidth || !isValidLength(boardWidth)) {
-        return false;
-    }
+    // const boardHeight = lines.length;
+    // const boardWidth = lines[0].trim().length;
+
+    // if (boardHeight !== boardWidth || !isValidLength(boardWidth)) {
+    //     return false;
+    // }
     
-    for (let i = 0; i < lines.length; i ++) {
-        // Ensure texts are all numbers
-        if (!isAllNum(lines[i].trim())) {
-            return false;
-        }
+    // for (let i = 0; i < lines.length; i ++) {
+    //     // Ensure texts are all numbers
+    //     if (!isAllNum(lines[i].trim())) {
+    //         return false;
+    //     }
 
-        // Ensure the length of each line is consistent with the board width
-        if (lines[i].trim().length !== boardWidth) {
-            return false;
-        }
-    }
+    //     // Ensure the length of each line is consistent with the board width
+    //     if (lines[i].trim().length !== boardWidth) {
+    //         return false;
+    //     }
+    // }
 
     return true;
 }
 
 const parseBoard = (boardInput) => {
-    const rows = boardInput.split("\n");
-    const board = [];
+    // const rows = boardInput.split("\n");
+    // const board = [];
 
-    for (const row of rows) {
-        board.push(row.trim().split("").map(numStr => parseInt(numStr)));
-    }
+    // for (const row of rows) {
+    //     board.push(row.trim().split("").map(numStr => parseInt(numStr)));
+    // }
+
+    // return {
+    //     board: JSON.stringify(board),
+    //     size: rows.length
+    // };
+    const board = JSON.parse(boardInput);
+    const size = board[0].length;
 
     return {
-        board: JSON.stringify(board),
-        size: rows.length
-    };
+        board: boardInput,
+        size
+    };    
 }
