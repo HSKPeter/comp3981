@@ -4,6 +4,7 @@ from puzzle_loader import *
 
 app = FastAPI()
 puzzle_loader = PuzzleLoader()
+board = None
 
 # Configure CORS middleware
 app.add_middleware(
@@ -20,15 +21,16 @@ def read_root():
 
 @app.get("/board/{size}")
 def load_board(size: int):
+    global board
+    
     board =  puzzle_loader.load(size)
-    return {"board": board}
+    maskedBoard = puzzle_loader.mask_puzzle(board)
+    return {"board": maskedBoard}
 
 @app.get("/brute-force")
 def solve_brute_force():
-    board = [[]]
     return {"board": board}
 
 @app.get("/csp")
 def csp():
-    board = [[]]
     return {"board": board}

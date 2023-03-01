@@ -1,5 +1,6 @@
 import json
 import random
+import copy
 class PuzzleLoader:
     def load(self, size):
         """
@@ -9,13 +10,13 @@ class PuzzleLoader:
         with open('assets/solved_sudoku/sudoku{0}x{0}/{0}x{0}_sample_{1}.txt'.format(size, sample), 'r') as file:
             contents = file.read()
             board = json.loads(contents)
-            board = self.mask_puzzle(board)
             return board
     
     def mask_puzzle(self, board):
         """
         randomly sets 75% of a board to 0s and returns the board
         """
+        board = copy.deepcopy(board)
         side = len(board)
         size = side*side
         values_to_mask = int(size * 0.75)
