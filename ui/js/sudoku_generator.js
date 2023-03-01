@@ -4,8 +4,13 @@ export default class SudokuPuzzleGenerator {
         this.solver = new SudokuValidityChecker(this.board);
     }
 
-    generateNewPuzzle() {
+    async generateNewPuzzle(readFromFile=true) {
         this.clearBoard()
+        if (readFromFile) {
+            const response = await fetch("http://localhost:8000/board");
+            const {board} = await response.json();
+            return board;
+        }
         const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
         const N = this.board.length
         let col = 0
@@ -31,8 +36,6 @@ export default class SudokuPuzzleGenerator {
         }
         return this.board
     }
-
-
 
     updateBoard(row, col, value) {
         this.board[row][col] = value; // update the board with the new value
