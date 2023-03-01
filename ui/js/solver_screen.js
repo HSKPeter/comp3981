@@ -78,6 +78,8 @@ async function main() {
     sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
     sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
     
+    console.log(board_values)
+    
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             var cell_to_insert = document.createElement('div');
