@@ -74,7 +74,6 @@ async function main() {
         board_values = await generator.generateNewPuzzle()
     }
     
-    
     sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
     sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
     
@@ -96,10 +95,6 @@ async function main() {
             if ((set_row + set_column) % 2 == 1) {
                 cell_to_insert.style.backgroundColor = "#D3D3D3"
             }
-    
-            
-    
-    
             sudoku_container.appendChild(cell_to_insert);
         }
     }
