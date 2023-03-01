@@ -1,15 +1,56 @@
 
 import SudokuPuzzleGenerator from "./sudoku_generator.js";
 
+const timeContainer = document.getElementById("timeContainer");
+const timeText = document.getElementById("time")
+const title = document.getElementById("title")
+
+let deltaTime;
+var startTime;
+let endTime;
+let sum = 0;
+
 document.getElementById("solve-brute-force").addEventListener("click", function () {
-    window.location.href = "solved_screen.html";
+    displayTime(solveWithBruteForce);
 });
 document.getElementById("solve-csp").addEventListener("click", function () {
-    window.location.href = "solved_screen.html";
+    displayTime(solveWithCSP);
 });
 document.getElementById("clear").addEventListener("click", function () {
     window.location.href = "main_menu.html";
 });
+
+// Replace contents of this function with the real algorithm
+function solveWithBruteForce() {
+    localStorage.setItem("Algorithm", "Brute Force")
+    setTimeout(showTime, 2500);
+}
+
+function showTime() {
+    console.log("heheheh")
+    endTime = Date.now();
+    deltaTime = endTime - startTime;
+    timeText.innerText = deltaTime;
+    timeContainer.style.display = "block";
+    let algorithm = localStorage.getItem("Algorithm");
+    if (algorithm === "CSP") {
+        title.innerHTML = "Solved with CSP"
+    } else {
+        title.innerHTML = "Solved with Brute Force"
+    }
+
+}
+
+// Replace contents of this function with the real algorithm
+function solveWithCSP() {
+    localStorage.setItem("Algorithm", "CSP")
+    setTimeout(showTime, 5000)
+}
+
+function displayTime(solveAlgorithm) {
+    startTime = Date.now()
+    solveAlgorithm()
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 const source = urlParams.get('source');
