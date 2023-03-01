@@ -25,7 +25,6 @@ export default class SudokuPuzzleGenerator {
                 let newValue = random(1, N + 1)
                 if (this.solver.isValidValue(row, col, newValue)) {
                     this.updateBoard(row, col, newValue)
-                    this.printBoard()
                     filledValues++
                 }
             }
@@ -133,12 +132,3 @@ class SudokuValidityChecker {
         return row * squareSize + col;
     }
 }
-
-
-
-
-// const sudokuGenerator = new SudokuPuzzleGenerator(9); // create a 9x9 Sudoku board
-// console.log(sudokuGenerator.solver.squareSets)
-// sudokuGenerator.printBoard()
-// sudokuGenerator.generateNewPuzzle()
-// sudokuGenerator.printBoard()
