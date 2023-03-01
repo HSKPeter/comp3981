@@ -2,17 +2,21 @@ export default class SudokuPuzzleGenerator {
     constructor(N) {
         this.size = N
         this.board = Array.from(Array(N), () => new Array(N).fill(0));
-        this.solver = new SudokuValidityChecker(this.board);
+        if (Math.sqrt(this.size) % 1 == 0) {
+            this.solver = new SudokuValidityChecker(this.board);
+        }
     }
 
-    async generateNewPuzzle(readFromFile=true) {
-        this.clearBoard()
+    async generateNewPuzzle(readFromFile = true) {
         if (readFromFile) {
             const response = await fetch("http://localhost:8000/board/" + this.size);
-            const {board} = await response.json();
-            console.log(board)
+            const { board } = await response.json();
             return board;
         }
+        if (typeof this.solver == "undefined") {
+            return board
+        }
+        this.clearBoard()
         const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
         const N = this.board.length
         let col = 0

@@ -27,7 +27,7 @@ function solveWithBruteForce() {
 }
 
 function showTime() {
-    console.log("heheheh")
+
     endTime = Date.now();
     deltaTime = endTime - startTime;
     timeText.innerText = deltaTime;
@@ -72,16 +72,13 @@ async function main() {
     if (source === "generate") {
         const generator = new SudokuPuzzleGenerator(+size)
         board_values = await generator.generateNewPuzzle()
-        generator.printBoard()
     }
     
     
     sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
     sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
     
-    
-    console.log(board_values)
-    
+        
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             var cell_to_insert = document.createElement('div');
