@@ -34,7 +34,8 @@
 
         .sudoku-board>div {
             background-color: white;
-            border: 1px solid black;
+            border-right: 1px solid black;
+            border-bottom: 1px solid black;
             text-align: center;
             font-size: 8px;
 
