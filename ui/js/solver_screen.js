@@ -84,7 +84,12 @@ async function main() {
             cell_to_insert.setAttribute('id', 'cell ' + i + "-" + j)
     
             var set_row = parseInt(i/(Math.sqrt(size)))
-            var set_column = parseInt(j/Math.sqrt(size))
+            var set_column = parseInt(j / Math.sqrt(size))
+            
+            if (size == 12) {
+                set_row = parseInt(i/(Math.sqrt(size) + 1))
+            }
+            
     
             if (board_values[i][j] == 0)
                 cell_to_insert.innerHTML = '';  
