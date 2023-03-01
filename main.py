@@ -18,9 +18,10 @@ app.add_middleware(
 def read_root():
     return {"Hello": "World"}
 
-@app.get("/board")
-def load_board():
-    return {"board": puzzle_loader.load(9)}
+@app.get("/board/{size}")
+def load_board(size: int):
+    board =  puzzle_loader.load(size)
+    return {"board": board}
 
 @app.get("/brute-force")
 def solve_brute_force():

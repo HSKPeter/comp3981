@@ -71,7 +71,7 @@ async function main() {
     
     if (source === "generate") {
         const generator = new SudokuPuzzleGenerator(+size)
-        board_values = generator.generateNewPuzzle()
+        board_values = await generator.generateNewPuzzle()
         generator.printBoard()
     }
     
@@ -80,7 +80,7 @@ async function main() {
     sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
     
     
-    
+    console.log(board_values)
     
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {

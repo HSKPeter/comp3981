@@ -1,5 +1,6 @@
 export default class SudokuPuzzleGenerator {
     constructor(N) {
+        this.size = N
         this.board = Array.from(Array(N), () => new Array(N).fill(0));
         this.solver = new SudokuValidityChecker(this.board);
     }
@@ -7,8 +8,9 @@ export default class SudokuPuzzleGenerator {
     async generateNewPuzzle(readFromFile=true) {
         this.clearBoard()
         if (readFromFile) {
-            const response = await fetch("http://localhost:8000/board");
+            const response = await fetch("http://localhost:8000/board/" + this.size);
             const {board} = await response.json();
+            console.log(board)
             return board;
         }
         const random = (min, max) => Math.floor(Math.random() * (max - min)) + min;
