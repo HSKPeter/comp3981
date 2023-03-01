@@ -87,7 +87,8 @@ async function main() {
             var set_column = parseInt(j / Math.sqrt(size))
             
             if (size == 12) {
-                set_row = parseInt(i/(Math.sqrt(size) + 1))
+                set_row = parseInt(i/4)
+                var set_column = parseInt(i/3)
             }
             
     
