@@ -3,8 +3,8 @@ import json
 import abc
 
 class SampleGenerator(abc.ABC):
-    def map_digits_to_int_list(self, digits_str):
-        return [int(digit_char) for digit_char in digits_str]
+    def map_digits_to_int_list(self, string):
+        return [int(char) if char.isnumeric() else char for char in string]
 
     def jsonfiy(self, src_filename):
         with open(f'{self.src_folder}/{src_filename}', 'r') as file:
