@@ -12,6 +12,9 @@ git clone https://github.com/HSKPeter/comp3981.git
      - Windows: Run `.\venv\Scripts\activate.bat`
      - Mac: Run `source venv/bin/activate`
 
-3. Install dependencies by running `pip install "fastapi[all]"`
+3. Install dependencies by running `pip install -r requirements.txt"`
 
-4. Run the web server by running `uvicorn main:app --reload`
+4. Run the web backend server by running `uvicorn main:app --reload` in terminal
+
+5. Host the frontend with the live server extension in VS code
+
