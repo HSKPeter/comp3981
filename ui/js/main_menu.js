@@ -52,56 +52,42 @@ const isValidLength = (num) => {
     return acceptableValues.includes(num);
 }
 
-const isAllNum = (text) => {
-    const characters = text.split("");
-    for (const char of characters) {
-        if (isNaN(parseInt(char))) {
+const isValidTextContent = (textContent) => {
+    try {
+        const board = JSON.parse(textContent);
+        const columnCountOfFirstRow = board[0].length;
+
+        if (!isValidLength(columnCountOfFirstRow)) {
             return false;
         }
+
+        let rowCount = 0;
+
+        for (const row of board) {
+            let columnCounter = 0;
+
+            for (const cell of row) {
+                if (isNaN(cell)) {
+                    return false
+                }
+                columnCounter ++;
+            }
+
+            if (columnCounter !== columnCountOfFirstRow) {
+                return false;
+            }
+
+            rowCount ++;
+        }
+
+        return isValidLength(rowCount) && rowCount === columnCountOfFirstRow;
+
+    } catch (error) {
+        return false;
     }
-
-    return true;
-}
-
-const isValidTextContent = (textContent) => {
-    // const board = JSON.parse(textContent);
-
-    // const lines = textContent.split("\n");
-
-    // const boardHeight = lines.length;
-    // const boardWidth = lines[0].trim().length;
-
-    // if (boardHeight !== boardWidth || !isValidLength(boardWidth)) {
-    //     return false;
-    // }
-    
-    // for (let i = 0; i < lines.length; i ++) {
-    //     // Ensure texts are all numbers
-    //     if (!isAllNum(lines[i].trim())) {
-    //         return false;
-    //     }
-
-    //     // Ensure the length of each line is consistent with the board width
-    //     if (lines[i].trim().length !== boardWidth) {
-    //         return false;
-    //     }
-    // }
-
-    return true;
 }
 
 const parseBoard = (boardInput) => {
-    // const rows = boardInput.split("\n");
-    // const board = [];
-
-    // for (const row of rows) {
-    //     board.push(row.trim().split("").map(numStr => parseInt(numStr)));
-    // }
-
-    // return {
-    //     board: JSON.stringify(board),
-    //     size: rows.length
-    // };
     const board = JSON.parse(boardInput);
     const size = board[0].length;
 
