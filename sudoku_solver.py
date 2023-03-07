@@ -79,15 +79,51 @@ class Node:
     # Maybe we could make good use of `yield` to enhance the performance for large board e.g. 25x25
     def find_valid_children(self):
         n = len(self.board)
-        for row in range(n):
-            for col in range(n):
-                if self.board[row][col] == 0:
-                    for i in range(1, n + 1):
-                        if self.is_valid_insertion(row, col, i):
-                            new_board = copy.deepcopy(self.board)
-                            new_board[row][col] = i
-                            self.children.append(Node(new_board))
-                    return
+        cell = self.find_min_domain_cell()
+        if cell is None:
+            return
+        row, col = cell
+        for i in range(1, n + 1):
+            print("checking", i)
+            if self.is_valid_insertion(row, col, i):
+                new_board = copy.deepcopy(self.board)
+                new_board[row][col] = i
+                self.children.append(Node(new_board))
+    
+    def find_min_domain_cell(self):
+        board = self.board
+        n = len(board)
+        domains = self.find_domains()
+        min_domain_size = n+1
+        min_domain_cell = None
+        for i in range(n):
+            for j in range(n):
+                if board[i][j] == 0 and len(domains[i][j]) < min_domain_size:
+                    min_domain_size = len(domains[i][j])
+                    min_domain_cell = (i, j)
+        return min_domain_cell
+
+    
+    def find_domains(self):
+        board = self.board
+        n = len(board)
+        domains = [[set(range(1, n+1)) if board[i][j] == 0 else set() for j in range(n)] for i in range(n)]
+        for i in range(n):
+            for j in range(n):
+                if board[i][j] == 0:
+                    for k in range(n):
+                        # remove values from the row and column
+                        domains[i][j].discard(board[i][k])
+                        domains[i][j].discard(board[k][j])
+                    # remove values from the block
+                    block_i = i // int(n ** 0.5)
+                    block_j = j // int(n ** 0.5)
+                    for bi in range(int(n ** 0.5)):
+                        for bj in range(int(n ** 0.5)):
+                            i2 = block_i * int(n ** 0.5) + bi
+                            j2 = block_j * int(n ** 0.5) + bj
+                            domains[i][j].discard(board[i2][j2])
+        return domains
 
     def is_valid_insertion(self, row, col, new_value):
         board = self.board
