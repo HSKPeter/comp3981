@@ -1,5 +1,4 @@
 import copy
-import math
 
 NINE_X_NINE = [[0,0,3,0,2,0,6,0,0],[9,0,0,3,0,5,0,0,1],[0,0,1,8,0,6,4,0,0],[0,0,8,1,0,2,9,0,0],[7,0,0,0,0,0,0,0,8],[0,0,6,7,0,8,2,0,0],[0,0,2,6,0,9,5,0,0],[8,0,0,2,0,3,0,0,9],[0,0,5,0,1,0,3,0,0]]
 TWELVE_X_TWELVE = [[0,0,0,11,8,0,0,0,0,0,0,6],[10,0,0,0,0,0,0,0,0,4,0,11],[0,7,0,0,0,0,2,6,0,0,1,0],[7,0,12,0,0,0,9,0,0,0,0,0],[0,0,0,10,6,2,0,0,5,0,0,0],[0,9,0,8,0,10,0,0,0,0,0,0],[0,1,0,0,5,0,7,8,0,0,6,3],[0,0,0,7,2,0,10,0,8,0,12,5],[0,6,0,5,0,0,12,0,0,1,0,0],[6,5,7,12,0,3,8,2,0,11,0,0],[0,0,8,0,0,1,5,0,0,7,3,9],[9,3,4,1,0,0,6,10,12,0,0,0]]
@@ -92,12 +91,12 @@ class Node:
         (4) No duplicated value in each sub square
         """
         sqr_root = SQUARE_ROOTS[self.board_length]
-        col_values_sets = [set() for i in range(self.board_length)]
-        sub_square_values_sets = [set() for i in range(self.board_length)]
+        col_values_sets = [set() for _ in range(self.board_length)]
+        sub_square_values_sets = [set() for _ in range(self.board_length)]
         for row_index in range(self.board_length):
             row_values_set = set()
             for col_index in range(self.board_length):
-                sub_square_index = math.floor(row_index / sqr_root) * sqr_root + math.floor(col_index / sqr_root)
+                sub_square_index = (row_index // sqr_root) * sqr_root + (col_index // sqr_root)
                 sub_square_values_set = sub_square_values_sets[sub_square_index]
                 cell = self.board[row_index][col_index]
                 col_values_set = col_values_sets[col_index]
@@ -138,25 +137,25 @@ class Node:
             return False
 
         sub_index = self.get_sub_square_index(row, col)
-        squares = self.get_subsquares()
+        squares = self.get_sub_squares()
         if new_value in squares[sub_index]:
             return False
 
         return True
 
-    def get_subsquares(self):
+    def get_sub_squares(self):
         board = self.board
         n = len(board)
-        subsquares = []
-        subsize = int(n ** 0.5)
-        for i in range(0, n, subsize):
-            for j in range(0, n, subsize):
-                subsquare = set()
-                for x in range(i, i + subsize):
-                    for y in range(j, j + subsize):
-                        subsquare.add(board[x][y])
-                subsquares.append(subsquare)
-        return subsquares
+        sub_squares = []
+        sub_size = int(n ** 0.5)
+        for i in range(0, n, sub_size):
+            for j in range(0, n, sub_size):
+                sub_square = set()
+                for x in range(i, i + sub_size):
+                    for y in range(j, j + sub_size):
+                        sub_square.add(board[x][y])
+                sub_squares.append(sub_square)
+        return sub_squares
 
     def get_sub_square_index(self, row, col):
         sub_size = SQUARE_ROOTS[self.board_length]
