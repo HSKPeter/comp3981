@@ -19,17 +19,24 @@ class SudokuSolver:
         self.stack = [Node(self.board)]
 
     def solve(self):
-        while len(self.stack) > 0:
+        i = 0
+        stack_size = len(self.stack)
+        while stack_size > 0:
             # print(f"Stack size: {len(self.stack)}")
             current_node = self.stack[-1]
+            print(current_node)
             if current_node.is_solution():
-                return current_node.board
+                print(f"result found: i = {i}")
+                return current_node
             next_node = current_node.get_first_unchecked_child()
             if next_node is None:
                 self.stack.pop()
                 current_node.check()
             else:
                 self.stack.append(next_node)
+            i += 1
+            stack_size = len(self.stack)
+            print(f"searching (i = {i}; stack size = {stack_size})")
 
 
 class Node:
@@ -159,8 +166,10 @@ class Node:
 
 def main():
     solver = SudokuSolver(RAW_BOARD)
-    solution = solver.solve()
-    print("solution: ", solution)
+    solution_node = solver.solve()
+    print(f"solution:\n{solution_node}")
+    board = solution_node.board
+    print(f"2D array: {board}")
 
 
 if __name__ == '__main__':
