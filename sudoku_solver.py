@@ -44,6 +44,16 @@ class Node:
     def check(self):
         self.isChecked = True
 
+    def __str__(self):
+        result = ""
+        for row in self.board:
+            for cell in row:
+                cell_representation = cell if cell != 0 else "__"
+                new_part = f"{cell_representation} "
+                result += new_part.ljust(4)
+            result += "\n"
+        return result
+
     def is_solution(self):
         """
         To become a solution, it is required that:
