@@ -1,5 +1,7 @@
 import bisect
 import copy
+import time
+import datetime
 
 SQUARE_ROOTS = {
     9: 3,
@@ -8,18 +10,27 @@ SQUARE_ROOTS = {
     100: 10
 }
 
-# class Foo:
-#     heuristic_value_counter = 0
-
-#     @classmethod
-#     def foo(cls):
-#         v = cls.heuristic_value_counter
-#         cls.heuristic_value_counter += 1
-#         return v
-
-NINE = [[0,0,3,0,2,0,6,0,0],[9,0,0,3,0,5,0,0,1],[0,0,1,8,0,6,4,0,0],[0,0,8,1,0,2,9,0,0],[7,0,0,0,0,0,0,0,8],[0,0,6,7,0,8,2,0,0],[0,0,2,6,0,9,5,0,0],[8,0,0,2,0,3,0,0,9],[0,0,5,0,1,0,3,0,0]]
-SIXTEEN = [[0,3,0,0,0,0,0,2,0,0,10,14,13,0,0,0],[0,0,0,0,0,0,0,0,16,15,0,1,0,0,0,6],[0,11,0,10,9,1,0,0,0,0,0,2,0,14,0,0],[0,0,0,8,0,16,0,14,0,0,0,0,0,0,9,0],[0,0,0,0,15,0,13,7,0,0,12,0,0,0,0,10],[0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,14,0,0,0,4,0,13,0,0,0,12],[0,13,0,0,0,0,0,0,0,0,5,0,0,0,0,0],[0,0,0,6,0,0,9,0,14,0,0,0,0,13,1,0],[15,0,0,0,5,0,3,6,0,0,0,0,0,2,0,0],[13,16,2,0,0,0,0,0,3,12,6,0,0,0,0,9],[0,0,0,0,0,13,0,4,9,0,1,7,0,8,6,0],[16,15,0,0,0,0,0,0,8,1,0,10,0,0,7,2],[0,0,0,11,0,0,0,0,2,14,0,0,0,0,0,4],[5,10,0,2,16,12,7,0,15,11,4,6,0,9,0,14],[1,0,0,4,2,8,0,9,0,5,16,3,11,12,10,0]]
+NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
+        [0, 0, 8, 1, 0, 2, 9, 0, 0], [7, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 6, 7, 0, 8, 2, 0, 0],
+        [0, 0, 2, 6, 0, 9, 5, 0, 0], [8, 0, 0, 2, 0, 3, 0, 0, 9], [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+TWELVE = [[]]
+SIXTEEN = [[0, 3, 0, 0, 0, 0, 0, 2, 0, 0, 10, 14, 13, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 16, 15, 0, 1, 0, 0, 0, 6],
+           [0, 11, 0, 10, 9, 1, 0, 0, 0, 0, 0, 2, 0, 14, 0, 0], [0, 0, 0, 8, 0, 16, 0, 14, 0, 0, 0, 0, 0, 0, 9, 0],
+           [0, 0, 0, 0, 15, 0, 13, 7, 0, 0, 12, 0, 0, 0, 0, 10], [0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 1, 14, 0, 0, 0, 4, 0, 13, 0, 0, 0, 12], [0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0],
+           [0, 0, 0, 6, 0, 0, 9, 0, 14, 0, 0, 0, 0, 13, 1, 0], [15, 0, 0, 0, 5, 0, 3, 6, 0, 0, 0, 0, 0, 2, 0, 0],
+           [13, 16, 2, 0, 0, 0, 0, 0, 3, 12, 6, 0, 0, 0, 0, 9], [0, 0, 0, 0, 0, 13, 0, 4, 9, 0, 1, 7, 0, 8, 6, 0],
+           [16, 15, 0, 0, 0, 0, 0, 0, 8, 1, 0, 10, 0, 0, 7, 2], [0, 0, 0, 11, 0, 0, 0, 0, 2, 14, 0, 0, 0, 0, 0, 4],
+           [5, 10, 0, 2, 16, 12, 7, 0, 15, 11, 4, 6, 0, 9, 0, 14], [1, 0, 0, 4, 2, 8, 0, 9, 0, 5, 16, 3, 11, 12, 10, 0]]
+TWENTY_FIVE = [[]]
 RAW_BOARD = NINE
+
+
+class Cell:
+    def __init__(self, value, domain=set()) -> None:
+        self.value = value
+        self.domain = domain
+
 
 class NodeFrontier:
     def __init__(self, root_node):
@@ -40,7 +51,8 @@ class NodeFrontier:
 
 
 class Node:
-    def __init__(self, board: [[int]], action=(None, None, None), parent_node=None) -> None:
+    def __init__(self, board: [[int]], action=(None, None, None), parent_node=None,
+                 count_of_alternatives_in_designated_cell=0) -> None:
         self.board = board
         self.action = action
         self.board_length = len(self.board)
@@ -48,6 +60,7 @@ class Node:
         self.row_values_sets = [set() for _ in range(self.board_length)]
         self.col_values_sets = [set() for _ in range(self.board_length)]
         self.sub_square_values_sets = [set() for _ in range(self.board_length)]
+        self.count_of_alternatives_in_designated_cell = count_of_alternatives_in_designated_cell
 
         self.empty_cell_count = 0
 
@@ -62,7 +75,7 @@ class Node:
                 else:
                     self.empty_cell_count += 1
 
-        self.heuristic_value = self.compute_heuristics_value()
+        # self.heuristic_value = self.compute_heuristics_values()
 
     def compute_state(self):
         result = ""
@@ -73,28 +86,6 @@ class Node:
                 result += new_part.ljust(4)
             result += "\n"
         return result
-
-    def compute_heuristics_value(self):
-        # return Foo.foo()
-
-        h = 0
-        # # for row in self.board:
-        # #     for cell in row:
-        # #         if cell == 0:
-        # #             h += 1
-        # # return -h
-
-        for row in range(self.board_length):
-            for col in range(self.board_length):
-                value = self.board[row][col]
-                sub_square_index = self.get_sub_square_index(row, col)
-                if value != 0:
-                    set_of_prohibited_values = self.row_values_sets[row].copy()
-                    set_of_prohibited_values.update(self.col_values_sets[col])
-                    set_of_prohibited_values.update(self.sub_square_values_sets[sub_square_index])
-                    possible_values_count = self.board_length - len(set_of_prohibited_values)
-                    h += possible_values_count
-        return -h
 
     def is_solution(self):
         """
@@ -115,9 +106,9 @@ class Node:
                 cell = self.board[row_index][col_index]
                 col_values_set = col_values_sets[col_index]
                 if (cell == 0) or \
-                   (cell in row_values_set) or \
-                   (cell in col_values_set) or \
-                   (cell in sub_square_values_set):
+                        (cell in row_values_set) or \
+                        (cell in col_values_set) or \
+                        (cell in sub_square_values_set):
                     return False
                 row_values_set.add(cell)
                 col_values_set.add(cell)
@@ -129,15 +120,21 @@ class Node:
         for row in range(n):
             for col in range(n):
                 if self.board[row][col] == 0:
-                    for i in range(1, n + 1):
-                        if self.is_valid_insertion(row, col, i):
-                            new_board = copy.deepcopy(self.board)
-                            new_board[row][col] = i
-                            yield Node(new_board, (row, col, i), self)
+                    valid_insertion_values = [i for i in range(1, n + 1) if self.is_valid_insertion(row, col, i)]
+                    count_of_alternatives = len(valid_insertion_values) - 1
+                    for value in valid_insertion_values:
+                        new_board = copy.deepcopy(self.board)
+                        new_board[row][col] = value
+                        yield Node(
+                            board=new_board,
+                            action=(row, col, value),
+                            parent_node=self,
+                            count_of_alternatives_in_designated_cell=count_of_alternatives)
 
     def is_valid_insertion(self, row, col, value):
         sub_square_index = self.get_sub_square_index(row, col)
-        if value in self.row_values_sets[row] or value in self.col_values_sets[col] or value in self.sub_square_values_sets[sub_square_index]:
+        if value in self.row_values_sets[row] or value in self.col_values_sets[col] or value in \
+                self.sub_square_values_sets[sub_square_index]:
             return False
 
         return True
@@ -150,8 +147,13 @@ class Node:
         return sub_index
 
     # https://stackoverflow.com/a/26840843
-    def __lt__(self, cmp_node):
-        return self.heuristic_value < cmp_node.heuristic_value
+    def __gt__(self, cmp_node):
+        if self.empty_cell_count != cmp_node.empty_cell_count:
+            has_less_empty_cells = self.empty_cell_count < cmp_node.empty_cell_count
+            return has_less_empty_cells
+
+        has_more_constraints = self.count_of_alternatives_in_designated_cell < cmp_node.count_of_alternatives_in_designated_cell
+        return has_more_constraints
 
     def __str__(self):
         row, col, value = self.action
@@ -165,8 +167,14 @@ class SudokuSolver:
         self.reached_state = list()
 
     def solve(self):
-        while self.frontier.is_not_empty() > 0:
+        start_time = time.time()
+        iteration_counter = 0
+        while self.frontier.is_not_empty():
             current_node = self.frontier.pop()
+            time_snapshot = time.time()
+            delta = datetime.timedelta(seconds=time_snapshot - start_time)
+            print(f"Duration: {delta}")
+            print(f"Iteration: {iteration_counter}")
             print(f"Frontier size: {len(self.frontier)}")
             print(current_node)
 
@@ -178,6 +186,9 @@ class SudokuSolver:
                 if state not in self.reached_state:
                     self.reached_state.append(state)
                     self.frontier.add(child_node)
+
+            iteration_counter += 1
+
 
 def main():
     solver = SudokuSolver(RAW_BOARD)
