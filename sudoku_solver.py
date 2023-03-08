@@ -3,18 +3,58 @@ import math
 from typing import List
 import random
 
-NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0], [0, 0, 8, 1, 0, 2, 9, 0, 0], [
-    7, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 6, 7, 0, 8, 2, 0, 0], [0, 0, 2, 6, 0, 9, 5, 0, 0], [8, 0, 0, 2, 0, 3, 0, 0, 9], [0, 0, 5, 0, 1, 0, 3, 0, 0]]
-TWELVE_X_TWELVE = [[0, 0, 0, 11, 8, 0, 0, 0, 0, 0, 0, 6], [10, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 11], [0, 7, 0, 0, 0, 0, 2, 6, 0, 0, 1, 0], [7, 0, 12, 0, 0, 0, 9, 0, 0, 0, 0, 0], [0, 0, 0, 10, 6, 2, 0, 0, 5, 0, 0, 0], [0, 9, 0, 8, 0, 10, 0, 0, 0, 0, 0, 0], [
-    0, 1, 0, 0, 5, 0, 7, 8, 0, 0, 6, 3], [0, 0, 0, 7, 2, 0, 10, 0, 8, 0, 12, 5], [0, 6, 0, 5, 0, 0, 12, 0, 0, 1, 0, 0], [6, 5, 7, 12, 0, 3, 8, 2, 0, 11, 0, 0], [0, 0, 8, 0, 0, 1, 5, 0, 0, 7, 3, 9], [9, 3, 4, 1, 0, 0, 6, 10, 12, 0, 0, 0]]
-SIXTEEN_X_SIXTEEN_SOLVED = [[15, 8, 16, 14, 9, 13, 6, 1, 5, 3, 7, 4, 10, 2, 11, 12], [6, 12, 11, 7, 5, 3, 10, 8, 1, 14, 9, 2, 13, 4, 16, 15], [5, 13, 3, 10, 7, 16, 2, 4, 8, 11, 15, 12, 9, 6, 1, 14], [9, 1, 2, 4, 11, 15, 14, 12, 16, 10, 13, 6, 8, 5, 7, 3], [8, 7, 14, 13, 16, 5, 11, 10, 12, 15, 4, 1, 2, 3, 6, 9], [16, 3, 10, 11, 13, 14, 4, 15, 7, 2, 6, 9, 5, 1, 12, 8], [1, 9, 5, 15, 8, 6, 12, 2, 10, 13, 3, 11, 14, 16, 4, 7], [2, 6, 4, 12, 3, 7, 1, 9, 14, 16, 5, 8, 15, 11, 13, 10], [
-    10, 4, 8, 16, 14, 12, 5, 7, 9, 1, 11, 13, 6, 15, 3, 2], [11, 2, 9, 5, 15, 4, 16, 13, 6, 12, 8, 3, 7, 14, 10, 1], [12, 15, 7, 6, 1, 10, 8, 3, 2, 4, 14, 5, 16, 13, 9, 11], [13, 14, 1, 3, 2, 11, 9, 6, 15, 7, 16, 10, 12, 8, 5, 4], [14, 5, 12, 1, 6, 8, 13, 11, 3, 9, 2, 7, 4, 10, 15, 16], [3, 10, 6, 9, 4, 1, 15, 14, 13, 8, 12, 16, 11, 7, 2, 5], [7, 11, 13, 8, 12, 2, 3, 16, 4, 5, 10, 15, 1, 9, 14, 6], [4, 16, 15, 2, 10, 9, 7, 5, 11, 6, 1, 14, 3, 12, 8, 13]]
-TWENTY_FIVE_X_TWENTY_FIVE = [[0, 0, 0, 0, 0, 20, 0, 0, 9, 0, 25, 14, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0], [21, 0, 6, 18, 20, 1, 0, 0, 0, 0, 0, 11, 4, 0, 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 22], [0, 0, 0, 3, 22, 0, 8, 0, 0, 7, 23, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 10, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 24, 11, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 9, 10, 0, 0, 0], [0, 0, 0, 0, 0, 0, 24, 0, 0, 14, 0, 0, 12, 0, 17, 0, 1, 0, 6, 25, 0, 0, 0, 21, 0], [0, 0, 14, 0, 24, 12, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 2, 0, 22, 10, 0, 7, 3, 0], [0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 14, 21, 0, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [6, 21, 18, 0, 0, 0, 0, 0, 0, 0, 11, 0, 10, 0, 0, 0, 16, 0, 5, 0, 0, 0, 12, 0, 0], [0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 5, 2, 0, 0], [0, 0, 0, 0, 0, 0, 2, 17, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 25, 0, 0, 0, 4, 0, 16, 3, 0, 9, 0, 22, 0, 18, 0, 17, 15, 14, 0, 11, 0, 24, 0], [8, 0, 0, 0, 14, 0, 25, 19, 23, 0, 0, 0, 15,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            0, 0, 0, 21, 0, 0, 0, 4, 3, 9, 10, 7], [0, 4, 0, 0, 0, 24, 0, 7, 5, 0, 0, 17, 0, 0, 2, 1, 6, 0, 0, 20, 0, 21, 19, 16, 13], [0, 13, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 7, 0, 0, 4, 1, 0, 0, 18, 6], [11, 0, 22, 9, 4, 0, 5, 0, 0, 0, 0, 12, 0, 17, 23, 25, 0, 0, 0, 6, 13, 19, 16, 15, 0], [24, 0, 0, 17, 0, 0, 0, 0, 0, 18, 0, 1, 0, 0, 0, 22, 2, 0, 13, 21, 7, 9, 10, 0, 0], [0, 2, 15, 5, 0, 11, 0, 0, 22, 0, 21, 16, 0, 3, 0, 0, 4, 12, 0, 0, 0, 0, 18, 0, 0], [0, 18, 20, 0, 0, 17, 1, 2, 0, 0, 0, 0, 11, 0, 0, 0, 9, 16, 3, 0, 0, 25, 0, 0, 8], [10, 12, 7, 25, 0, 0, 16, 0, 3, 6, 0, 13, 0, 9, 0, 15, 0, 0, 17, 0, 0, 0, 24, 5, 0], [3, 0, 11, 4, 9, 0, 0, 8, 0, 5, 0, 0, 0, 12, 0, 6, 0, 25, 20, 0, 0, 0, 15, 19, 0], [14, 8, 24, 16, 17, 0, 19, 12, 0, 23, 6, 0, 0, 0, 5, 21, 0, 22, 0, 11, 0, 7, 0, 0, 10], [2, 0, 19, 13, 5, 0, 0, 0, 0, 20, 0, 0, 21, 16, 0, 7, 0, 0, 0, 12, 0, 6, 0, 0, 0], [0, 20, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 9, 16, 0, 12, 22, 25, 14], [12, 0, 0, 0, 0, 0, 21, 3, 0, 0, 9, 0, 0, 13, 22, 0, 17, 15, 14, 18, 0, 0, 0, 0, 0]]
+NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
+               [0, 0, 8, 1, 0, 2, 9, 0, 0], [
+                   7, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 6, 7, 0, 8, 2, 0, 0], [0, 0, 2, 6, 0, 9, 5, 0, 0],
+               [8, 0, 0, 2, 0, 3, 0, 0, 9], [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+TWELVE_X_TWELVE = [[10, 11, 8, 12, 5, 6, 3, 4, 1, 7, 2, 9], [9, 4, 2, 5, 1, 11, 7, 10, 6, 12, 3, 8], [1, 3, 6, 7, 8, 12, 2, 9, 10, 5, 4, 11], [2, 6, 12, 4, 3, 9, 8, 5, 7, 11, 1, 10], [5, 1, 11, 3, 7, 2, 10, 12, 8, 9, 6, 4], [8, 10, 7, 9, 6, 4, 11, 1, 12, 3, 5, 2], [4, 9, 5, 11, 10, 7, 1, 2, 3, 6, 8, 12], [6, 8, 3, 1, 4, 5, 12, 11, 9, 2, 10, 7], [7, 12, 10, 2, 9, 3, 6, 8, 4, 1, 11, 5], [11, 7, 9, 8, 2, 1, 4, 3, 5, 10, 12, 6], [3, 2, 4, 6, 12, 10, 5, 7, 11, 8, 9, 1], [12, 5, 1, 10, 11, 8, 9, 6, 2, 4, 7, 3]]
+SIXTEEN_X_SIXTEEN_SOLVED = [[15, 8, 16, 14, 9, 13, 6, 1, 5, 3, 7, 4, 10, 2, 11, 12],
+                            [6, 12, 11, 7, 5, 3, 10, 8, 1, 14, 9, 2, 13, 4, 16, 15],
+                            [5, 13, 3, 10, 7, 16, 2, 4, 8, 11, 15, 12, 9, 6, 1, 14],
+                            [9, 1, 2, 4, 11, 15, 14, 12, 16, 10, 13, 6, 8, 5, 7, 3],
+                            [8, 7, 14, 13, 16, 5, 11, 10, 12, 15, 4, 1, 2, 3, 6, 9],
+                            [16, 3, 10, 11, 13, 14, 4, 15, 7, 2, 6, 9, 5, 1, 12, 8],
+                            [1, 9, 5, 15, 8, 6, 12, 2, 10, 13, 3, 11, 14, 16, 4, 7],
+                            [2, 6, 4, 12, 3, 7, 1, 9, 14, 16, 5, 8, 15, 11, 13, 10], [
+                                10, 4, 8, 16, 14, 12, 5, 7, 9, 1, 11, 13, 6, 15, 3, 2],
+                            [11, 2, 9, 5, 15, 4, 16, 13, 6, 12, 8, 3, 7, 14, 10, 1],
+                            [12, 15, 7, 6, 1, 10, 8, 3, 2, 4, 14, 5, 16, 13, 9, 11],
+                            [13, 14, 1, 3, 2, 11, 9, 6, 15, 7, 16, 10, 12, 8, 5, 4],
+                            [14, 5, 12, 1, 6, 8, 13, 11, 3, 9, 2, 7, 4, 10, 15, 16],
+                            [3, 10, 6, 9, 4, 1, 15, 14, 13, 8, 12, 16, 11, 7, 2, 5],
+                            [7, 11, 13, 8, 12, 2, 3, 16, 4, 5, 10, 15, 1, 9, 14, 6],
+                            [4, 16, 15, 2, 10, 9, 7, 5, 11, 6, 1, 14, 3, 12, 8, 13]]
+TWENTY_FIVE_X_TWENTY_FIVE = [[0, 0, 0, 0, 0, 20, 0, 0, 9, 0, 25, 14, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0],
+                             [21, 0, 6, 18, 20, 1, 0, 0, 0, 0, 0, 11, 4, 0, 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 22],
+                             [0, 0, 0, 3, 22, 0, 8, 0, 0, 7, 23, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                             [0, 10, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 24, 11, 0, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 9, 10, 0, 0, 0],
+                             [0, 0, 0, 0, 0, 0, 24, 0, 0, 14, 0, 0, 12, 0, 17, 0, 1, 0, 6, 25, 0, 0, 0, 21, 0],
+                             [0, 0, 14, 0, 24, 12, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 2, 0, 22, 10, 0, 7, 3, 0],
+                             [0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 14, 21, 0, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                             [6, 21, 18, 0, 0, 0, 0, 0, 0, 0, 11, 0, 10, 0, 0, 0, 16, 0, 5, 0, 0, 0, 12, 0, 0],
+                             [0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 5, 2, 0, 0],
+                             [0, 0, 0, 0, 0, 0, 2, 17, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                             [0, 0, 25, 0, 0, 0, 4, 0, 16, 3, 0, 9, 0, 22, 0, 18, 0, 17, 15, 14, 0, 11, 0, 24, 0],
+                             [8, 0, 0, 0, 14, 0, 25, 19, 23, 0, 0, 0, 15,
+                              0, 0, 0, 21, 0, 0, 0, 4, 3, 9, 10, 7],
+                             [0, 4, 0, 0, 0, 24, 0, 7, 5, 0, 0, 17, 0, 0, 2, 1, 6, 0, 0, 20, 0, 21, 19, 16, 13],
+                             [0, 13, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 7, 0, 0, 4, 1, 0, 0, 18, 6],
+                             [11, 0, 22, 9, 4, 0, 5, 0, 0, 0, 0, 12, 0, 17, 23, 25, 0, 0, 0, 6, 13, 19, 16, 15, 0],
+                             [24, 0, 0, 17, 0, 0, 0, 0, 0, 18, 0, 1, 0, 0, 0, 22, 2, 0, 13, 21, 7, 9, 10, 0, 0],
+                             [0, 2, 15, 5, 0, 11, 0, 0, 22, 0, 21, 16, 0, 3, 0, 0, 4, 12, 0, 0, 0, 0, 18, 0, 0],
+                             [0, 18, 20, 0, 0, 17, 1, 2, 0, 0, 0, 0, 11, 0, 0, 0, 9, 16, 3, 0, 0, 25, 0, 0, 8],
+                             [10, 12, 7, 25, 0, 0, 16, 0, 3, 6, 0, 13, 0, 9, 0, 15, 0, 0, 17, 0, 0, 0, 24, 5, 0],
+                             [3, 0, 11, 4, 9, 0, 0, 8, 0, 5, 0, 0, 0, 12, 0, 6, 0, 25, 20, 0, 0, 0, 15, 19, 0],
+                             [14, 8, 24, 16, 17, 0, 19, 12, 0, 23, 6, 0, 0, 0, 5, 21, 0, 22, 0, 11, 0, 7, 0, 0, 10],
+                             [2, 0, 19, 13, 5, 0, 0, 0, 0, 20, 0, 0, 21, 16, 0, 7, 0, 0, 0, 12, 0, 6, 0, 0, 0],
+                             [0, 20, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 9, 16, 0, 12, 22, 25, 14],
+                             [12, 0, 0, 0, 0, 0, 21, 3, 0, 0, 9, 0, 0, 13, 22, 0, 17, 15, 14, 18, 0, 0, 0, 0, 0]]
 
-
-SQUARE_ROOTS = {
+FLOOR_SQUARE_ROOTS = {
     9: 3,
+    12:3,
+    16:4,
     25: 5,
     100: 10
 }
@@ -30,12 +70,11 @@ class SudokuSolver:
         timeout = 0
         stack_size = len(self.stack)
         while stack_size > 0:
-            # print(f"Stack size: {len(self.stack)}")
             current_node = self.stack[-1]
             if current_node.is_solution():
                 print(f"result found: i = {i}")
                 return current_node
-            current_node.visit()
+            current_node.expand()
             next_node = current_node.get_first_unchecked_child()
             if next_node is None:
                 current_node.check()
@@ -53,7 +92,6 @@ class SudokuSolver:
             if i % 1000 == 0:
                 print()
                 print(f"searching (i = {i}; timeout = {timeout}; stack size = {stack_size})")
-                # print("stack", self.stack)
                 print(current_node)
 
 
@@ -65,16 +103,16 @@ class Node:
         self.domains = self.find_domains()
         self.heuristic_value = self.compute_heuristic_value()
         self.isChecked = False
-        self.isVisited = False
+        self.isExpanded = False
 
     def compute_heuristic_value(self):
         # Sum the length of all domains
         return sum(len(domain) for row in self.domains for domain in row)
 
-    def visit(self):
-        if not self.isVisited:
+    def expand(self):
+        if not self.isExpanded:
             self.find_valid_children()
-            self.isVisited = True
+            self.isExpanded = True
 
     def check(self):
         self.isChecked = True
@@ -101,7 +139,6 @@ class Node:
                 return node
         return None
 
-    # Maybe we could make good use of `yield` to enhance the performance for large board e.g. 25x25
     def find_valid_children(self):
         cell = self.find_min_domain_cell()
         if cell is None:
@@ -118,7 +155,7 @@ class Node:
         board = self.board
         n = len(board)
         domains = self.domains
-        min_domain_size = n+1
+        min_domain_size = n + 1
         min_domain_cell = None
         for i in range(n):
             for j in range(n):
@@ -130,7 +167,9 @@ class Node:
     def find_domains(self):
         board = self.board
         n = len(board)
-        domains = [[set(range(1, n+1)) if board[i][j] == 0 else set()
+        sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
+        sub_m = n // sub_n  # number of sub-squares in each row or column
+        domains = [[set(range(1, n + 1)) if board[i][j] == 0 else set()
                     for j in range(n)] for i in range(n)]
         for i in range(n):
             for j in range(n):
@@ -139,78 +178,39 @@ class Node:
                         # remove values from the row and column
                         domains[i][j].discard(board[i][k])
                         domains[i][j].discard(board[k][j])
-                    # remove values from the block
-                    block_i = i // int(n ** 0.5)
-                    block_j = j // int(n ** 0.5)
-                    for bi in range(int(n ** 0.5)):
-                        for bj in range(int(n ** 0.5)):
-                            i2 = block_i * int(n ** 0.5) + bi
-                            j2 = block_j * int(n ** 0.5) + bj
+                    # remove values from the sub-square
+                    sub_row = i // sub_n
+                    sub_col = j // sub_m
+                    for bi in range(sub_n):
+                        for bj in range(sub_m):
+                            i2 = sub_row * sub_n + bi
+                            j2 = sub_col * sub_m + bj
                             domains[i][j].discard(board[i2][j2])
         return domains
 
     def is_valid_insertion(self, row, col, new_value):
         board = self.board
         n = len(board)
+        sub_n = int(n ** 0.5)  # size of each sub-square
+        sub_m = n // sub_n  # number of sub-squares in each row or column
         # check if the value i is already present in the same row or column
         for k in range(n):
             if board[row][k] == new_value or board[k][col] == new_value:
                 return False
-        # check if the value i is already present in the same block
-        block_i = row // int(n ** 0.5)
-        block_j = col // int(n ** 0.5)
-        for bi in range(int(n ** 0.5)):
-            for bj in range(int(n ** 0.5)):
-                i2 = block_i * int(n ** 0.5) + bi
-                j2 = block_j * int(n ** 0.5) + bj
-                if board[i2][j2] == new_value:
+        # check if the value i is already present in the same sub-square
+        sub_row = row // sub_n
+        sub_col = col // sub_m
+        for i in range(sub_n):
+            for j in range(sub_m):
+                if board[sub_row * sub_n + i][sub_col * sub_m + j] == new_value:
                     return False
         # if none of the checks failed, the insertion is valid
         return True
-    
+
     def __gt__(self, cmp_node):
         if self.heuristic_value != cmp_node.heuristic_value:
             has_less_empty_cells = self.heuristic_value < cmp_node.heuristic_value
             return has_less_empty_cells
-
-    # def get_subsquares(self):
-    #     board = self.board
-    #     n = len(board)
-    #     subsquares = []
-    #     subsize = int(n ** 0.5)
-    #     for i in range(0, n, subsize):
-    #         for j in range(0, n, subsize):
-    #             subsquare = set()
-    #             for x in range(i, i + subsize):
-    #                 for y in range(j, j + subsize):
-    #                     subsquare.add(board[x][y])
-    #             subsquares.append(subsquare)
-    #     return subsquares
-    #
-    # def get_sub_square_index(self, row, col):
-    #     subsize = int(math.sqrt(len(self.board)))
-    #     subRow = row // subsize
-    #     subCol = col // subsize
-    #     subIndex = subRow * subsize + subCol
-    #     return subIndex
-    #
-    # def get_rows(self):
-    #     board = self.board
-    #     rows = []
-    #     for i in range(len(board)):
-    #         row = set(board[i])
-    #         rows.append(row)
-    #     return rows
-    #
-    # def get_columns(self):
-    #     board = self.board
-    #     columns = []
-    #     for j in range(len(board)):
-    #         column = set()
-    #         for i in range(len(board)):
-    #             column.add(board[i][j])
-    #         columns.append(column)
-    #     return columns
 
 
 def change_values_to_zero(arr, p=0.75):
@@ -222,7 +222,7 @@ def change_values_to_zero(arr, p=0.75):
         p: float - the proportion of values to change to 0 (default 0.75)
 
     Returns:
-        list[list[int]] - the modified n x n array
+        list[list[int]] - the modified n x n array8
     """
     n = len(arr)
     m = int(p * n * n)  # number of values to change to 0
@@ -234,12 +234,13 @@ def change_values_to_zero(arr, p=0.75):
 
 
 def main():
-    board = change_values_to_zero(TWENTY_FIVE_X_TWENTY_FIVE)
-    solver = SudokuSolver(TWENTY_FIVE_X_TWENTY_FIVE)
+    board = change_values_to_zero(SIXTEEN_X_SIXTEEN_SOLVED)
+    solver = SudokuSolver(board)
     solution_node = solver.solve()
     print(f"solution:\n{solution_node}")
-    board = solution_node.board
-    print(f"2D array: {board}")
+    if solution_node:
+        board = solution_node.board
+        print(f"2D array: {board}")
 
 
 if __name__ == '__main__':
