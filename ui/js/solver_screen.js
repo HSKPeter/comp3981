@@ -74,6 +74,22 @@ function fillBoard(board_values) {
                 set_row = parseInt(j/4)
                 set_column = parseInt(i/3)
             }
+
+            if (size == 9 || size == 12) {
+                cell_to_insert.style.fontSize = "20px";
+            }
+
+            if (size == 16) {
+                cell_to_insert.style.fontSize = "15px";
+            }
+
+            if (size == 25) {
+                cell_to_insert.style.fontSize = "11px";
+            }
+
+            if (size == 100) {
+                cell_to_insert.style.fontSize = "5px";
+            }
             
     
             if (board_values[i][j] == 0)
@@ -108,8 +124,29 @@ async function main() {
         board_values = await generator.generateNewPuzzle()
     }
 
-    sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 10 + "px)";
-    sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 10 + "px)";
+    if (size == 9 || size == 12) {
+        sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 30 + "px)";
+        sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 30 + "px)";
+    }
+
+    if (size == 16) {
+        sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 25 + "px)";
+        sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 25 + "px)";
+    }
+
+    if (size == 25) {
+        sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 18 + "px)";
+        sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 18 + "px)";
+        document.body.style.overflow = "scroll";
+        document.body.style.height = "700px"
+    }
+
+    if (size == 100) {
+        sudoku_container.style.gridTemplateColumns = "repeat(" + size + ", " + 8 + "px)";
+        sudoku_container.style.gridTemplateRows = "repeat(" + size + ", " + 8 + "px)";
+        document.body.style.overflow = "scroll";
+        document.body.style.height = "1100px"
+    }
 
     fillBoard(board_values)
 }
