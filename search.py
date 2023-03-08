@@ -1,5 +1,4 @@
 import bisect
-import copy
 import time
 import datetime
 
@@ -23,8 +22,10 @@ SIXTEEN = [[0, 3, 0, 0, 0, 0, 0, 2, 0, 0, 10, 14, 13, 0, 0, 0], [0, 0, 0, 0, 0, 
            [16, 15, 0, 0, 0, 0, 0, 0, 8, 1, 0, 10, 0, 0, 7, 2], [0, 0, 0, 11, 0, 0, 0, 0, 2, 14, 0, 0, 0, 0, 0, 4],
            [5, 10, 0, 2, 16, 12, 7, 0, 15, 11, 4, 6, 0, 9, 0, 14], [1, 0, 0, 4, 2, 8, 0, 9, 0, 5, 16, 3, 11, 12, 10, 0]]
 TWENTY_FIVE = [[]]
-RAW_BOARD = NINE
 
+
+RAW_BOARD = [[0, 0, 16, 0, 9, 0, 6, 1, 0, 3, 0, 0, 0, 0, 0, 0], [0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0], [0, 13, 0, 0, 0, 0, 0, 0, 8, 0, 0, 12, 0, 0, 0, 14], [0, 0, 0, 4, 11, 0, 14, 0, 16, 10, 13, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 6, 0], [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 16, 0, 7], [0, 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 16, 0, 12, 5, 0, 0, 0, 0, 13, 6, 0, 0, 0], [0, 0, 0, 5, 15, 0, 16, 13, 0, 0, 0, 0, 0, 0, 10, 0], [0, 0, 7, 6, 1, 0, 8, 3, 0, 4, 0, 0, 16, 0, 9, 0], [0, 0, 0, 3, 0, 0, 0, 0, 15, 0, 16, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7, 0, 0, 0, 0], [3, 10, 6, 0, 4, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 5], [0, 0, 13, 0, 0, 0, 3, 0, 0, 0, 0, 15, 0, 0, 14, 6], [0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 1, 14, 0, 0, 8, 13]]
+# RAW_BOARD = NINE
 
 class Cell:
     def __init__(self, value, domain=set()) -> None:
@@ -51,90 +52,99 @@ class NodeFrontier:
 
 
 class Node:
-    def __init__(self, board: [[int]], action=(None, None, None), parent_node=None,
-                 count_of_alternatives_in_designated_cell=0) -> None:
+    def __init__(
+            self,
+            board: [[int]],
+            board_length,
+            empty_cell_count,
+            action=(None, None, None),
+            count_of_alternatives_in_designated_cell=0) -> None:
         self.board = board
         self.action = action
-        self.board_length = len(self.board)
-        self.state = self.compute_state()
-        self.row_values_sets = [set() for _ in range(self.board_length)]
-        self.col_values_sets = [set() for _ in range(self.board_length)]
-        self.sub_square_values_sets = [set() for _ in range(self.board_length)]
+        self.board_length = board_length
+        self.state = self.board.__str__()
+        self.empty_cell_count = empty_cell_count
         self.count_of_alternatives_in_designated_cell = count_of_alternatives_in_designated_cell
 
-        self.empty_cell_count = 0
+    # def compute_state(self):
+    #     return self.board.__str__()
+        # result = ""
+        # for row in self.board:
+        #     for cell in row:
+        #         cell_representation = cell if cell != 0 else "__"
+        #         new_part = f"{cell_representation} "
+        #         result += new_part.ljust(4)
+        #     result += "\n"
+        # return result
+
+    def is_solution(self):
+        # """
+        # To become a solution, it is required that:
+        # (1) All cells are filled
+        # (2) No duplicated value in each row
+        # (3) No duplicated value in each column
+        # (4) No duplicated value in each sub square
+        # """
+        # sqr_root = SQUARE_ROOTS[self.board_length]
+        # col_values_sets = [set() for _ in range(self.board_length)]
+        # sub_square_values_sets = [set() for _ in range(self.board_length)]
+        # for row_index in range(self.board_length):
+        #     row_values_set = set()
+        #     for col_index in range(self.board_length):
+        #         sub_square_index = (row_index // sqr_root) * sqr_root + (col_index // sqr_root)
+        #         sub_square_values_set = sub_square_values_sets[sub_square_index]
+        #         cell = self.board[row_index][col_index]
+        #         col_values_set = col_values_sets[col_index]
+        #         if (cell == 0) or \
+        #                 (cell in row_values_set) or \
+        #                 (cell in col_values_set) or \
+        #                 (cell in sub_square_values_set):
+        #             return False
+        #         row_values_set.add(cell)
+        #         col_values_set.add(cell)
+        #         sub_square_values_set.add(cell)
+        for row in self.board:
+            for cell in row:
+                if cell == 0:
+                    return False
+        return True
+
+    def expand(self):
+        row_values_sets = [set() for _ in range(self.board_length)]
+        col_values_sets = [set() for _ in range(self.board_length)]
+        sub_square_values_sets = [set() for _ in range(self.board_length)]
 
         for row in range(self.board_length):
             for col in range(self.board_length):
                 value = self.board[row][col]
                 if value != 0:
                     sub_square_index = self.get_sub_square_index(row, col)
-                    self.row_values_sets[row].add(value)
-                    self.col_values_sets[col].add(value)
-                    self.sub_square_values_sets[sub_square_index].add(value)
-                else:
-                    self.empty_cell_count += 1
+                    row_values_sets[row].add(value)
+                    col_values_sets[col].add(value)
+                    sub_square_values_sets[sub_square_index].add(value)
 
-        # self.heuristic_value = self.compute_heuristics_values()
+        value_sets = (row_values_sets, col_values_sets, sub_square_values_sets)
 
-    def compute_state(self):
-        result = ""
-        for row in self.board:
-            for cell in row:
-                cell_representation = cell if cell != 0 else "__"
-                new_part = f"{cell_representation} "
-                result += new_part.ljust(4)
-            result += "\n"
-        return result
-
-    def is_solution(self):
-        """
-        To become a solution, it is required that:
-        (1) All cells are filled
-        (2) No duplicated value in each row
-        (3) No duplicated value in each column
-        (4) No duplicated value in each sub square
-        """
-        sqr_root = SQUARE_ROOTS[self.board_length]
-        col_values_sets = [set() for _ in range(self.board_length)]
-        sub_square_values_sets = [set() for _ in range(self.board_length)]
-        for row_index in range(self.board_length):
-            row_values_set = set()
-            for col_index in range(self.board_length):
-                sub_square_index = (row_index // sqr_root) * sqr_root + (col_index // sqr_root)
-                sub_square_values_set = sub_square_values_sets[sub_square_index]
-                cell = self.board[row_index][col_index]
-                col_values_set = col_values_sets[col_index]
-                if (cell == 0) or \
-                        (cell in row_values_set) or \
-                        (cell in col_values_set) or \
-                        (cell in sub_square_values_set):
-                    return False
-                row_values_set.add(cell)
-                col_values_set.add(cell)
-                sub_square_values_set.add(cell)
-        return True
-
-    def expand(self):
-        n = len(self.board)
-        for row in range(n):
-            for col in range(n):
+        for row in range(self.board_length):
+            for col in range(self.board_length):
                 if self.board[row][col] == 0:
-                    valid_insertion_values = [i for i in range(1, n + 1) if self.is_valid_insertion(row, col, i)]
+                    valid_insertion_values = [i for i in range(1, self.board_length + 1) if self.is_valid_insertion(value_sets, row, col, i)]
                     count_of_alternatives = len(valid_insertion_values) - 1
                     for value in valid_insertion_values:
-                        new_board = copy.deepcopy(self.board)
+                        new_board = [list(row) for row in self.board]
                         new_board[row][col] = value
                         yield Node(
                             board=new_board,
+                            board_length=self.board_length,
+                            empty_cell_count=self.empty_cell_count-1,
                             action=(row, col, value),
-                            parent_node=self,
                             count_of_alternatives_in_designated_cell=count_of_alternatives)
 
-    def is_valid_insertion(self, row, col, value):
+    def is_valid_insertion(self, values_sets, row, col, value):
+        row_values_sets, col_values_sets, sub_square_values_sets = values_sets
         sub_square_index = self.get_sub_square_index(row, col)
-        if value in self.row_values_sets[row] or value in self.col_values_sets[col] or value in \
-                self.sub_square_values_sets[sub_square_index]:
+        if value in row_values_sets[row] or value in col_values_sets[col] or value in \
+                sub_square_values_sets[sub_square_index]:
             return False
 
         return True
@@ -163,7 +173,19 @@ class Node:
 class SudokuSolver:
     def __init__(self, raw_board: [[int]]) -> None:
         self.board = raw_board
-        self.frontier = NodeFrontier(Node(self.board))
+
+        empty_cell_count = 0
+        for row in self.board:
+            for cell in row:
+                if cell == 0:
+                    empty_cell_count += 1
+
+        self.frontier = NodeFrontier(
+            Node(
+                board=self.board,
+                board_length=len(self.board),
+                empty_cell_count=empty_cell_count)
+        )
         self.reached_state = list()
 
     def solve(self):
