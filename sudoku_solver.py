@@ -2,6 +2,8 @@ import copy
 import math
 from typing import List
 import random
+import asyncio
+import concurrent.futures
 
 NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
                [0, 0, 8, 1, 0, 2, 9, 0, 0], [
@@ -53,8 +55,8 @@ TWENTY_FIVE_X_TWENTY_FIVE = [[0, 0, 0, 0, 0, 20, 0, 0, 9, 0, 25, 14, 0, 0, 0, 0,
 
 FLOOR_SQUARE_ROOTS = {
     9: 3,
-    12:3,
-    16:4,
+    12: 3,
+    16: 4,
     25: 5,
     100: 10
 }
@@ -241,6 +243,11 @@ def main():
     if solution_node:
         board = solution_node.board
         print(f"2D array: {board}")
+
+def solve_with_brute_force(board):
+    solver = SudokuSolver(board)
+    solution_node = solver.solve()
+    return solution_node.board
 
 
 if __name__ == '__main__':

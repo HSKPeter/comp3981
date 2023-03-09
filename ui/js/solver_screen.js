@@ -23,8 +23,19 @@ document.getElementById("clear").addEventListener("click", function () {
 
 // Replace contents of this function with the real algorithm
 async function solveWithBruteForce() {
-    localStorage.setItem("Algorithm", "Brute Force")
-    const response = await fetch("http://localhost:8000/brute-force/");
+    localStorage.setItem("Algorithm", "Brute Force");
+    const boardJsonString = localStorage.getItem("Board");
+    const parsedBoard = JSON.parse(boardJsonString);
+
+    const fetchConfig = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({board: parsedBoard})
+    };
+
+    const response = await fetch("http://localhost:8000/brute-force/", fetchConfig);
     const { board } = await response.json();
     fillBoard(board)
 }
@@ -88,6 +99,7 @@ function fillBoard(board_values) {
             sudoku_container.appendChild(cell_to_insert);
         }
     }
+    localStorage.setItem("Board", JSON.stringify(board_values));
 }
 
 
