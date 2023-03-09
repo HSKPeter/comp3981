@@ -19,3 +19,14 @@ git clone https://github.com/HSKPeter/comp3981.git
 4. Run the web backend server by running `uvicorn main:app --reload` in terminal or 'python -m uvicorn main:app --reload'
 
 5. Host the frontend with the live server extension in VS code
+
+## Brute Force Algorithm
+
+### Design of heuristics
+- TBC
+
+### Limitation
+- TBC
+
+## References
+- TBC
