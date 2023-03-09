@@ -35,7 +35,7 @@ def load_board(size: int):
     return {"board": maskedBoard}
 
 @app.post("/brute-force")
-def solve_brute_force(board_puzzle: BoardPuzzleData):
+async def solve_brute_force(board_puzzle: BoardPuzzleData):
     try:
         board = board_puzzle.board
         result = solve_with_brute_force(board)

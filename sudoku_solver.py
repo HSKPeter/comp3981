@@ -166,12 +166,59 @@ class Node:
         domains = self.domains
         min_domain_size = n + 1
         min_domain_cell = None
+
+        board = self.board
+
+        n = len(board)
+
+        row_empty_values_counter = [0 for _ in range(self.board_length)]
+        col_empty_values_counter = [0 for _ in range(self.board_length)]
+        sub_empty_values_counter = [0 for _ in range(self.board_length)]
+        for i in range(n):
+            for j in range(n):
+                if board[i][j] == 0:
+                    k = self.get_sub_square_index(i, j)
+                    row_empty_values_counter[i] += 1
+                    col_empty_values_counter[j] += 1
+                    sub_empty_values_counter[k] += 1
+
+        empty_values_counters = (row_empty_values_counter, col_empty_values_counter, sub_empty_values_counter)
+
         for i in range(n):
             for j in range(n):
                 if board[i][j] == 0 and len(domains[i][j]) < min_domain_size:
                     min_domain_size = len(domains[i][j])
                     min_domain_cell = (i, j)
+                elif board[i][j] == 0 and len(domains[i][j]) == min_domain_size and min_domain_cell is not None:
+                    min_domain_cell = self.find_cell_with_less_unassigned_neighbours(empty_values_counters, (i, j), min_domain_cell)
         return min_domain_cell
+
+    def find_cell_with_less_unassigned_neighbours(self, empty_values_counters, cell1, cell2):
+        row_index_1, col_index_1 = cell1
+        row_index_2, col_index_2 = cell2
+
+        sub_square_index_1 = self.get_sub_square_index(row_index_1, col_index_1)
+        sub_square_index_2 = self.get_sub_square_index(row_index_2, col_index_2)
+
+        row_empty_values_counter, col_empty_values_counter, sub_empty_values_counter = empty_values_counters
+
+        cell1_empty_neighbours_count = row_empty_values_counter[row_index_1] + col_empty_values_counter[col_index_1] + sub_empty_values_counter[sub_square_index_1]
+        cell2_empty_neighbours_count = row_empty_values_counter[row_index_2] + col_empty_values_counter[col_index_2] + sub_empty_values_counter[sub_square_index_2]
+
+        if cell2_empty_neighbours_count <= cell1_empty_neighbours_count:
+            return cell2
+
+        return cell1
+
+    def get_sub_square_index(self, row, col):
+        board = self.board
+        n = len(board)
+        sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
+        sub_m = n // sub_n  # number of sub-squares in each row or column
+        sub_row = row // sub_m
+        sub_col = col // sub_n
+        sub_index = sub_row * sub_m + sub_col
+        return sub_index
 
     def find_domains(self):
         board = self.board
@@ -253,7 +300,7 @@ def main():
 
 def solve_with_brute_force(board):
     solver = SudokuSolver(board)
-    solution_node = solver.solve(max_process_seconds=8)
+    solution_node = solver.solve(max_process_seconds=20)
     return solution_node.board
 
 
