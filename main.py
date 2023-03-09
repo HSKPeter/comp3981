@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from puzzle_loader import *
-from sudoku_solver import solve_with_brute_force
+from sudoku_solver import solve_with_brute_force, SolverExecutionExpiredException
 from pydantic import BaseModel
 from typing import List
 
@@ -35,9 +36,14 @@ def load_board(size: int):
 
 @app.post("/brute-force")
 def solve_brute_force(board_puzzle: BoardPuzzleData):
-    board = board_puzzle.board
-    result = solve_with_brute_force(board)
-    return {"board": result}
+    try:
+        board = board_puzzle.board
+        result = solve_with_brute_force(board)
+        return {"board": result}
+    except SolverExecutionExpiredException:
+        error_message = "Solution not found by brute force algorithm within reasonable amount of time.  You may consider to use CSP algorithm instead."
+        return JSONResponse(content={"message": error_message}, status_code=404)
+
 
 @app.get("/csp")
 def csp():

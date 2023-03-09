@@ -36,6 +36,11 @@ async function solveWithBruteForce() {
     };
 
     const response = await fetch("http://localhost:8000/brute-force/", fetchConfig);
+    if (response.status === 404) {
+        const { message } = await response.json();
+        alert(message);
+        return;
+    }
     const { board } = await response.json();
     fillBoard(board)
 }
