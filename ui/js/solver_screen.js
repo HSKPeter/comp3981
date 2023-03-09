@@ -32,9 +32,9 @@ async function solveWithBruteForce() {
     const fetchConfig = {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify({board: parsedBoard})
+        body: JSON.stringify({ board: parsedBoard })
     };
 
     const response = await fetch("http://localhost:8000/brute-force/", fetchConfig);
@@ -45,9 +45,9 @@ async function solveWithBruteForce() {
         return;
     }
     const { board } = await response.json();
-    
+
     fillBoard(board)
-    stop()
+    stopDynamicTimer()
 }
 
 
@@ -57,11 +57,12 @@ async function solveWithCSP() {
     const response = await fetch("http://localhost:8000/brute-force/");
     const { board } = await response.json();
     fillBoard(board)
+    stopDynamicTimer()
 }
 
-async function displayTime(solveAlgorithm) {
+function displayTime(solveAlgorithm) {
     startTime = Date.now()
-    await solveAlgorithm()
+    solveAlgorithm()
     endTime = Date.now();
     deltaTime = endTime - startTime;
     timeText.innerText = deltaTime;
@@ -87,13 +88,13 @@ function fillBoard(board_values) {
         for (let j = 0; j < size; j++) {
             var cell_to_insert = document.createElement('div');
             cell_to_insert.setAttribute('id', 'cell ' + i + "-" + j)
-    
-            var set_row = parseInt(i/(Math.sqrt(size)))
+
+            var set_row = parseInt(i / (Math.sqrt(size)))
             var set_column = parseInt(j / Math.sqrt(size))
-            
+
             if (size == 12) {
-                set_row = parseInt(j/4)
-                set_column = parseInt(i/3)
+                set_row = parseInt(j / 4)
+                set_column = parseInt(i / 3)
             }
 
             if (size == 9 || size == 12) {
@@ -111,14 +112,14 @@ function fillBoard(board_values) {
             if (size == 100) {
                 cell_to_insert.style.fontSize = "5px";
             }
-            
-    
+
+
             if (board_values[i][j] == 0)
-                cell_to_insert.innerHTML = '';  
-            else 
+                cell_to_insert.innerHTML = '';
+            else
                 cell_to_insert.innerHTML = board_values[i][j]
-            
-            
+
+
             if ((set_row + set_column) % 2 == 1) {
                 cell_to_insert.style.backgroundColor = "#D3D3D3"
             }
@@ -131,7 +132,7 @@ function fillBoard(board_values) {
 
 async function main() {
     let board_values;
-
+    intervalId = setInterval(updateTime, 10);
     if (size > 25) {
         document.getElementById("solve-brute-force").remove()
     }
@@ -171,32 +172,28 @@ async function main() {
     }
 
     fillBoard(board_values)
-    start()
 }
 
 
-function start() {
-  startTime = Date.now();
-    intervalId = setInterval(updateTime, 10);
-}
 
-function stop() {
+
+function stopDynamicTimer() {
     clearInterval(intervalId);
     document.getElementById("time-title").style.color = "#228C22"
     intervalId = null;
 }
 
 function updateTime() {
-  const elapsedTime = Date.now() - startTime;
-  const minutes = Math.floor(elapsedTime / (1000 * 60));
-  const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
-  const milliseconds = Math.floor((elapsedTime % 1000) / 10);
-  document.getElementById("time").textContent =
-    `${padNumber(minutes)}:${padNumber(seconds)}:${padNumber(milliseconds)}`;
+    const elapsedTime = Date.now() - startTime;
+    const minutes = Math.floor(elapsedTime / (1000 * 60));
+    const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+    const milliseconds = Math.floor((elapsedTime % 1000) / 10);
+    document.getElementById("time").textContent =
+        `${padNumber(minutes)}:${padNumber(seconds)}:${padNumber(milliseconds)}`;
 }
 
 function padNumber(num) {
-  return num.toString().padStart(2, "0");
+    return num.toString().padStart(2, "0");
 }
 
 
