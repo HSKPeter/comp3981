@@ -64,6 +64,10 @@ class SolverExecutionExpiredException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+class PuzzleUnsolvedException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)        
+
 class SudokuSolver:
     def __init__(self, raw_board: List[List[int]]) -> None:
         self.board = raw_board
@@ -301,6 +305,10 @@ def main():
 def solve_with_brute_force(board):
     solver = SudokuSolver(board)
     solution_node = solver.solve(max_process_seconds=20)
+    
+    if solution_node is None:
+        raise PuzzleUnsolvedException()
+    
     return solution_node.board
 
 
