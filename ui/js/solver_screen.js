@@ -5,19 +5,26 @@ const timeContainer = document.getElementById("timeContainer");
 const timeText = document.getElementById("time")
 const title = document.getElementById("title")
 const spinner = document.getElementById("spinner")
+const bruteForceButton = document.getElementById("solve-brute-force")
+const cspButton = document.getElementById("solve-csp")
+const clearButton = document.getElementById("clear")
+
+
+const FAIL = "Fail"
+const SUCCESS = "Success"
 
 let deltaTime;
 var startTime;
 let endTime;
 let intervalId;
 
-document.getElementById("solve-brute-force").addEventListener("click", function () {
+bruteForceButton.addEventListener("click", function () {
     displayTime(solveWithBruteForce);
 });
-document.getElementById("solve-csp").addEventListener("click", function () {
+cspButton.addEventListener("click", function () {
     displayTime(solveWithCSP);
 });
-document.getElementById("clear").addEventListener("click", function () {
+clearButton.addEventListener("click", function () {
     window.location.href = "main_menu.html";
 });
 
@@ -25,6 +32,7 @@ document.getElementById("clear").addEventListener("click", function () {
 // Replace contents of this function with the real algorithm
 async function solveWithBruteForce() {
     spinner.style.display = "block"
+    disableButtons()
     localStorage.setItem("Algorithm", "Brute Force");
     const boardJsonString = localStorage.getItem("Board");
     const parsedBoard = JSON.parse(boardJsonString);
@@ -42,9 +50,12 @@ async function solveWithBruteForce() {
     if (response.status === 404) {
         const { message } = await response.json();
         alert(message);
+        
+        // myReject()
         return;
     }
     const { board } = await response.json();
+    // myResolve()
 
     fillBoard(board)
     stopDynamicTimer()
@@ -62,10 +73,16 @@ async function solveWithCSP() {
 
 function displayTime(solveAlgorithm) {
     startTime = Date.now()
-    solveAlgorithm()
-    endTime = Date.now();
-    deltaTime = endTime - startTime;
-    timeText.innerText = deltaTime;
+    intervalId = setInterval(updateTime, 10);
+    solveAlgorithm().then(
+        function() {
+            stopDynamicTimer(FAIL)
+            enableButtons()
+        }
+    )
+    // endTime = Date.now();
+    // deltaTime = endTime - startTime;
+    // timeText.innerText = deltaTime;
     timeContainer.style.display = "block";
     let algorithm = localStorage.getItem("Algorithm");
     if (algorithm === "CSP") {
@@ -132,7 +149,6 @@ function fillBoard(board_values) {
 
 async function main() {
     let board_values;
-    intervalId = setInterval(updateTime, 10);
     if (size > 25) {
         document.getElementById("solve-brute-force").remove()
     }
@@ -170,16 +186,17 @@ async function main() {
         document.body.style.overflow = "scroll";
         document.body.style.height = "1100px"
     }
-
     fillBoard(board_values)
 }
 
-
-
-
-function stopDynamicTimer() {
+function stopDynamicTimer(status = SUCCESS) {
     clearInterval(intervalId);
-    document.getElementById("time-title").style.color = "#228C22"
+    if (status === FAIL) {
+        document.getElementById("time-title").style.color = "#FF0000"
+    } else {
+        document.getElementById("time-title").style.color = "#228C22"
+    }
+    
     intervalId = null;
 }
 
@@ -196,6 +213,17 @@ function padNumber(num) {
     return num.toString().padStart(2, "0");
 }
 
+function disableButtons() {
+    cspButton.disabled = true
+    bruteForceButton.disabled = true
+    clearButton.disabled = true
+}
+
+function enableButtons() {
+    cspButton.disabled = false
+    bruteForceButton.disabled = false
+    clearButton.disabled = false
+}
 
 main()
 
