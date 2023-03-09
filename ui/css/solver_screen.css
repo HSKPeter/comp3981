@@ -64,3 +64,8 @@
         #timeContainer {
             display: none;
         }
+
+        #time-title{
+            font-size: medium;
+            font-family: Arial, Helvetica, sans-serif;
+        }

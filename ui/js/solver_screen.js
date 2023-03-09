@@ -9,6 +9,10 @@ let deltaTime;
 var startTime;
 let endTime;
 let sum = 0;
+var output = document.getElementById('time');
+var running = false;
+var paused = false;
+let intervalId;
 
 document.getElementById("solve-brute-force").addEventListener("click", function () {
     displayTime(solveWithBruteForce);
@@ -42,7 +46,9 @@ async function solveWithBruteForce() {
         return;
     }
     const { board } = await response.json();
+    
     fillBoard(board)
+    stop()
 }
 
 
@@ -166,6 +172,37 @@ async function main() {
     }
 
     fillBoard(board_values)
+    start()
+}
+
+
+function start() {
+  startTime = Date.now();
+    intervalId = setInterval(updateTime, 10);
+}
+
+function stop() {
+    clearInterval(intervalId);
+    document.getElementById("time-title").style.color = "#228C22"
+    intervalId = null;
+}
+
+function reset() {
+  stop();
+  document.getElementById("time").textContent = "00:00:00";
+}
+
+function updateTime() {
+  const elapsedTime = Date.now() - startTime;
+  const minutes = Math.floor(elapsedTime / (1000 * 60));
+  const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+  const milliseconds = Math.floor((elapsedTime % 1000) / 10);
+  document.getElementById("time").textContent =
+    `${padNumber(minutes)}:${padNumber(seconds)}:${padNumber(milliseconds)}`;
+}
+
+function padNumber(num) {
+  return num.toString().padStart(2, "0");
 }
 
 
