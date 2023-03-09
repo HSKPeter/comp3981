@@ -1,7 +1,8 @@
 import copy
-import math
 from typing import List
 import random
+from datetime import datetime, timedelta
+import time
 
 NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
                [0, 0, 8, 1, 0, 2, 9, 0, 0], [
@@ -53,23 +54,31 @@ TWENTY_FIVE_X_TWENTY_FIVE = [[0, 0, 0, 0, 0, 20, 0, 0, 9, 0, 25, 14, 0, 0, 0, 0,
 
 FLOOR_SQUARE_ROOTS = {
     9: 3,
-    12:3,
-    16:4,
+    12: 3,
+    16: 4,
     25: 5,
     100: 10
 }
 
+class SolverExecutionExpiredException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 class SudokuSolver:
     def __init__(self, raw_board: List[List[int]]) -> None:
         self.board = raw_board
         self.stack = [Node(self.board)]
 
-    def solve(self):
+    def solve(self, max_process_seconds=None):
+        expiry_timestamp = (datetime.now() + timedelta(seconds=max_process_seconds)).timestamp() if max_process_seconds is not None else None
+
         i = 0
         timeout = 0
         stack_size = len(self.stack)
         while stack_size > 0:
+            if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
+                raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
+            
             current_node = self.stack[-1]
             if current_node.is_solution():
                 print(f"result found: i = {i}")
@@ -241,6 +250,12 @@ def main():
     if solution_node:
         board = solution_node.board
         print(f"2D array: {board}")
+
+def solve_with_brute_force(board):
+    solver = SudokuSolver(board)
+    solution_node = solver.solve(max_process_seconds=8)
+    return solution_node.board
+
 
 
 if __name__ == '__main__':
