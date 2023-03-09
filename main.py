@@ -35,10 +35,6 @@ def load_board(size: int):
 
 @app.post("/brute-force")
 def solve_brute_force(board_puzzle: BoardPuzzleData):
-    """
-    This method uses the async keyword to avoid blocking other parts of program,
-    considering that the brute force solving process could be a long-running operation.
-    """
     board = board_puzzle.board
     result = solve_with_brute_force(board)
     return {"board": result}
