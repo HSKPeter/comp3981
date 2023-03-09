@@ -4,14 +4,11 @@ import SudokuPuzzleGenerator from "./sudoku_generator.js";
 const timeContainer = document.getElementById("timeContainer");
 const timeText = document.getElementById("time")
 const title = document.getElementById("title")
+const spinner = document.getElementById("spinner")
 
 let deltaTime;
 var startTime;
 let endTime;
-let sum = 0;
-var output = document.getElementById('time');
-var running = false;
-var paused = false;
 let intervalId;
 
 document.getElementById("solve-brute-force").addEventListener("click", function () {
@@ -27,6 +24,7 @@ document.getElementById("clear").addEventListener("click", function () {
 
 // Replace contents of this function with the real algorithm
 async function solveWithBruteForce() {
+    spinner.style.display = "block"
     localStorage.setItem("Algorithm", "Brute Force");
     const boardJsonString = localStorage.getItem("Board");
     const parsedBoard = JSON.parse(boardJsonString);
@@ -40,6 +38,7 @@ async function solveWithBruteForce() {
     };
 
     const response = await fetch("http://localhost:8000/brute-force/", fetchConfig);
+    spinner.style.display = "none"
     if (response.status === 404) {
         const { message } = await response.json();
         alert(message);
@@ -60,9 +59,9 @@ async function solveWithCSP() {
     fillBoard(board)
 }
 
-function displayTime(solveAlgorithm) {
+async function displayTime(solveAlgorithm) {
     startTime = Date.now()
-    solveAlgorithm()
+    await solveAlgorithm()
     endTime = Date.now();
     deltaTime = endTime - startTime;
     timeText.innerText = deltaTime;
@@ -185,11 +184,6 @@ function stop() {
     clearInterval(intervalId);
     document.getElementById("time-title").style.color = "#228C22"
     intervalId = null;
-}
-
-function reset() {
-  stop();
-  document.getElementById("time").textContent = "00:00:00";
 }
 
 function updateTime() {
