@@ -1,66 +1,74 @@
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #c4d7e7;
-        }
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #c4d7e7;
+}
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 
-        #sudoku_container {
-            display: grid;
-            grid-template-columns: repeat(9, 30px);
-            grid-template-rows: repeat(9, 30px);
-            gap: 1px;
-            margin: 0 auto;
-            border: 1px solid black;
-            padding: 1px;
-            box-sizing: border-box;
-        }
+#sudoku_container {
+    display: grid;
+    grid-template-columns: repeat(9, 30px);
+    grid-template-rows: repeat(9, 30px);
+    gap: 1px;
+    margin: 0 auto;
+    border: 1px solid black;
+    padding: 1px;
+    box-sizing: border-box;
+}
 
-        .buttons {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-        }
+.buttons {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
 
 
-        .sudoku-board>div {
-            background-color: white;
-            border-right: 1px solid black;
-            border-bottom: 1px solid black;
-            text-align: center;
-            font-size: 8px;
+.sudoku-board>div {
+    background-color: white;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    text-align: center;
+    font-size: 8px;
 
-        }
+}
 
-        button {
-            font-family: Arial, sans-serif;
-            font-size: 10px;
-            padding: 8px 8px;
-            border-radius: 4px;
-            background-color: white;
-            border: 1px solid black;
-            cursor: pointer;
-        }
+button {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    padding: 8px 8px;
+    border-radius: 4px;
+    background-color: white;
+    border: 1px solid black;
+    cursor: pointer;
+}
 
-        button:hover {
-            background-color: #e6e6e6;
-        }
+button:hover {
+    background-color: #e6e6e6;
+}
 
-        .title {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            font-size: 36px;
-        }
+.title {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 36px;
+}
 
-        #timeContainer {
-            display: none;
-        }
+#timeContainer {
+    display: none;
+}
+
+#spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
