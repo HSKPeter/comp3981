@@ -52,13 +52,12 @@ async function solveWithBruteForce() {
         alert(message);
         
         // myReject()
-        return;
+        return Promise.reject(new Error(FAIL));
     }
     const { board } = await response.json();
     // myResolve()
 
     fillBoard(board)
-    stopDynamicTimer()
 }
 
 
@@ -76,9 +75,14 @@ function displayTime(solveAlgorithm) {
     intervalId = setInterval(updateTime, 10);
     solveAlgorithm().then(
         function() {
+            stopDynamicTimer(SUCCESS)
+            enableButtons()
+        },
+        function() {
             stopDynamicTimer(FAIL)
             enableButtons()
         }
+
     )
     // endTime = Date.now();
     // deltaTime = endTime - startTime;
@@ -193,7 +197,7 @@ function stopDynamicTimer(status = SUCCESS) {
     clearInterval(intervalId);
     if (status === FAIL) {
         document.getElementById("time-title").style.color = "#FF0000"
-    } else {
+    } else if (status === SUCCESS) {
         document.getElementById("time-title").style.color = "#228C22"
     }
     
