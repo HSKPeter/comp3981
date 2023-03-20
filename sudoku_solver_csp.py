@@ -4,13 +4,15 @@ assignemnt = {(3, 5): 4}
 class Assignments:
     def __init__(self):
         # key = (row_index, col_index, sub_square_index)
-        self.data = {(3, 5, 0): 4}
+        # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
+        # value = the number that is assigned to the cell
+        self.data = {(3, 5, 1): 4}
 
-    # key = (row_index, col_index, sub_square_index)
+    # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key):
         pass
 
-    # key = (row_index, col_index, sub_square_index)
+    # key = a tuple of (row_index, col_index, sub_square_index)
     def add(self, key, value):
         pass
 
@@ -24,7 +26,7 @@ class Assignments:
         Degree: Choose the variable involved in the highest number of constraints with other unassigned variables.
 
         Minimum Remaining Values (MRV):
-T       he MRV heuristic chooses the unassigned variable with the fewest legal values remaining in its domain. In other words, it selects the variable that has the smallest number of possible values left to be assigned. The idea behind MRV is to select the variable that is most likely to cause a failure early on, thus pruning the search tree and reducing the overall search time.
+        The MRV heuristic chooses the unassigned variable with the fewest legal values remaining in its domain. In other words, it selects the variable that has the smallest number of possible values left to be assigned. The idea behind MRV is to select the variable that is most likely to cause a failure early on, thus pruning the search tree and reducing the overall search time.
 
         Degree:
         The Degree heuristic chooses the unassigned variable that is involved in the highest number of constraints with other unassigned variables. By selecting a variable with a high degree, you can potentially affect the most other unassigned variables in the problem. The Degree heuristic helps to resolve potential conflicts earlier in the search, which can also reduce the overall search time.
@@ -59,16 +61,27 @@ T       he MRV heuristic chooses the unassigned variable with the fewest legal v
 
 
 class Constraints:
-    def __init__(self):
+    def __init__(self, data):
         # key = (row_index, col_index, sub_square_index)
+        # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
         # value = a set that representing the domain
-        self.data = {(3, 5, 0): {1, 2, 3}}
+        self.data = {k: v for (k, v) in data.items()}
+        self.data_copy = {k: v for (k, v) in self.data.items()}
 
     def add_inferences(self, inferences_to_add):
+        """
+        Args:
+            inferences_to_add: a dict where the key is a tuple of (row_index, col_index, sub_square_index),
+            and the value is a set of numbers that represents the domain values
+        """
+        # mutate self.data (maybe with some looping)
         pass
 
-    def remove_inferences(self, inferences_to_remove):
-        pass
+    def copy(self):
+        return Constraints(self.data)
+
+    def remove_inferences(self):
+        self.data = {k: v for (k, v) in self.data_copy.items()}
 
     def is_consistent(self, cell, value, constraints):
         pass
@@ -84,10 +97,10 @@ def new_backtrack(constraints, assignment):
             inferences = assignment.infer(cell, constraints)
             if inferences is not None:
                 constraints.add_inferences(inferences)
-                result = backtrack(constraints, assignment)
+                result = backtrack(constraints.copy(), assignment)
                 if result is not None:
                     return result
-                constraints.remove_inferences(inferences)
+                constraints.remove_inferences()
             assignment.remove(cell)
     return None
 
