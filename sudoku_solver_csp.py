@@ -13,8 +13,8 @@ FLOOR_SQUARE_ROOTS = {
 class Assignments:
     def __init__(self, board):
         self.n = len(board)
-        self.values = {(row, col): board[row][col] for row in range(self.n) for col in range(self.n)}
-        # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
+        self.values = {(row, col, self.get_sub_square_index(row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
+        # Note: sub_square_index starting from 0, counting from top-left to bottom-right of the board
         # value = the number that is assigned to the cell
 
     # key = a tuple of (row_index, col_index, sub_square_index)
@@ -104,7 +104,7 @@ class Assignments:
 class Constraints:
     def __init__(self, assignments: Assignments):
         # key = (row_index, col_index, sub_square_index)
-        # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
+        # Note: sub_square_index starting from 0, counting from top-left to bottom-right of the board
         # value = a set that representing the domain
         # self.data = {k: v for (k, v) in data.items()}
         # self.data_copy = {k: v for (k, v) in self.data.items()}
@@ -168,8 +168,12 @@ def backtrack(constraints: Constraints, assignment: Assignments):
 
 
 def main():
-    pass
-
+    NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
+                   [0, 0, 8, 1, 0, 2, 9, 0, 0], [
+                       7, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 6, 7, 0, 8, 2, 0, 0], [0, 0, 2, 6, 0, 9, 5, 0, 0],
+                   [8, 0, 0, 2, 0, 3, 0, 0, 9], [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+    assignment = Assignments(NINE_X_NINE)
+    print(assignment.values)
 
 if __name__ == '__main__':
     main()
