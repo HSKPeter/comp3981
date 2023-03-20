@@ -2,6 +2,33 @@
 assignemnt = {(3, 5): 4}
 
 
+class Assignments:
+    def __init__(self):
+        # key = (row_index, col_index, sub_square_index)
+        self.data = {(3, 5, 0): 4}
+
+    # key = (row_index, col_index, sub_square_index)
+    def remove(self, key):
+        pass
+
+    # key = (row_index, col_index, sub_square_index)
+    def add(self, key):
+        pass
+
+
+class Constraints:
+    def __init__(self):
+        # key = (row_index, col_index, sub_square_index)
+        # value = a set that representing the domain
+        self.data = {(3, 5, 0): {1, 2, 3}}
+
+    def add(self, inference_to_add):
+        pass
+
+    def remove(self, inference_to_remove):
+        pass
+
+
 def backtrack(csp, assignment):
     if is_complete(assignment, csp):
         return assignment
