@@ -62,6 +62,9 @@ class Assignments:
     def copy(self):
         pass
 
+    def to_2d_array(self):
+        pass
+
 
 class Constraints:
     def __init__(self, data):
