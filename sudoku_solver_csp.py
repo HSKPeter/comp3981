@@ -12,7 +12,16 @@ class Assignments:
         pass
 
     # key = (row_index, col_index, sub_square_index)
-    def add(self, key):
+    def add(self, key, value):
+        pass
+
+    def is_complete(self):
+        pass
+
+    def select_unassigned_variable(self, constraints):
+        pass
+
+    def find_order_domain_values_of_var(self, var, constraints):
         pass
 
 
@@ -22,12 +31,33 @@ class Constraints:
         # value = a set that representing the domain
         self.data = {(3, 5, 0): {1, 2, 3}}
 
-    def add(self, inference_to_add):
+    def add(self, inferences_to_add):
         pass
 
-    def remove(self, inference_to_remove):
+    def remove(self, inferences_to_remove):
         pass
 
+    def is_consistent(self, value, var, constraints):
+        pass
+
+
+def new_backtrack(constraints, assignment):
+    if assignment.is_complete():
+        return assignment
+    var = assignment.select_unassigned_variable(constraints)  # var = (row, col, sub_square)
+    for value in assignment.find_order_domain_values_of_var(var, constraints):
+        if assignment.is_consistent(value, var, constraints):
+            assignment.add(var, value)
+            # TODO: update follows
+            inferences = inference(constraints, var, assignment)
+            if inferences != "failure":
+                csp.add_inference(inferences)
+                result = backtrack(constraints, assignment)
+                if result != "failure":
+                    return result
+                csp.remove_inference(inferences)
+            del assignemnt[var]
+    return "failure"
 
 def backtrack(csp, assignment):
     if is_complete(assignment, csp):
