@@ -17,6 +17,9 @@ class Assignments:
         pass
 
     def is_complete(self):
+        """
+        check if this set of assignments is a solution to the problem (the whole board is filled and satisfies the constraints)
+        """
         pass
 
     def select_unassigned_cell(self, constraints):
@@ -87,7 +90,7 @@ class Constraints:
         pass
 
 
-def new_backtrack(constraints, assignment):
+def new_backtrack(constraints: Constraints, assignment: Assignments):
     if assignment.is_complete():
         return assignment
     cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
