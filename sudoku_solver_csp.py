@@ -31,6 +31,8 @@ class Assignments:
         """
         pass
 
+    # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
+    # and the value would be a set of integers that represent the domain values of that cell
     def select_unassigned_cell(self, constraints) -> (int, int):
         """
         Selecting unassigned variables: Use a combination of the Minimum Remaining Values (MRV) and Degree heuristics.
@@ -47,6 +49,9 @@ class Assignments:
         """
         pass
 
+    # cell_key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
+    # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
+    # and the value would be a set of integers that represent the domain values of that cell
     def find_ordered_domain_values(self, cell_key, constraints) -> list[int]:
         """
         Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
@@ -65,6 +70,9 @@ class Assignments:
         """
         pass
 
+    # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
+    # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
+    # and the value would be a set of integers that represent the domain values of that cell
     def infer(self, cell, constraints) -> dict[(int, int): set[int]]:
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
