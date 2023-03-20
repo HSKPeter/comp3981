@@ -1,28 +1,37 @@
-assignemnt = {(3, 5): 4}
+ROW = 0
+COL = 1
+
+FLOOR_SQUARE_ROOTS = {
+    9: 3,
+    12: 3,
+    16: 4,
+    25: 5,
+    100: 10
+}
 
 
 class Assignments:
-    def __init__(self):
-        # key = (row_index, col_index, sub_square_index)
+    def __init__(self, board):
+        self.n = len(board)
+        self.values = {(row, col): board[row][col] for row in range(self.n) for col in range(self.n)}
         # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
         # value = the number that is assigned to the cell
-        self.data = {(3, 5, 1): 4}
 
     # key = a tuple of (row_index, col_index, sub_square_index)
-    def remove(self, key):
+    def remove(self, key) -> None:
         pass
 
-    # key = a tuple of (row_index, col_index, sub_square_index)
-    def add(self, key, value):
+    # key = (row_index, col_index, sub_square_index)
+    def add(self, key, value) -> None:
         pass
 
-    def is_complete(self):
+    def is_complete(self) -> bool:
         """
         check if this set of assignments is a solution to the problem (the whole board is filled and satisfies the constraints)
         """
         pass
 
-    def select_unassigned_cell(self, constraints):
+    def select_unassigned_cell(self, constraints) -> (int, int):
         """
         Selecting unassigned variables: Use a combination of the Minimum Remaining Values (MRV) and Degree heuristics.
         MRV: Choose the variable with the fewest legal values remaining in its domain.
@@ -38,7 +47,7 @@ class Assignments:
         """
         pass
 
-    def find_ordered_domain_values(self, cell_key, constraints):
+    def find_ordered_domain_values(self, cell_key, constraints) -> list[int]:
         """
         Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
         which selects the value that imposes the fewest constraints on the remaining variables.
@@ -56,7 +65,16 @@ class Assignments:
         """
         pass
 
-    def infer(self, var, constraints):
+    def infer(self, cell, constraints) -> dict[(int, int): set[int]]:
+        """
+         Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
+         AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
+         after assigning a value to the current variable.
+
+        This function returns a dictionary where the keys are are cells whose domain is updated based on the "cell" value
+        If any of the domains reduce to none (size 0) then this function fails and returns None
+
+        """
         pass
 
     def copy(self):
@@ -65,14 +83,44 @@ class Assignments:
     def to_2d_array(self):
         pass
 
+    def get_sub_square_index(self, row, col) -> int:
+        n = self.n
+        sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
+        sub_m = n // sub_n  # number of sub-squares in each row or column
+        sub_row = row // sub_m
+        sub_col = col // sub_n
+        sub_index = sub_row * sub_m + sub_col
+        return sub_index
+
 
 class Constraints:
-    def __init__(self, data):
+    def __init__(self, assignments: Assignments):
         # key = (row_index, col_index, sub_square_index)
         # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
         # value = a set that representing the domain
-        self.data = {k: v for (k, v) in data.items()}
-        self.data_copy = {k: v for (k, v) in self.data.items()}
+        # self.data = {k: v for (k, v) in data.items()}
+        # self.data_copy = {k: v for (k, v) in self.data.items()}
+        cells = assignments.values.keys()
+        self.domains = {cell: set(range(1, 10)) for cell in cells}
+        self.arcs = self.build_arcs(cells)
+
+    def build_arcs(self, cells):
+        def same_row(cell1, cell2):
+            return cell1[ROW] == cell2[ROW]
+
+        def same_column(cell1, cell2):
+            return cell1[COL] == cell2[COL]
+
+        def same_box(cell1, cell2):
+            return (cell1[ROW] // 3 == cell2[ROW] // 3) and (cell1[COL] // 3 != cell2[COL] // 3)
+
+        arcs = set()
+        for cell1 in cells:
+            for cell2 in cells:
+                if cell1 != cell2:
+                    if same_row(cell1, cell2) or same_column(cell1, cell2) or same_box(cell1, cell2):
+                        arcs.add((cell1, cell2))
+        return arcs
 
     def add_inferences(self, inferences_to_add):
         """
@@ -93,7 +141,7 @@ class Constraints:
         pass
 
 
-def new_backtrack(constraints: Constraints, assignment: Assignments):
+def backtrack(constraints: Constraints, assignment: Assignments):
     if assignment.is_complete():
         return assignment
     cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
@@ -111,91 +159,9 @@ def new_backtrack(constraints: Constraints, assignment: Assignments):
     return None
 
 
-
-def backtrack(csp, assignment):
-    if is_complete(assignment, csp):
-        return assignment
-    var = select_unassigned_variable(csp, assignment)  # var = (row, col)
-    for value in order_domain_values(csp, var, assignment):
-        if is_consistent(value, var, assignment, csp):
-            assignment[var] = value
-            inferences = inference(csp, var, assignment)
-            if inferences != "failure":
-                csp.add_inference(inferences)
-                result = backtrack(csp, assignment)
-                if result != "failure":
-                    return result
-                csp.remove_inference(inferences)
-            del assignemnt[var]
-    return "failure"
-
-
-def is_complete(assignment, csp):
+def main():
     pass
 
 
-def select_unassigned_variable(csp, assignment):
-    pass
-
-
-def order_domain_values(csp, var, assignment):
-    pass
-
-
-def is_consistent(value, var, assignment, csp):
-    pass
-
-
-def inference(csp, var, assignment):
-    pass
-
-
-ROW = 0
-COL = 0
-
-
-class SudokuCSP:
-
-    def __init__(self, initial_grid=None) -> None:
-        self.variables = [(row, col) for row in range(9) for col in range(9)]
-        self.domains = {(row, col): set(range(1, 10))
-                        for row in range(9) for col in range(9)}
-        self.constraints = self.build_constraints()
-
-        # Set the initial values in the grid
-        for row in range(9):
-            for col in range(9):
-                value = initial_grid[row][col]
-                if value != 0:
-                    self.assign_value(row, col, value)
-
-    def build_constraints(self):
-        def row_constraint(cell1, cell2):
-            return cell1[ROW] == cell2[ROW]
-
-        def col_constraint(cell1, cell2):
-            return cell1[COL] == cell2[COL]
-
-        def box_constraint(cell1, cell2):
-            return (cell1[ROW] // 3 == cell2[ROW] // 3) and (cell1[COL] // 3 != cell2[COL] // 3)
-
-        constraints = set()
-        for cell1 in self.variables:
-            for cell2 in self.variables:
-                if cell1 != cell2:
-                    if row_constraint(cell1, cell2) or col_constraint(cell1, cell2) or box_constraint(cell1, cell2):
-                        constraints.add((cell1, cell2))
-        return constraints
-
-    def assign_value(self, row, col, value):
-        if value in self.domains[(row, col)]:
-            self.domains[(row, col)] = {value}
-
-    def add_inferences(self, inferences):
-        pass  # Implement adding inferences
-
-    def remove_inferences(self, inferences):
-        pass  # Implement removing inferences
-
-
-csp = SudokuCSP()
+if __name__ == '__main__':
+    main()
