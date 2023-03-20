@@ -112,8 +112,6 @@ class Assignments:
 
         return result_constraints
 
-
-
     # (int, int, int) = cell
     # ((int, int, int), (int, int, int)) = binary arc
     # set(((int, int, int), (int, int, int))) = set of binary arc
@@ -168,7 +166,6 @@ class Assignments:
                 revised = True
         return revised, constraints
 
-
     def copy(self):
         pass
 
@@ -194,20 +191,6 @@ class Constraints:
                 self.domains[cell_key] = {cell_value}
 
         self.domains_copy = {key: value for (key, value) in self.domains.items()}
-
-    #     board = 2d array of integers
-    # def __init__(self, board):
-    #     n = len(board)
-    #     self.domains = dict()
-    #     for row in range(n):
-    #         for col in range(n):
-    #             key = (row, col, get_sub_square_index(n, row, col))
-    #             if board[row][col] == 0:
-    #                 value = set(range(1, 10))
-    #             else:
-    #                 value = {board[row][col]}
-    #             self.domains[key] = value
-
 
     # TODO: to further discuss the usage of arcs in this Constraints class
     # def build_arcs(self, cells):
@@ -270,14 +253,6 @@ def backtrack(constraints: Constraints, assignment: Assignments):
 
     return None
 
-
-# def foo(n, row, col) -> int:
-#     sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
-#     sub_m = n // sub_n  # number of sub-squares in each row or column
-#     sub_row = row // sub_m
-#     sub_col = col // sub_n
-#     sub_index = sub_row * sub_m + sub_col
-#     return sub_index
 
 def main():
     NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
