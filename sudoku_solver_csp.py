@@ -18,10 +18,16 @@ class Assignments:
     def is_complete(self):
         pass
 
-    def select_unassigned_variable(self, constraints):
+    def select_unassigned_cell(self, constraints):
         pass
 
-    def find_order_domain_values_of_var(self, var, constraints):
+    def find_ordered_domain_values(self, cell_key, constraints):
+        pass
+
+    def infer(self, var, constraints):
+        pass
+
+    def copy(self):
         pass
 
 
@@ -31,33 +37,33 @@ class Constraints:
         # value = a set that representing the domain
         self.data = {(3, 5, 0): {1, 2, 3}}
 
-    def add(self, inferences_to_add):
+    def add_inferences(self, inferences_to_add):
         pass
 
-    def remove(self, inferences_to_remove):
+    def remove_inferences(self, inferences_to_remove):
         pass
 
-    def is_consistent(self, value, var, constraints):
+    def is_consistent(self, cell, value, constraints):
         pass
 
 
 def new_backtrack(constraints, assignment):
     if assignment.is_complete():
         return assignment
-    var = assignment.select_unassigned_variable(constraints)  # var = (row, col, sub_square)
-    for value in assignment.find_order_domain_values_of_var(var, constraints):
-        if assignment.is_consistent(value, var, constraints):
-            assignment.add(var, value)
-            # TODO: update follows
-            inferences = inference(constraints, var, assignment)
-            if inferences != "failure":
-                csp.add_inference(inferences)
+    cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
+    for value in assignment.find_ordered_domain_values(cell, constraints):
+        if assignment.is_consistent(cell, value, constraints):
+            assignment.add(cell, value)
+            inferences = assignment.infer(cell, constraints)
+            if inferences is not None:
+                constraints.add_inferences(inferences)
                 result = backtrack(constraints, assignment)
-                if result != "failure":
+                if result is not None:
                     return result
-                csp.remove_inference(inferences)
-            del assignemnt[var]
-    return "failure"
+                constraints.remove_inferences(inferences)
+            assignment.remove(cell)
+    return None
+
 
 def backtrack(csp, assignment):
     if is_complete(assignment, csp):
