@@ -9,6 +9,7 @@ FLOOR_SQUARE_ROOTS = {
     100: 10
 }
 
+
 class InvalidAssignmentException(Exception):
     pass
 
@@ -49,7 +50,8 @@ class Assignments:
         for arc in all_arcs:
             cell_one, cell_two = arc
             if self.values[cell_one] == self.values[cell_two]:
-                raise InvalidAssignmentException(f"{cell_one} and {cell_two} were both assigned {self.values[cell_one]}")
+                raise InvalidAssignmentException(
+                    f"{cell_one} and {cell_two} were both assigned {self.values[cell_one]}")
 
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
@@ -67,7 +69,35 @@ class Assignments:
 
         While both MRV and Degree heuristics aim to improve the efficiency of the search process, they focus on different aspects of the problem. MRV looks at the remaining possibilities for a variable, while Degree looks at the relationships and constraints between unassigned variables. In some cases, it's beneficial to use a combination of both heuristics to select the most promising unassigned variable for the next step in the search process.
         """
-        pass
+        best_cell = {
+            "cell": (0, 0, 0),
+            "heuristic_value": sys.maxsize
+        }
+        cells = list(self.values.keys())
+        for cell in cells:
+            if self.cell_is_empty(cell):
+                continue
+            domain_size = self.n - len(constraints.domains[cell])
+            degree = self.find_degree(cell)
+            heuristic_value = domain_size + degree
+            if heuristic_value < best_cell["heuristic_value"]:
+                best_cell["cell"] = cell
+                best_cell["heuristic_value"] = heuristic_value
+        print("best_cell[\"cell\"]", best_cell["cell"])
+        return best_cell["cell"]
+
+    def cell_is_empty(self, cell) -> bool:
+        return self.values[cell] == 0
+
+    def find_degree(self, cell) -> int:
+        degree = 0
+        arcs = self.find_arcs(cell)
+        print(arcs)
+        for arc in arcs:
+            other_cell = arc[1]
+            if self.cell_is_empty(other_cell) == 0:
+                degree += 1
+        return degree
 
     # cell_key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
@@ -172,7 +202,7 @@ class Assignments:
     def find_all_arcs(self) -> dict[(int, int, int), set]:
         all_arcs = dict()
         for cell in self.values.keys():
-            arcs = self.find_arcs(cell)
+            arcs = self.compute_arcs(cell)
             all_arcs[cell] = arcs
         return all_arcs
 
