@@ -53,6 +53,7 @@ class Assignments:
         for arc in all_arcs:
             cell_one, cell_two = arc
             if self.values[cell_one] == self.values[cell_two]:
+                self.print_board()
                 raise InvalidAssignmentException(
                     f"{cell_one} and {cell_two} were both assigned {self.values[cell_one]}")
         return True
@@ -246,8 +247,9 @@ class Assignments:
                     row_str += '  |'
                 row_str += "  "
             print(row_str)
-            # if (row + 1) % sub_square_size == 0:
-            #     print(full_row)
+        print(full_row)
+        print()
+
 
     @staticmethod
     def revise(constraints, cell_i, cell_j):
@@ -310,14 +312,16 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0)
     if depth % 1000 == 0:
         print(depth)
         assignment.print_board()
+        print()
     if assignment.is_complete():
         return assignment
     cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
         if assignment.is_consistent(cell, value, constraints):
             assignment.add(cell, value)
-            inferences, revert_inferences = assignment.infer(cell, constraints.domains)
-            if inferences is not None:
+            inference_results = assignment.infer(cell, constraints.domains)
+            if inference_results is not None:
+                inferences, revert_inferences = inference_results
                 constraints.add_inferences(inferences)
                 result = backtrack(constraints, assignment, depth + 1)
                 if result is not None:
@@ -354,31 +358,28 @@ def dev_backtrack(constraints: Constraints, assignment: Assignments):
 
 
 def main():
-    # NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
-    #                [9, 0, 0, 3, 0, 5, 0, 0, 1],
-    #                [0, 0, 1, 8, 0, 6, 4, 0, 0],
-    #                [0, 0, 8, 1, 0, 2, 9, 0, 0],
-    #                [7, 0, 0, 0, 0, 0, 0, 0, 8],
-    #                [0, 0, 6, 7, 0, 8, 2, 0, 0],
-    #                [0, 0, 2, 6, 0, 9, 5, 0, 0],
-    #                [8, 0, 0, 2, 0, 3, 0, 0, 9],
-    #                [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+    NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
+                   [9, 0, 0, 3, 0, 5, 0, 0, 1],
+                   [0, 0, 1, 8, 0, 6, 4, 0, 0],
+                   [0, 0, 8, 1, 0, 2, 9, 0, 0],
+                   [7, 0, 0, 0, 0, 0, 0, 0, 8],
+                   [0, 0, 6, 7, 0, 8, 2, 0, 0],
+                   [0, 0, 2, 6, 0, 9, 5, 0, 0],
+                   [8, 0, 0, 2, 0, 3, 0, 0, 9],
+                   [0, 0, 5, 0, 1, 0, 3, 0, 0]]
 
     ONLY_EMPTY_VALUE = 0
 
-    NINE_X_NINE = [[ONLY_EMPTY_VALUE, 6, 2, 4, 9, 8, 5, 1, 3], [9, 3, 1, 2, 5, 6, 4, 8, 7], [4, 5, 8, 1, 3, 7, 2, 6, 9], [5, 1, 9, 7, 8, 2, 3, 4, 6],
-     [6, 8, 7, 9, 4, 3, 1, 5, 2], [3, 2, 4, 5, 6, 1, 9, 7, 8], [2, 9, 6, 8, 1, 4, 7, 3, 5], [8, 4, 5, 3, 7, 9, 6, 2, 1],
-     [1, 7, 3, 6, 2, 5, 8, 9, 4]]
+    # NINE_X_NINE = [[ONLY_EMPTY_VALUE, 6, 2, 4, 9, 8, 5, 1, 3], [9, 3, 1, 2, 5, 6, 4, 8, 7], [4, 5, 8, 1, 3, 7, 2, 6, 9], [5, 1, 9, 7, 8, 2, 3, 4, 6],
+    #  [6, 8, 7, 9, 4, 3, 1, 5, 2], [3, 2, 4, 5, 6, 1, 9, 7, 8], [2, 9, 6, 8, 1, 4, 7, 3, 5], [8, 4, 5, 3, 7, 9, 6, 2, 1],
+    #  [1, 7, 3, 6, 2, 5, 8, 9, 4]]
     test_assignments = Assignments(NINE_X_NINE)
     test_constraints = Constraints(test_assignments)
     print("recursion limit:", sys.setrecursionlimit(1000000))
     result = backtrack(test_constraints, test_assignments)
-    print(result)
-    # dev_backtrack(test_constraints, test_assignments)
-    # print("Values: \n", test_assignments.values)
-    # ordered_values = test_assignments.find_ordered_domain_values(
-    #     (0, 0, 0), test_constraints)
-    # print(ordered_values)
+    print("Solution")
+    result.print_board()
+
 
 
 if __name__ == '__main__':
