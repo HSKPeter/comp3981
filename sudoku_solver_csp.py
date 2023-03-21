@@ -49,7 +49,7 @@ class Assignments:
         for value in self.values.values():
             if value == 0:
                 return False
-        all_arcs = set(self.all_arcs.values())
+        all_arcs = set.union(*self.all_arcs.values())
         for arc in all_arcs:
             cell_one, cell_two = arc
             if self.values[cell_one] == self.values[cell_two]:
