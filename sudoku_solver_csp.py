@@ -16,13 +16,15 @@ def get_sub_square_index(n, row, col) -> int:
     sub_row = row // sub_m
     sub_col = col // sub_n
     sub_square_index = sub_row * sub_m + sub_col
-    return sub_square_index  # sub_square_index starting from 0, counting from top-left to bottom-right of the board
+    # sub_square_index starting from 0, counting from top-left to bottom-right of the board
+    return sub_square_index
 
 
 class Assignments:
     def __init__(self, board):
         self.n = len(board)
-        self.values = {(row, col, self.get_sub_square_index(row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
+        self.values = {(row, col, self.get_sub_square_index(
+            row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
@@ -59,6 +61,7 @@ class Assignments:
     # cell_key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
+
     def find_ordered_domain_values(self, cell_key, constraints) -> list[int]:
         """
         Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
@@ -75,11 +78,30 @@ class Assignments:
         3. Assign the values to the current variable in the order determined by the LCV heuristic.
         By using the LCV heuristic, you can increase the likelihood of finding a solution without the need for excessive backtracking. This can result in a more efficient search process and, ultimately, a faster solution to the CSP.
         """
-        return list()  # TODO: to be updated
+        # cell_key is a tuple of three integers
+        # constraints is a Constraints object
+        domain_values = list(constraints.domains.get(cell_key))
+        # print(constraints.domains)
+        print("Domain for cell ", cell_key, " ", domain_values)
+        if len(domain_values) == 1:
+            return domain_values
+
+        def count_constraints(cell_key, value):
+            count = 0
+            for neighbor_key in self.find_cell_neighbours(cell_key):
+                # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
+                if value in constraints.domains.get(neighbor_key):
+                    count += 1
+            return count
+
+        domain_values.sort(key=lambda x: count_constraints(cell_key, x))
+
+        return domain_values  # TODO: to be updated
 
     # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
+
     def infer(self, cell: (int, int, int), constraints: dict[(int, int): set[int]]) -> dict[(int, int): set[int]]:
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
@@ -90,18 +112,21 @@ class Assignments:
         If any of the domains reduce to none (size 0) then this function fails and returns None
 
         """
-        constraints_copy = {key: value.copy() for (key, value) in constraints.items()}
+        constraints_copy = {key: value.copy()
+                            for (key, value) in constraints.items()}
         initial_arcs = self.find_arcs(cell)
         queue = list(initial_arcs)
 
         while len(queue) > 0:
             cell_i, cell_j = queue.pop()
-            has_revised, constraints_copy = self.revise(constraints_copy, cell_i, cell_j)
+            has_revised, constraints_copy = self.revise(
+                constraints_copy, cell_i, cell_j)
             if has_revised:
                 if len(constraints_copy[cell_i]) == 0:
                     return None
                 cell_neighbours = self.find_cell_neighbours(cell_i)
-                cell_neighbours_excluding_cell_j = [cell_neighbour for cell_neighbour in cell_neighbours if cell_neighbour != cell_j]
+                cell_neighbours_excluding_cell_j = [
+                    cell_neighbour for cell_neighbour in cell_neighbours if cell_neighbour != cell_j]
                 for cell_neighbour in cell_neighbours_excluding_cell_j:
                     queue.append((cell_neighbour, cell_i))
 
@@ -156,11 +181,13 @@ class Assignments:
 
     @staticmethod
     def revise(constraints, cell_i, cell_j):
-        constraints_copy = {key: value.copy() for (key, value) in constraints.items()}
+        constraints_copy = {key: value.copy()
+                            for (key, value) in constraints.items()}
         revised = False
         for domain_value_i in constraints_copy[cell_i]:
             domain_of_cell_j = constraints[cell_j]
-            filtered_domain_of_cell_j = {value for value in domain_of_cell_j if value != domain_value_i}
+            filtered_domain_of_cell_j = {
+                value for value in domain_of_cell_j if value != domain_value_i}
             if len(filtered_domain_of_cell_j) == 0:
                 constraints[cell_i].remove(domain_value_i)
                 revised = True
@@ -190,7 +217,8 @@ class Constraints:
             else:
                 self.domains[cell_key] = {cell_value}
 
-        self.domains_copy = {key: value for (key, value) in self.domains.items()}
+        self.domains_copy = {key: value for (
+            key, value) in self.domains.items()}
 
     # TODO: to further discuss the usage of arcs in this Constraints class
     # def build_arcs(self, cells):
@@ -224,7 +252,8 @@ class Constraints:
         return Constraints(self.data)
 
     def remove_inferences(self):
-        self.domains = {key: value for (key, value) in self.domains_copy.items()}
+        self.domains = {key: value for (
+            key, value) in self.domains_copy.items()}
 
     def is_consistent(self, cell, value, constraints):
         pass
@@ -233,7 +262,8 @@ class Constraints:
 def backtrack(constraints: Constraints, assignment: Assignments):
     if assignment.is_complete():
         return assignment
-    cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
+    cell = assignment.select_unassigned_cell(
+        constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
         if assignment.is_consistent(cell, value, constraints):
 
@@ -272,17 +302,25 @@ def dev_backtrack(constraints: Constraints, assignment: Assignments):
 
 
 def main():
-    NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
-                   [0, 0, 8, 1, 0, 2, 9, 0, 0], [
-                       7, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 6, 7, 0, 8, 2, 0, 0], [0, 0, 2, 6, 0, 9, 5, 0, 0],
-                   [8, 0, 0, 2, 0, 3, 0, 0, 9], [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+    NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
+                   [9, 0, 0, 3, 0, 5, 0, 0, 1],
+                   [0, 0, 1, 8, 0, 6, 4, 0, 0],
+                   [0, 0, 8, 1, 0, 2, 9, 0, 0],
+                   [7, 0, 0, 0, 0, 0, 0, 0, 8],
+                   [0, 0, 6, 7, 0, 8, 2, 0, 0],
+                   [0, 0, 2, 6, 0, 9, 5, 0, 0],
+                   [8, 0, 0, 2, 0, 3, 0, 0, 9],
+                   [0, 0, 5, 0, 1, 0, 3, 0, 0]]
     test_assignments = Assignments(NINE_X_NINE)
     test_constraints = Constraints(test_assignments)
 
     # backtrack(test_constraints, test_assignments)
     dev_backtrack(test_constraints, test_assignments)
+    print("Values: \n", test_assignments.values)
+    ordered_values = test_assignments.find_ordered_domain_values(
+        (0, 0, 0), test_constraints)
+    print(ordered_values)
 
 
 if __name__ == '__main__':
     main()
-
