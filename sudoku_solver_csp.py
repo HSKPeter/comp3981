@@ -78,7 +78,7 @@ class Assignments:
         }
         cells = list(self.values.keys())
         for cell in cells:
-            if self.cell_is_empty(cell):
+            if not self.cell_is_empty(cell):
                 continue
             domain_size = self.n - len(constraints.domains[cell])
             degree = self.find_degree(cell)
@@ -311,8 +311,7 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0)
         assignment.print_board()
     if assignment.is_complete():
         return assignment
-    cell = assignment.select_unassigned_cell(
-        constraints)  # cell = (row, col, sub_square)
+    cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
         if assignment.is_consistent(cell, value, constraints):
             assignment.add(cell, value)
