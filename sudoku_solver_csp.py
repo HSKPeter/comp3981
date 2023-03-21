@@ -255,8 +255,19 @@ def backtrack(constraints: Constraints, assignment: Assignments):
 
 
 def dev_backtrack(constraints: Constraints, assignment: Assignments):
-    cell = (0, 0, 0)
+    """
+    TODO: this function is for dev and demo purpose only.  It would be removed in future.
+    """
+    print("Original constraints: ")
+    print(constraints.domains)
+
+    cell = (0, 1, 0)
+    print("\nCell: ")
+    print(cell)
+
     inferences = assignment.infer(cell, constraints.domains)
+
+    print("\nNew constraints inferred: ")
     print(inferences)
 
 
