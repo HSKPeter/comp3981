@@ -25,6 +25,7 @@ class Assignments:
         self.n = len(board)
         self.values = {(row, col, self.get_sub_square_index(
             row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
+        self.all_arcs = self.find_all_arcs()
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
@@ -137,10 +138,13 @@ class Assignments:
 
         return result_constraints
 
+    def find_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
+        return self.all_arcs[cell]
+
     # (int, int, int) = cell
     # ((int, int, int), (int, int, int)) = binary arc
     # set(((int, int, int), (int, int, int))) = set of binary arc
-    def find_arcs(self, cell: (int, int, int)) -> set(((int, int, int), (int, int, int))):
+    def compute_arcs(self, cell: (int, int, int)) -> set[((int, int, int), (int, int, int))]:
         arcs = set()
         row_index, col_index, sub_square_index = cell
         for counter_cell in self.values.keys():
@@ -155,13 +159,11 @@ class Assignments:
 
         return arcs
 
-    def find_all_arcs(self) -> set(((int, int, int), (int, int, int))):
-        all_arcs = set()
+    def find_all_arcs(self) -> dict[(int, int, int), set]:
+        all_arcs = dict()
         for cell in self.values.keys():
             arcs = self.find_arcs(cell)
-            for arc in arcs:
-                all_arcs.add(arc)
-
+            all_arcs[cell] = arcs
         return all_arcs
 
     def find_cell_neighbours(self, cell: (int, int, int)):
