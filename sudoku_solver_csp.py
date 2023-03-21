@@ -55,6 +55,7 @@ class Assignments:
             if self.values[cell_one] == self.values[cell_two]:
                 raise InvalidAssignmentException(
                     f"{cell_one} and {cell_two} were both assigned {self.values[cell_one]}")
+        return True
 
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
