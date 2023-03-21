@@ -9,6 +9,9 @@ FLOOR_SQUARE_ROOTS = {
     100: 10
 }
 
+class InvalidAssignmentException(Exception):
+    pass
+
 
 def get_sub_square_index(n, row, col) -> int:
     sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
@@ -39,7 +42,14 @@ class Assignments:
         """
         check if this set of assignments is a solution to the problem (the whole board is filled and satisfies the constraints)
         """
-        pass
+        for value in self.values.values():
+            if value == 0:
+                return False
+        all_arcs = set(self.all_arcs.values())
+        for arc in all_arcs:
+            cell_one, cell_two = arc
+            if self.values[cell_one] == self.values[cell_two]:
+                raise InvalidAssignmentException(f"{cell_one} and {cell_two} were both assigned {self.values[cell_one]}")
 
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
@@ -290,6 +300,10 @@ def dev_backtrack(constraints: Constraints, assignment: Assignments):
     """
     TODO: this function is for dev and demo purpose only.  It would be removed in future.
     """
+    print("Original assignments")
+    print(assignment.values)
+    print("Is complete")
+    print(assignment.is_complete())
     print("Original constraints: ")
     print(constraints.domains)
 
