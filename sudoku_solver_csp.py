@@ -227,6 +227,27 @@ class Assignments:
 
         return cell_neighbours
 
+    def print_board(self):
+        sub_square_size = int(self.n ** 0.5)
+        full_row = "+".join(["-" * (sub_square_size * 5 - 1)] * sub_square_size)
+
+        for row in range(self.n):
+            if row % sub_square_size == 0:
+                print(full_row)
+            row_str = ' |'
+            for col in range(self.n):
+                value = self.values[(row, col, self.get_sub_square_index(row, col))]
+                if value == 0:
+                    row_str += '__'
+                else:
+                    row_str += f'{value} '
+                if (col + 1) % sub_square_size == 0:
+                    row_str += '  |'
+                row_str += "  "
+            print(row_str)
+            # if (row + 1) % sub_square_size == 0:
+            #     print(full_row)
+
     @staticmethod
     def revise(constraints, cell_i, cell_j):
         constraints_copy = {key: value.copy()
@@ -285,8 +306,9 @@ class Constraints:
 
 
 def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0):
-    # if depth % 1000 == 0:
-    print(depth)
+    if depth % 1000 == 0:
+        print(depth)
+        assignment.print_board()
     if assignment.is_complete():
         return assignment
     cell = assignment.select_unassigned_cell(
@@ -343,7 +365,7 @@ def main():
                    [0, 0, 5, 0, 1, 0, 3, 0, 0]]
     test_assignments = Assignments(NINE_X_NINE)
     test_constraints = Constraints(test_assignments)
-
+    print("recursion limit:", sys.setrecursionlimit(1000000))
     result = backtrack(test_constraints, test_assignments)
     print(result)
     # dev_backtrack(test_constraints, test_assignments)
