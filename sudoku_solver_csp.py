@@ -1,3 +1,6 @@
+import copy
+import sys
+
 ROW = 0
 COL = 1
 
@@ -83,7 +86,7 @@ class Assignments:
             if heuristic_value < best_cell["heuristic_value"]:
                 best_cell["cell"] = cell
                 best_cell["heuristic_value"] = heuristic_value
-        print("best_cell[\"cell\"]", best_cell["cell"])
+        # print("best_cell[\"cell\"]", best_cell["cell"])
         return best_cell["cell"]
 
     def cell_is_empty(self, cell) -> bool:
@@ -92,7 +95,7 @@ class Assignments:
     def find_degree(self, cell) -> int:
         degree = 0
         arcs = self.find_arcs(cell)
-        print(arcs)
+        # print(arcs)
         for arc in arcs:
             other_cell = arc[1]
             if self.cell_is_empty(other_cell) == 0:
@@ -123,7 +126,7 @@ class Assignments:
         # constraints is a Constraints object
         domain_values = list(constraints.domains.get(cell_key))
         # print(constraints.domains)
-        print("Domain for cell ", cell_key, " ", domain_values)
+        # print("Domain for cell ", cell_key, " ", domain_values)
         if len(domain_values) == 1:
             return domain_values
 
@@ -137,7 +140,7 @@ class Assignments:
 
         domain_values.sort(key=lambda x: count_constraints(cell_key, x))
 
-        return domain_values  # TODO: to be updated
+        return domain_values
 
     # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
@@ -155,6 +158,7 @@ class Assignments:
         """
         constraints_copy = {key: value.copy()
                             for (key, value) in constraints.items()}
+        constraints_copy[cell] = {self.values[cell]}
         initial_arcs = self.find_arcs(cell)
         queue = list(initial_arcs)
 
@@ -172,11 +176,13 @@ class Assignments:
                     queue.append((cell_neighbour, cell_i))
 
         result_constraints = dict()
+        old_constraints = dict()
         for key, value in constraints_copy.items():
             if constraints_copy[key] != constraints[key]:
                 result_constraints[key] = value
+                old_constraints[key] = constraints[key]
 
-        return result_constraints
+        return result_constraints, old_constraints
 
     def find_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
         return self.all_arcs[cell]
@@ -244,14 +250,15 @@ class Assignments:
     def get_sub_square_index(self, row, col) -> int:
         return get_sub_square_index(self.n, row, col)
 
+    def is_consistent(self, cell, value, constraints):
+        return True  # TODO: could remove this method if it is no longer needed eventually
+
 
 class Constraints:
     def __init__(self, assignments: Assignments):
         # key = (row_index, col_index, sub_square_index)
         # Note: sub_square_index starting from 0, counting from top-left to bottom-right of the board
         # value = a set that representing the domain
-        # self.data = {k: v for (k, v) in data.items()}
-        # self.data_copy = {k: v for (k, v) in self.data.items()}
         self.domains = dict()
         for cell_key, cell_value in assignments.values.items():
             if cell_value == 0:
@@ -259,27 +266,7 @@ class Constraints:
             else:
                 self.domains[cell_key] = {cell_value}
 
-        self.domains_copy = {key: value for (
-            key, value) in self.domains.items()}
-
-    # TODO: to further discuss the usage of arcs in this Constraints class
-    # def build_arcs(self, cells):
-    #     def same_row(cell1, cell2):
-    #         return cell1[ROW] == cell2[ROW]
-    #
-    #     def same_column(cell1, cell2):
-    #         return cell1[COL] == cell2[COL]
-    #
-    #     def same_box(cell1, cell2):
-    #         return (cell1[ROW] // 3 == cell2[ROW] // 3) and (cell1[COL] // 3 != cell2[COL] // 3)
-    #
-    #     arcs = set()
-    #     for cell1 in cells:
-    #         for cell2 in cells:
-    #             if cell1 != cell2:
-    #                 if same_row(cell1, cell2) or same_column(cell1, cell2) or same_box(cell1, cell2):
-    #                     arcs.add((cell1, cell2))
-    #     return arcs
+        self.domains_copy = copy.deepcopy(self.domains)
 
     def add_inferences(self, inferences_to_add):
         """
@@ -287,8 +274,7 @@ class Constraints:
             inferences_to_add: a dict where the key is a tuple of (row_index, col_index, sub_square_index),
             and the value is a set of numbers that represents the domain values
         """
-        # mutate self.data (maybe with some looping)
-        pass
+        self.domains.update(inferences_to_add)
 
     def copy(self):
         return Constraints(self.data)
@@ -297,31 +283,26 @@ class Constraints:
         self.domains = {key: value for (
             key, value) in self.domains_copy.items()}
 
-    def is_consistent(self, cell, value, constraints):
-        pass
 
-
-def backtrack(constraints: Constraints, assignment: Assignments):
+def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0):
+    # if depth % 1000 == 0:
+    print(depth)
     if assignment.is_complete():
         return assignment
     cell = assignment.select_unassigned_cell(
         constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
         if assignment.is_consistent(cell, value, constraints):
-
             assignment.add(cell, value)
-            constraints = Constraints(assignment)
-
-            inferences = assignment.infer(cell, constraints.domains)
+            inferences, revert_inferences = assignment.infer(cell, constraints.domains)
             if inferences is not None:
                 constraints.add_inferences(inferences)
-                result = backtrack(constraints.copy(), assignment)
+                result = backtrack(constraints, assignment, depth + 1)
                 if result is not None:
                     return result
-                constraints.remove_inferences()
-
+                constraints.add_inferences(revert_inferences)
             assignment.remove(cell)
-            constraints = Constraints(assignment)
+            # constraints = prev_constraints
 
     return None
 
@@ -341,10 +322,13 @@ def dev_backtrack(constraints: Constraints, assignment: Assignments):
     print("\nCell: ")
     print(cell)
 
-    inferences = assignment.infer(cell, constraints.domains)
+    inferences, revert_inferences = assignment.infer(cell, constraints.domains)
 
     print("\nNew constraints inferred: ")
     print(inferences)
+
+    print("These are updated from")
+    print(revert_inferences)
 
 
 def main():
@@ -360,12 +344,13 @@ def main():
     test_assignments = Assignments(NINE_X_NINE)
     test_constraints = Constraints(test_assignments)
 
-    # backtrack(test_constraints, test_assignments)
-    dev_backtrack(test_constraints, test_assignments)
-    print("Values: \n", test_assignments.values)
-    ordered_values = test_assignments.find_ordered_domain_values(
-        (0, 0, 0), test_constraints)
-    print(ordered_values)
+    result = backtrack(test_constraints, test_assignments)
+    print(result)
+    # dev_backtrack(test_constraints, test_assignments)
+    # print("Values: \n", test_assignments.values)
+    # ordered_values = test_assignments.find_ordered_domain_values(
+    #     (0, 0, 0), test_constraints)
+    # print(ordered_values)
 
 
 if __name__ == '__main__':
