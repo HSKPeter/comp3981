@@ -240,7 +240,7 @@ def backtrack(constraints: Constraints, assignment: Assignments):
             assignment.add(cell, value)
             constraints = Constraints(assignment)
 
-            inferences = assignment.infer(cell, constraints)
+            inferences = assignment.infer(cell, constraints.domains)
             if inferences is not None:
                 constraints.add_inferences(inferences)
                 result = backtrack(constraints.copy(), assignment)
@@ -254,6 +254,12 @@ def backtrack(constraints: Constraints, assignment: Assignments):
     return None
 
 
+def dev_backtrack(constraints: Constraints, assignment: Assignments):
+    cell = (0, 0, 0)
+    inferences = assignment.infer(cell, constraints.domains)
+    print(inferences)
+
+
 def main():
     NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
                    [0, 0, 8, 1, 0, 2, 9, 0, 0], [
@@ -262,7 +268,8 @@ def main():
     test_assignments = Assignments(NINE_X_NINE)
     test_constraints = Constraints(test_assignments)
 
-    backtrack(test_constraints, test_assignments)
+    # backtrack(test_constraints, test_assignments)
+    dev_backtrack(test_constraints, test_assignments)
 
 
 if __name__ == '__main__':
