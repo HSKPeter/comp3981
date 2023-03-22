@@ -27,6 +27,27 @@ def get_sub_square_index(n, row, col) -> int:
     return sub_square_index
 
 
+class ArcsCollection:
+    def __init__(self, initial_arcs):
+        self._arcs = set(initial_arcs)
+        self._priority_arcs_stack = list()
+
+    def __len__(self):
+        return len(self._arcs) + len(self._priority_arcs_stack)
+
+    def pop(self):
+        if len(self._priority_arcs_stack) > 0:
+            return self._priority_arcs_stack.pop()
+
+        return self._arcs.pop()
+
+    def add_priority_arc(self, arc):
+        if arc in self._arcs:
+            self._arcs.remove(arc)
+
+        self._priority_arcs_stack.append(arc)
+
+
 class Assignments:
     def __init__(self, board):
         self.n = len(board)
@@ -161,15 +182,15 @@ class Assignments:
         constraints_copy = {key: value.copy()
                             for (key, value) in constraints.items()}
         constraints_copy[cell] = {self.values[cell]}
-        queue = list()
 
+        initial_arcs = list()
         for arc_key, arc_set in self.all_arcs.items():
             for arc in arc_set:
-                queue.append(arc)
+                initial_arcs.append(arc)
+        arcs = ArcsCollection(initial_arcs)
 
-
-        while len(queue) > 0:
-            cell_i, cell_j = queue.pop()
+        while len(arcs) > 0:
+            cell_i, cell_j = arcs.pop()
             has_revised, constraints_copy = self.revise(
                 constraints_copy, cell_i, cell_j)
             if has_revised:
@@ -179,7 +200,8 @@ class Assignments:
                 cell_neighbours_excluding_cell_j = [
                     cell_neighbour for cell_neighbour in cell_neighbours if cell_neighbour != cell_j]
                 for cell_neighbour in cell_neighbours_excluding_cell_j:
-                    queue.append((cell_neighbour, cell_i))
+                    arc_to_add = (cell_neighbour, cell_i)
+                    arcs.add_priority_arc(arc_to_add)
 
         result_constraints = dict()
         old_constraints = dict()
