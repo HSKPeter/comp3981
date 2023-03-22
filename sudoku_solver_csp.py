@@ -161,8 +161,12 @@ class Assignments:
         constraints_copy = {key: value.copy()
                             for (key, value) in constraints.items()}
         constraints_copy[cell] = {self.values[cell]}
-        initial_arcs = self.find_arcs(cell)
-        queue = list(initial_arcs)
+        queue = list()
+
+        for arc_key, arc_set in self.all_arcs.items():
+            for arc in arc_set:
+                queue.append(arc)
+
 
         while len(queue) > 0:
             cell_i, cell_j = queue.pop()
