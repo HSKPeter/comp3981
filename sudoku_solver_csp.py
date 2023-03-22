@@ -29,6 +29,27 @@ def get_sub_square_index(n, row, col) -> int:
     return sub_square_index
 
 
+class ArcsCollection:
+    def __init__(self, initial_arcs):
+        self._arcs = set(initial_arcs)
+        self._priority_arcs_stack = list()
+
+    def __len__(self):
+        return len(self._arcs) + len(self._priority_arcs_stack)
+
+    def pop(self):
+        if len(self._priority_arcs_stack) > 0:
+            return self._priority_arcs_stack.pop()
+
+        return self._arcs.pop()
+
+    def add_priority_arc(self, arc):
+        if arc in self._arcs:
+            self._arcs.remove(arc)
+
+        self._priority_arcs_stack.append(arc)
+
+
 class Assignments:
     def __init__(self, board):
         self.n = len(board)
