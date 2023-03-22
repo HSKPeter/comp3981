@@ -273,7 +273,7 @@ class Node:
             return has_less_empty_cells
 
 
-def change_values_to_zero(arr, p=0.75):
+def mask_board(arr, p=0.75):
     """
     Takes an n x n array and changes p percent of the values to 0.
 
@@ -294,7 +294,7 @@ def change_values_to_zero(arr, p=0.75):
 
 
 def main():
-    board = change_values_to_zero(SIXTEEN_X_SIXTEEN_SOLVED)
+    board = mask_board(SIXTEEN_X_SIXTEEN_SOLVED)
     solver = SudokuSolver(board)
     solution_node = solver.solve()
     print(f"solution:\n{solution_node}")
