@@ -274,17 +274,21 @@ class Node:
             return has_less_empty_cells
 
 
-def mask_board(original_board, p=0.75):
+def mask_board(original_board, p=0.75, seed=None):
     """
     Takes an n x n array and changes p percent of the values to 0.
 
     Args:
         original_board: list[list[int]] - an n x n array
         p: float - the proportion of values to change to 0 (default 0.75)
+        seed: int or None - seed for the random number generator (default None)
 
     Returns:
-        list[list[int]] - the modified n x n array8
+        list[list[int]] - the modified n x n array
     """
+    if seed is not None:
+        random.seed(seed)
+
     board = copy.deepcopy(original_board)
     n = len(board)
     m = int(p * n * n)  # number of values to change to 0
