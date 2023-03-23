@@ -201,7 +201,10 @@ class Assignments:
                 other_cell_neighbors = self.find_cell_neighbours(other_cell)
                 other_cell_neighbors.remove(current_cell)
                 for neighbor in other_cell_neighbors:
-                    queue.append((other_cell, neighbor))
+                    arc_to_prioritize = (other_cell, neighbor)
+                    if arc_to_prioritize in queue:
+                        queue.remove(arc_to_prioritize)
+                    queue.append(arc_to_prioritize)
 
         result_constraints = dict()
         old_constraints = dict()
