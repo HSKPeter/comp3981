@@ -40,7 +40,7 @@ def convert_seconds_to_formatted_time(seconds):
     min = int(seconds // 60)
     sec = int(seconds % 60)
     ms = int((seconds % 1) * 1000)
-    return f"{min:02}:{sec:02}:{ms:05}"
+    return f"{min:02}:{sec:02}.{ms:05}"
 
 @app.post("/brute-force")
 async def solve_brute_force(board_puzzle: BoardPuzzleData):
