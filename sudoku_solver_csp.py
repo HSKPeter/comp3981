@@ -186,7 +186,7 @@ class Assignments:
         for neighbor in assigned_cell_neighbors:
             constraints_copy[neighbor].discard(assigned_value)
 
-        # queue = list(self.find_arcs(assigned_cell)) # TODO: consider using this line for optimization
+        # queue = list(self.get_arcs(assigned_cell)) # TODO: consider using this line for optimization
         queue = list()
         for _, arc_set in self.all_arcs.items():
             for arc in arc_set:
@@ -212,6 +212,7 @@ class Assignments:
             if constraints_copy[key] != constraints[key]:
                 result_constraints[key] = value
                 old_constraints[key] = constraints[key]
+
 
         return result_constraints, old_constraints
 
