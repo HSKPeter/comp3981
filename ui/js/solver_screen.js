@@ -49,15 +49,17 @@ async function solve(algorithm) {
     if (response.status === 404) {
         const { message } = await response.json();
         alert(message);
+
+        throw Error()
         
         // myReject()
-        return;
+        // return;
     }
-    const { board } = await response.json();
+    const { board, duration } = await response.json();
     // myResolve()
 
     fillBoard(board)
-    stopDynamicTimer()
+    stopDynamicTimer({duration, status: SUCCESS})
 }
 
 function formatAlgorithmNameToApiRoute(algorithmName) {
@@ -76,12 +78,12 @@ async function solveWithCSP() {
 function displayTime(solveAlgorithm) {
     startTime = Date.now()
     intervalId = setInterval(updateTime, 10);
-    solveAlgorithm().then(
-        function() {
-            stopDynamicTimer(FAIL)
-            enableButtons()
-        }
-    )
+    solveAlgorithm()
+    .then(enableButtons)
+    .catch(() => {
+        stopDynamicTimer({status: FAIL})
+        enableButtons()
+    })
     // endTime = Date.now();
     // deltaTime = endTime - startTime;
     // timeText.innerText = deltaTime;
@@ -191,7 +193,7 @@ async function main() {
     fillBoard(board_values)
 }
 
-function stopDynamicTimer(status = SUCCESS) {
+function stopDynamicTimer({duration, status}) {
     clearInterval(intervalId);
     if (status === FAIL) {
         document.getElementById("time-title").style.color = "#FF0000"
@@ -200,6 +202,10 @@ function stopDynamicTimer(status = SUCCESS) {
     }
     
     intervalId = null;
+
+    if (duration) {
+        showTime(duration)
+    }
 }
 
 function updateTime() {
@@ -207,8 +213,12 @@ function updateTime() {
     const minutes = Math.floor(elapsedTime / (1000 * 60));
     const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
     const milliseconds = Math.floor((elapsedTime % 1000) / 10);
-    document.getElementById("time").textContent =
-        `${padNumber(minutes)}:${padNumber(seconds)}:${padNumber(milliseconds)}`;
+    const formattedTime = `${padNumber(minutes)}:${padNumber(seconds)}:${padNumber(milliseconds)}`
+    showTime(formattedTime)
+}
+
+function showTime(timeToDisplay) {
+    document.getElementById("time").textContent = timeToDisplay;
 }
 
 function padNumber(num) {

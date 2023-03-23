@@ -339,7 +339,7 @@ class Constraints:
                         updated_domains[(r, col, base * (r // base) + col // base)].discard(filled_value)
 
                 # Remove filled value from column domains
-                for c in range(9):
+                for c in range(n):
                     if c != col:
                         updated_domains[(row, c, base * (row // base) + c // base)].discard(filled_value)
 
