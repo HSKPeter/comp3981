@@ -363,8 +363,8 @@ class Constraints:
         self.domains.update(inferences_to_add)
 
 
-def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0):
-    if depth % 10 == 0:
+def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0, mute=True):
+    if not mute and depth % 10 == 0:
         print(f"depth {depth}")
         print(assignment)
         print()
@@ -394,13 +394,13 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0)
 def solve_with_csp(board, recursion_limit=None):
     assignments = Assignments(board)
     constraints = Constraints(assignments)
-    
+
     if recursion_limit is not None:
         sys.setrecursionlimit(recursion_limit)
         print("Recursion limit: ", recursion_limit)
-    
+
     result = backtrack(constraints, assignments)
-    
+
     return result.to_2d_array()
 
 
@@ -415,19 +415,22 @@ def main():
                    [8, 0, 0, 2, 0, 3, 0, 0, 9],
                    [0, 0, 5, 0, 1, 0, 3, 0, 0]]
 
-    ONLY_EMPTY_VALUE = 0
 
-    # NINE_X_NINE = [[ONLY_EMPTY_VALUE, 6, 2, 4, 9, 8, 5, 1, 3], [9, 3, 1, 2, 5, 6, 4, 8, 7], [4, 5, 8, 1, 3, 7, 2, 6, 9], [5, 1, 9, 7, 8, 2, 3, 4, 6],
-    #  [6, 8, 7, 9, 4, 3, 1, 5, 2], [3, 2, 4, 5, 6, 1, 9, 7, 8], [2, 9, 6, 8, 1, 4, 7, 3, 5], [8, 4, 5, 3, 7, 9, 6, 2, 1],
-    #  [1, 7, 3, 6, 2, 5, 8, 9, 4]]
-    # board = sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
-    assignments = Assignments(NINE_X_NINE)
+    sys.setrecursionlimit(1000000)
+
+    board = sudoku_solver.mask_board(NINE_X_NINE)
+    # first algo
+    assignments = Assignments(board)
     constraints = Constraints(assignments)
-    print("recursion limit:", sys.setrecursionlimit(1000000))
-    result = backtrack(constraints, assignments)
-    print("Solution")
-    print(result)
-    print(result.to_2d_array())
+    first_result = backtrack(constraints, assignments)
+    # second algo
+    solver = sudoku_solver.SudokuSolver(board)
+    solution = solver.solve()
+    if solution is not None:
+        second_result = solution.board
+    # print("Solution")
+    # print(result)
+    # print(result.to_2d_array())
 
 
 if __name__ == '__main__':
