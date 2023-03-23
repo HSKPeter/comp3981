@@ -292,6 +292,20 @@ class Assignments:
     def get_sub_square_index(self, row, col) -> int:
         return get_sub_square_index(self.n, row, col)
 
+    def to_2d_array(self):
+        two_d_array = list()
+        for i in range(self.n):
+            arr = list()
+            for j in range(self.n):
+                arr.append(0)
+            two_d_array.append(arr)
+
+        for key, value in self.values.items():
+            row_index, col_index, _ = key
+            two_d_array[row_index][col_index] = value
+
+        return two_d_array
+
 
 class Constraints:
     def __init__(self, assignments: Assignments):
@@ -373,6 +387,19 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0)
     return None
 
 
+def solve_with_csp(board, recursion_limit=None):
+    assignments = Assignments(board)
+    constraints = Constraints(assignments)
+    
+    if recursion_limit is not None:
+        sys.setrecursionlimit(recursion_limit)
+        print("Recursion limit: ", recursion_limit)
+    
+    result = backtrack(constraints, assignments)
+    
+    return result.to_2d_array()
+
+
 def main():
     NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
                    [9, 0, 0, 3, 0, 5, 0, 0, 1],
@@ -389,13 +416,14 @@ def main():
     # NINE_X_NINE = [[ONLY_EMPTY_VALUE, 6, 2, 4, 9, 8, 5, 1, 3], [9, 3, 1, 2, 5, 6, 4, 8, 7], [4, 5, 8, 1, 3, 7, 2, 6, 9], [5, 1, 9, 7, 8, 2, 3, 4, 6],
     #  [6, 8, 7, 9, 4, 3, 1, 5, 2], [3, 2, 4, 5, 6, 1, 9, 7, 8], [2, 9, 6, 8, 1, 4, 7, 3, 5], [8, 4, 5, 3, 7, 9, 6, 2, 1],
     #  [1, 7, 3, 6, 2, 5, 8, 9, 4]]
-    board = sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
-    assignments = Assignments(board)
+    # board = sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
+    assignments = Assignments(NINE_X_NINE)
     constraints = Constraints(assignments)
     print("recursion limit:", sys.setrecursionlimit(1000000))
     result = backtrack(constraints, assignments)
     print("Solution")
     print(result)
+    print(result.to_2d_array())
 
 
 if __name__ == '__main__':

@@ -28,9 +28,7 @@ clearButton.addEventListener("click", function () {
     window.location.href = "main_menu.html";
 });
 
-
-// Replace contents of this function with the real algorithm
-async function solveWithBruteForce() {
+async function solve(algorithm) {
     spinner.style.display = "block"
     disableButtons()
     localStorage.setItem("Algorithm", "Brute Force");
@@ -45,7 +43,7 @@ async function solveWithBruteForce() {
         body: JSON.stringify({ board: parsedBoard })
     };
 
-    const response = await fetch("http://localhost:8000/brute-force/", fetchConfig);
+    const response = await fetch(`http://localhost:8000/${algorithm}/`, fetchConfig);
     spinner.style.display = "none"
     if (response.status === 404) {
         const { message } = await response.json();
@@ -61,14 +59,13 @@ async function solveWithBruteForce() {
     stopDynamicTimer()
 }
 
+async function solveWithBruteForce() {
+    await solve("brute-force")
+}
 
-// Replace contents of this function with the real algorithm
+
 async function solveWithCSP() {
-    localStorage.setItem("Algorithm", "CSP")
-    const response = await fetch("http://localhost:8000/brute-force/");
-    const { board } = await response.json();
-    fillBoard(board)
-    stopDynamicTimer()
+    await solve("csp")
 }
 
 function displayTime(solveAlgorithm) {
