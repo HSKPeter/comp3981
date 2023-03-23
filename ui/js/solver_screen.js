@@ -31,7 +31,7 @@ clearButton.addEventListener("click", function () {
 async function solve(algorithm) {
     spinner.style.display = "block"
     disableButtons()
-    localStorage.setItem("Algorithm", "Brute Force");
+    localStorage.setItem("Algorithm", algorithm);
     const boardJsonString = localStorage.getItem("Board");
     const parsedBoard = JSON.parse(boardJsonString);
 
@@ -43,7 +43,8 @@ async function solve(algorithm) {
         body: JSON.stringify({ board: parsedBoard })
     };
 
-    const response = await fetch(`http://localhost:8000/${algorithm}/`, fetchConfig);
+    const apiRoute = formatAlgorithmNameToApiRoute(algorithm);
+    const response = await fetch(`http://localhost:8000/${apiRoute}/`, fetchConfig);
     spinner.style.display = "none"
     if (response.status === 404) {
         const { message } = await response.json();
@@ -59,13 +60,17 @@ async function solve(algorithm) {
     stopDynamicTimer()
 }
 
+function formatAlgorithmNameToApiRoute(algorithmName) {
+    return algorithmName?.toLowerCase()?.split(" ")?.join("-");
+}
+
 async function solveWithBruteForce() {
-    await solve("brute-force")
+    await solve("Brute Force")
 }
 
 
 async function solveWithCSP() {
-    await solve("csp")
+    await solve("CSP")
 }
 
 function displayTime(solveAlgorithm) {
