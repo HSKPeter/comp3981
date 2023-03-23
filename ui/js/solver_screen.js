@@ -28,12 +28,10 @@ clearButton.addEventListener("click", function () {
     window.location.href = "main_menu.html";
 });
 
-
-// Replace contents of this function with the real algorithm
-async function solveWithBruteForce() {
+async function solve(algorithm) {
     spinner.style.display = "block"
     disableButtons()
-    localStorage.setItem("Algorithm", "Brute Force");
+    localStorage.setItem("Algorithm", algorithm);
     const boardJsonString = localStorage.getItem("Board");
     const parsedBoard = JSON.parse(boardJsonString);
 
@@ -45,7 +43,8 @@ async function solveWithBruteForce() {
         body: JSON.stringify({ board: parsedBoard })
     };
 
-    const response = await fetch("http://localhost:8000/brute-force/", fetchConfig);
+    const apiRoute = formatAlgorithmNameToApiRoute(algorithm);
+    const response = await fetch(`http://localhost:8000/${apiRoute}/`, fetchConfig);
     spinner.style.display = "none"
     if (response.status === 404) {
         const { message } = await response.json();
@@ -61,14 +60,17 @@ async function solveWithBruteForce() {
     stopDynamicTimer()
 }
 
+function formatAlgorithmNameToApiRoute(algorithmName) {
+    return algorithmName?.toLowerCase()?.split(" ")?.join("-");
+}
 
-// Replace contents of this function with the real algorithm
+async function solveWithBruteForce() {
+    await solve("Brute Force")
+}
+
+
 async function solveWithCSP() {
-    localStorage.setItem("Algorithm", "CSP")
-    const response = await fetch("http://localhost:8000/brute-force/");
-    const { board } = await response.json();
-    fillBoard(board)
-    stopDynamicTimer()
+    await solve("CSP")
 }
 
 function displayTime(solveAlgorithm) {
