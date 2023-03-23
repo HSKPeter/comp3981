@@ -28,12 +28,10 @@ clearButton.addEventListener("click", function () {
     window.location.href = "main_menu.html";
 });
 
-
-// Replace contents of this function with the real algorithm
-async function solveWithBruteForce() {
+async function solve(algorithm) {
     spinner.style.display = "block"
     disableButtons()
-    localStorage.setItem("Algorithm", "Brute Force");
+    localStorage.setItem("Algorithm", algorithm);
     const boardJsonString = localStorage.getItem("Board");
     const parsedBoard = JSON.parse(boardJsonString);
 
@@ -45,41 +43,47 @@ async function solveWithBruteForce() {
         body: JSON.stringify({ board: parsedBoard })
     };
 
-    const response = await fetch("http://localhost:8000/brute-force/", fetchConfig);
+    const apiRoute = formatAlgorithmNameToApiRoute(algorithm);
+    const response = await fetch(`http://localhost:8000/${apiRoute}/`, fetchConfig);
     spinner.style.display = "none"
     if (response.status === 404) {
         const { message } = await response.json();
         alert(message);
+
+        throw Error()
         
         // myReject()
-        return;
+        // return;
     }
-    const { board } = await response.json();
+    const { board, duration } = await response.json();
     // myResolve()
 
     fillBoard(board)
-    stopDynamicTimer()
+    stopDynamicTimer({duration, status: SUCCESS})
+}
+
+function formatAlgorithmNameToApiRoute(algorithmName) {
+    return algorithmName?.toLowerCase()?.split(" ")?.join("-");
+}
+
+async function solveWithBruteForce() {
+    await solve("Brute Force")
 }
 
 
-// Replace contents of this function with the real algorithm
 async function solveWithCSP() {
-    localStorage.setItem("Algorithm", "CSP")
-    const response = await fetch("http://localhost:8000/brute-force/");
-    const { board } = await response.json();
-    fillBoard(board)
-    stopDynamicTimer()
+    await solve("CSP")
 }
 
 function displayTime(solveAlgorithm) {
     startTime = Date.now()
     intervalId = setInterval(updateTime, 10);
-    solveAlgorithm().then(
-        function() {
-            stopDynamicTimer(FAIL)
-            enableButtons()
-        }
-    )
+    solveAlgorithm()
+    .then(enableButtons)
+    .catch(() => {
+        stopDynamicTimer({status: FAIL})
+        enableButtons()
+    })
     // endTime = Date.now();
     // deltaTime = endTime - startTime;
     // timeText.innerText = deltaTime;
@@ -189,7 +193,7 @@ async function main() {
     fillBoard(board_values)
 }
 
-function stopDynamicTimer(status = SUCCESS) {
+function stopDynamicTimer({duration, status}) {
     clearInterval(intervalId);
     if (status === FAIL) {
         document.getElementById("time-title").style.color = "#FF0000"
@@ -198,6 +202,10 @@ function stopDynamicTimer(status = SUCCESS) {
     }
     
     intervalId = null;
+
+    if (duration) {
+        showTime(duration)
+    }
 }
 
 function updateTime() {
@@ -205,8 +213,12 @@ function updateTime() {
     const minutes = Math.floor(elapsedTime / (1000 * 60));
     const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
     const milliseconds = Math.floor((elapsedTime % 1000) / 10);
-    document.getElementById("time").textContent =
-        `${padNumber(minutes)}:${padNumber(seconds)}:${padNumber(milliseconds)}`;
+    const formattedTime = `${padNumber(minutes)}:${padNumber(seconds)}:${padNumber(milliseconds)}`
+    showTime(formattedTime)
+}
+
+function showTime(timeToDisplay) {
+    document.getElementById("time").textContent = timeToDisplay;
 }
 
 function padNumber(num) {

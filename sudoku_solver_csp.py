@@ -1,3 +1,8 @@
+import copy
+import sys
+
+import sudoku_solver
+
 ROW = 0
 COL = 1
 
@@ -10,26 +15,70 @@ FLOOR_SQUARE_ROOTS = {
 }
 
 
+class InvalidAssignmentException(Exception):
+    pass
+
+
+def get_sub_square_index(n, row, col) -> int:
+    sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
+    sub_m = n // sub_n  # number of sub-squares in each row or column
+    sub_row = row // sub_m
+    sub_col = col // sub_n
+    sub_square_index = sub_row * sub_m + sub_col
+    # sub_square_index starting from 0, counting from top-left to bottom-right of the board
+    return sub_square_index
+
+
+class ArcsCollection:
+    def __init__(self, initial_arcs):
+        self._arcs = set(initial_arcs)
+        self._priority_arcs_stack = list()
+
+    def __len__(self):
+        return len(self._arcs) + len(self._priority_arcs_stack)
+
+    def pop(self):
+        if len(self._priority_arcs_stack) > 0:
+            return self._priority_arcs_stack.pop()
+
+        return self._arcs.pop()
+
+    def add_priority_arc(self, arc):
+        if arc in self._arcs:
+            self._arcs.remove(arc)
+
+        self._priority_arcs_stack.append(arc)
+
+
 class Assignments:
     def __init__(self, board):
         self.n = len(board)
-        self.values = {(row, col): board[row][col] for row in range(self.n) for col in range(self.n)}
-        # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
-        # value = the number that is assigned to the cell
+        self.values = {(row, col, self.get_sub_square_index(
+            row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
+        self.all_arcs = self.find_all_arcs()
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
-        pass
+        self.values[key] = 0
 
     # key = (row_index, col_index, sub_square_index)
     def add(self, key, value) -> None:
-        pass
+        self.values[key] = value
 
     def is_complete(self) -> bool:
         """
         check if this set of assignments is a solution to the problem (the whole board is filled and satisfies the constraints)
         """
-        pass
+        for value in self.values.values():
+            if value == 0:
+                return False
+        all_arcs = set.union(*self.all_arcs.values())
+        for arc in all_arcs:
+            cell_one, cell_two = arc
+            if self.values[cell_one] == self.values[cell_two]:
+                raise InvalidAssignmentException(
+                    f"{cell_one} and {cell_two} were both assigned {self.values[cell_one]}\n{self}")
+        return True
 
     def select_unassigned_cell(self, constraints) -> (int, int):
         """
@@ -45,8 +94,42 @@ class Assignments:
 
         While both MRV and Degree heuristics aim to improve the efficiency of the search process, they focus on different aspects of the problem. MRV looks at the remaining possibilities for a variable, while Degree looks at the relationships and constraints between unassigned variables. In some cases, it's beneficial to use a combination of both heuristics to select the most promising unassigned variable for the next step in the search process.
         """
-        pass
+        unassigned_cells = [cell for cell in self.values.keys() if self.cell_is_empty(cell)]
 
+        # Find the cells with the smallest domain size
+        min_domain_size = min(len(constraints.domains[cell]) for cell in unassigned_cells)
+        min_domain_cells = [cell for cell in unassigned_cells if len(constraints.domains[cell]) == min_domain_size]
+
+        if len(min_domain_cells) == 1:
+            return min_domain_cells[0]
+
+        # If there are ties for the smallest domain size, use the degree as a tie-breaker
+        max_degree_cell = min_domain_cells[0]
+        max_degree = self.find_degree(max_degree_cell)
+
+        for cell in min_domain_cells[1:]:
+            cell_degree = self.find_degree(cell)
+            if cell_degree > max_degree:
+                max_degree = cell_degree
+                max_degree_cell = cell
+
+        return max_degree_cell
+
+    def cell_is_empty(self, cell) -> bool:
+        return self.values[cell] == 0
+
+    def find_degree(self, cell) -> int:
+        degree = 0
+        arcs = self.get_arcs(cell)
+        for arc in arcs:
+            other_cell = arc[1]
+            if self.cell_is_empty(other_cell) == 0:
+                degree += 1
+        return degree
+
+    # cell_key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
+    # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
+    # and the value would be a set of integers that represent the domain values of that cell
     def find_ordered_domain_values(self, cell_key, constraints) -> list[int]:
         """
         Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
@@ -63,64 +146,213 @@ class Assignments:
         3. Assign the values to the current variable in the order determined by the LCV heuristic.
         By using the LCV heuristic, you can increase the likelihood of finding a solution without the need for excessive backtracking. This can result in a more efficient search process and, ultimately, a faster solution to the CSP.
         """
-        pass
+        # cell_key is a tuple of three integers
+        # constraints is a Constraints object
+        domain_values = list(constraints.domains.get(cell_key))
+        if len(domain_values) == 1:
+            return domain_values
 
-    def infer(self, cell, constraints) -> dict[(int, int): set[int]]:
+        def count_constraints(cell_key, value):
+            count = 0
+            for neighbor_key in self.find_cell_neighbours(cell_key):
+                # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
+                if value in constraints.domains.get(neighbor_key):
+                    count += 1
+            return count
+
+        domain_values.sort(key=lambda x: count_constraints(cell_key, x))
+
+        return domain_values
+
+    # # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
+    # # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
+    # # and the value would be a set of integers that represent the domain values of that cell
+    def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
          AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
          after assigning a value to the current variable.
 
-        This function returns a dictionary where the keys are are cells whose domain is updated based on the "cell" value
+        This function returns a dictionary where the keys are cells whose domain is updated based on the "cell" value
         If any of the domains reduce to none (size 0) then this function fails and returns None
 
         """
-        pass
+        assigned_value = self.values[assigned_cell]
+        constraints_copy = {key: value.copy()
+                            for (key, value) in constraints.items()}
+        constraints_copy[assigned_cell] = {assigned_value}
 
-    def copy(self):
-        pass
+        assigned_cell_neighbors = self.find_cell_neighbours(assigned_cell)
+        for neighbor in assigned_cell_neighbors:
+            constraints_copy[neighbor].discard(assigned_value)
 
-    def to_2d_array(self):
-        pass
+        # queue = list(self.get_arcs(assigned_cell)) # TODO: consider using this line for optimization
+        queue = list()
+        for _, arc_set in self.all_arcs.items():
+            for arc in arc_set:
+                queue.append(arc)
+
+        while len(queue) > 0:
+            current_cell, other_cell = queue.pop()
+            has_revised, constraints_copy = self.revise(constraints_copy, cell_to_revise=other_cell, cell_to_check=current_cell)
+            if has_revised:
+                if len(constraints_copy[other_cell]) == 0:
+                    return None
+                other_cell_neighbors = self.find_cell_neighbours(other_cell)
+                other_cell_neighbors.remove(current_cell)
+                for neighbor in other_cell_neighbors:
+                    arc_to_prioritize = (other_cell, neighbor)
+                    if arc_to_prioritize in queue:
+                        queue.remove(arc_to_prioritize)
+                    queue.append(arc_to_prioritize)
+
+        result_constraints = dict()
+        old_constraints = dict()
+        for key, value in constraints_copy.items():
+            if constraints_copy[key] != constraints[key]:
+                result_constraints[key] = value
+                old_constraints[key] = constraints[key]
+
+
+        return result_constraints, old_constraints
+
+    def get_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
+        return self.all_arcs[cell]
+
+    # (int, int, int) = cell
+    # ((int, int, int), (int, int, int)) = binary arc
+    # set(((int, int, int), (int, int, int))) = set of binary arc
+    def compute_arcs(self, cell: (int, int, int)) -> set[((int, int, int), (int, int, int))]:
+        arcs = set()
+        row_index, col_index, sub_square_index = cell
+        for counter_cell in self.values.keys():
+            counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
+            is_same_row = row_index == counter_cell_row_index
+            is_same_col = col_index == counter_cell_col_index
+            is_same_sub_square = sub_square_index == counter_cell_sub_square_index
+            is_different_cell = cell != counter_cell
+
+            if is_different_cell and (is_same_row or is_same_col or is_same_sub_square):
+                arcs.add((cell, counter_cell))
+
+        return arcs
+
+    def find_all_arcs(self) -> dict[(int, int, int), set]:
+        all_arcs = dict()
+        for cell in self.values.keys():
+            arcs = self.compute_arcs(cell)
+            all_arcs[cell] = arcs
+        return all_arcs
+
+    def find_cell_neighbours(self, cell: (int, int, int)):
+        cell_neighbours = set()
+        row_index, col_index, sub_square_index = cell
+        for counter_cell in self.values.keys():
+            counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
+            is_same_row = row_index == counter_cell_row_index
+            is_same_col = col_index == counter_cell_col_index
+            is_same_sub_square = sub_square_index == counter_cell_sub_square_index
+            is_different_cell = cell != counter_cell
+
+            if is_different_cell and (is_same_row or is_same_col or is_same_sub_square):
+                cell_neighbours.add(counter_cell)
+
+        return cell_neighbours
+
+    def __str__(self):
+        sub_square_size = int(self.n ** 0.5)
+        full_row = "+".join(["-" * (sub_square_size * 5 - 1)] * sub_square_size)
+
+        board_str = ''
+        for row in range(self.n):
+            if row % sub_square_size == 0:
+                board_str += full_row + '\n'
+            row_str = ' |'
+            for col in range(self.n):
+                value = self.values[(row, col, self.get_sub_square_index(row, col))]
+                if value == 0:
+                    row_str += '__'
+                else:
+                    row_str += f'{value} ' if value < 10 else f'{value}'
+                if (col + 1) % sub_square_size == 0:
+                    row_str += '  |'
+                row_str += "  "
+            board_str += row_str + '\n'
+        board_str += full_row
+
+        return board_str + '\n'
+
+    @staticmethod
+    def revise(constraints, cell_to_revise, cell_to_check):
+        has_revised = False
+        domain_of_cell_to_check: set = constraints[cell_to_check]
+        if len(domain_of_cell_to_check) == 1:
+            domain_value = next(iter(domain_of_cell_to_check))  # get one element from the set
+            for value_in_cell_to_revise in list(constraints[cell_to_revise]):
+                if domain_value == value_in_cell_to_revise:
+                    constraints[cell_to_revise].remove(value_in_cell_to_revise)
+        return has_revised, constraints
 
     def get_sub_square_index(self, row, col) -> int:
-        n = self.n
-        sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
-        sub_m = n // sub_n  # number of sub-squares in each row or column
-        sub_row = row // sub_m
-        sub_col = col // sub_n
-        sub_index = sub_row * sub_m + sub_col
-        return sub_index
+        return get_sub_square_index(self.n, row, col)
+
+    def to_2d_array(self):
+        two_d_array = list()
+        for i in range(self.n):
+            arr = list()
+            for j in range(self.n):
+                arr.append(0)
+            two_d_array.append(arr)
+
+        for key, value in self.values.items():
+            row_index, col_index, _ = key
+            two_d_array[row_index][col_index] = value
+
+        return two_d_array
 
 
 class Constraints:
     def __init__(self, assignments: Assignments):
         # key = (row_index, col_index, sub_square_index)
-        # Note: sub_square_index starting from 1, counting from top-left to bottom-right of the board
+        # Note: sub_square_index starting from 0, counting from top-left to bottom-right of the board
         # value = a set that representing the domain
-        # self.data = {k: v for (k, v) in data.items()}
-        # self.data_copy = {k: v for (k, v) in self.data.items()}
-        cells = assignments.values.keys()
-        self.domains = {cell: set(range(1, 10)) for cell in cells}
-        self.arcs = self.build_arcs(cells)
+        self.domains = dict()
+        for cell_key, cell_value in assignments.values.items():
+            if cell_value == 0:
+                self.domains[cell_key] = set(range(1, assignments.n + 1))
+            else:
+                self.domains[cell_key] = {cell_value}
 
-    def build_arcs(self, cells):
-        def same_row(cell1, cell2):
-            return cell1[ROW] == cell2[ROW]
+        self.domains = self.trim_domains(self.domains, assignments.n)
 
-        def same_column(cell1, cell2):
-            return cell1[COL] == cell2[COL]
+    @staticmethod
+    def trim_domains(domains, n):
+        updated_domains = domains.copy()
+        base = FLOOR_SQUARE_ROOTS[n]
+        for cell, domain in domains.items():
+            if len(domain) == 1:
+                filled_value = next(iter(domain))
+                row, col, subsquare = cell
 
-        def same_box(cell1, cell2):
-            return (cell1[ROW] // 3 == cell2[ROW] // 3) and (cell1[COL] // 3 != cell2[COL] // 3)
+                # Remove filled value from row domains
+                for r in range(n):
+                    if r != row:
+                        updated_domains[(r, col, base * (r // base) + col // base)].discard(filled_value)
 
-        arcs = set()
-        for cell1 in cells:
-            for cell2 in cells:
-                if cell1 != cell2:
-                    if same_row(cell1, cell2) or same_column(cell1, cell2) or same_box(cell1, cell2):
-                        arcs.add((cell1, cell2))
-        return arcs
+                # Remove filled value from column domains
+                for c in range(n):
+                    if c != col:
+                        updated_domains[(row, c, base * (row // base) + c // base)].discard(filled_value)
+
+                # Remove filled value from subsquare domains
+                subsquare_row_start = base * (row // base)
+                subsquare_col_start = base * (col // base)
+                for r in range(subsquare_row_start, subsquare_row_start + 3):
+                    for c in range(subsquare_col_start, subsquare_col_start + 3):
+                        if r != row and c != col:
+                            updated_domains[(r, c, base * (r // base) + c // base)].discard(filled_value)
+
+        return updated_domains
 
     def add_inferences(self, inferences_to_add):
         """
@@ -128,39 +360,74 @@ class Constraints:
             inferences_to_add: a dict where the key is a tuple of (row_index, col_index, sub_square_index),
             and the value is a set of numbers that represents the domain values
         """
-        # mutate self.data (maybe with some looping)
-        pass
-
-    def copy(self):
-        return Constraints(self.data)
-
-    def remove_inferences(self):
-        self.data = {k: v for (k, v) in self.data_copy.items()}
-
-    def is_consistent(self, cell, value, constraints):
-        pass
+        self.domains.update(inferences_to_add)
 
 
-def backtrack(constraints: Constraints, assignment: Assignments):
+def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0):
+    if depth % 10 == 0:
+        print(f"depth {depth}")
+        print(assignment)
+        print()
     if assignment.is_complete():
         return assignment
     cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
-        if assignment.is_consistent(cell, value, constraints):
-            assignment.add(cell, value)
-            inferences = assignment.infer(cell, constraints)
-            if inferences is not None:
-                constraints.add_inferences(inferences)
-                result = backtrack(constraints.copy(), assignment)
-                if result is not None:
-                    return result
-                constraints.remove_inferences()
-            assignment.remove(cell)
+        # print(f"testing {value} in {cell}")
+        assignment.add(cell, value)
+        # print(assignment)
+        inference_results = assignment.infer(cell, constraints.domains)
+        # print(f"inference result {inference_results}")
+        if inference_results is not None:
+            inferences, revert_inferences = inference_results
+            # print(f"inferences {inferences}")
+            constraints.add_inferences(inferences)
+            result = backtrack(constraints, assignment, depth + 1)
+            if result is not None:
+                return result
+            constraints.add_inferences(revert_inferences)
+            # print("backtracking")
+        assignment.remove(cell)
+
     return None
 
 
+def solve_with_csp(board, recursion_limit=None):
+    assignments = Assignments(board)
+    constraints = Constraints(assignments)
+    
+    if recursion_limit is not None:
+        sys.setrecursionlimit(recursion_limit)
+        print("Recursion limit: ", recursion_limit)
+    
+    result = backtrack(constraints, assignments)
+    
+    return result.to_2d_array()
+
+
 def main():
-    pass
+    NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
+                   [9, 0, 0, 3, 0, 5, 0, 0, 1],
+                   [0, 0, 1, 8, 0, 6, 4, 0, 0],
+                   [0, 0, 8, 1, 0, 2, 9, 0, 0],
+                   [7, 0, 0, 0, 0, 0, 0, 0, 8],
+                   [0, 0, 6, 7, 0, 8, 2, 0, 0],
+                   [0, 0, 2, 6, 0, 9, 5, 0, 0],
+                   [8, 0, 0, 2, 0, 3, 0, 0, 9],
+                   [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+
+    ONLY_EMPTY_VALUE = 0
+
+    # NINE_X_NINE = [[ONLY_EMPTY_VALUE, 6, 2, 4, 9, 8, 5, 1, 3], [9, 3, 1, 2, 5, 6, 4, 8, 7], [4, 5, 8, 1, 3, 7, 2, 6, 9], [5, 1, 9, 7, 8, 2, 3, 4, 6],
+    #  [6, 8, 7, 9, 4, 3, 1, 5, 2], [3, 2, 4, 5, 6, 1, 9, 7, 8], [2, 9, 6, 8, 1, 4, 7, 3, 5], [8, 4, 5, 3, 7, 9, 6, 2, 1],
+    #  [1, 7, 3, 6, 2, 5, 8, 9, 4]]
+    # board = sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
+    assignments = Assignments(NINE_X_NINE)
+    constraints = Constraints(assignments)
+    print("recursion limit:", sys.setrecursionlimit(1000000))
+    result = backtrack(constraints, assignments)
+    print("Solution")
+    print(result)
+    print(result.to_2d_array())
 
 
 if __name__ == '__main__':

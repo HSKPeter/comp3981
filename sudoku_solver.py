@@ -16,8 +16,8 @@ SIXTEEN_X_SIXTEEN_SOLVED = [[15, 8, 16, 14, 9, 13, 6, 1, 5, 3, 7, 4, 10, 2, 11, 
                             [8, 7, 14, 13, 16, 5, 11, 10, 12, 15, 4, 1, 2, 3, 6, 9],
                             [16, 3, 10, 11, 13, 14, 4, 15, 7, 2, 6, 9, 5, 1, 12, 8],
                             [1, 9, 5, 15, 8, 6, 12, 2, 10, 13, 3, 11, 14, 16, 4, 7],
-                            [2, 6, 4, 12, 3, 7, 1, 9, 14, 16, 5, 8, 15, 11, 13, 10], [
-                                10, 4, 8, 16, 14, 12, 5, 7, 9, 1, 11, 13, 6, 15, 3, 2],
+                            [2, 6, 4, 12, 3, 7, 1, 9, 14, 16, 5, 8, 15, 11, 13, 10],
+                            [10, 4, 8, 16, 14, 12, 5, 7, 9, 1, 11, 13, 6, 15, 3, 2],
                             [11, 2, 9, 5, 15, 4, 16, 13, 6, 12, 8, 3, 7, 14, 10, 1],
                             [12, 15, 7, 6, 1, 10, 8, 3, 2, 4, 14, 5, 16, 13, 9, 11],
                             [13, 14, 1, 3, 2, 11, 9, 6, 15, 7, 16, 10, 12, 8, 5, 4],
@@ -273,7 +273,7 @@ class Node:
             return has_less_empty_cells
 
 
-def change_values_to_zero(arr, p=0.75):
+def mask_board(arr, p=0.75):
     """
     Takes an n x n array and changes p percent of the values to 0.
 
@@ -294,7 +294,7 @@ def change_values_to_zero(arr, p=0.75):
 
 
 def main():
-    board = change_values_to_zero(SIXTEEN_X_SIXTEEN_SOLVED)
+    board = mask_board(SIXTEEN_X_SIXTEEN_SOLVED)
     solver = SudokuSolver(board)
     solution_node = solver.solve()
     print(f"solution:\n{solution_node}")
