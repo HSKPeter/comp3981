@@ -165,7 +165,7 @@ class Assignments:
         for neighbor in assigned_cell_neighbors:
             constraints_copy[neighbor].discard(assigned_value)
 
-        # queue = list(self.find_arcs(assigned_cell)) # TODO: consider using this line for optimization
+        # queue = list(self.get_arcs(assigned_cell)) # TODO: consider using this line for optimization
         queue = list()
         for _, arc_set in self.all_arcs.items():
             for arc in arc_set:
@@ -188,6 +188,7 @@ class Assignments:
             if constraints_copy[key] != constraints[key]:
                 result_constraints[key] = value
                 old_constraints[key] = constraints[key]
+
 
         return result_constraints, old_constraints
 
@@ -368,7 +369,7 @@ def main():
     # NINE_X_NINE = [[ONLY_EMPTY_VALUE, 6, 2, 4, 9, 8, 5, 1, 3], [9, 3, 1, 2, 5, 6, 4, 8, 7], [4, 5, 8, 1, 3, 7, 2, 6, 9], [5, 1, 9, 7, 8, 2, 3, 4, 6],
     #  [6, 8, 7, 9, 4, 3, 1, 5, 2], [3, 2, 4, 5, 6, 1, 9, 7, 8], [2, 9, 6, 8, 1, 4, 7, 3, 5], [8, 4, 5, 3, 7, 9, 6, 2, 1],
     #  [1, 7, 3, 6, 2, 5, 8, 9, 4]]
-    board = sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
+    board = sudoku_solver.mask_board(sudoku_solver.SIXTEEN_X_SIXTEEN_SOLVED)
     assignments = Assignments(board)
     constraints = Constraints(assignments)
     print("recursion limit:", sys.setrecursionlimit(1000000))
