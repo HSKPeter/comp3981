@@ -28,5 +28,21 @@ git clone https://github.com/HSKPeter/comp3981.git
 ### Limitation
 - TBC
 
-## References
+## CSP
+
+### Degree and MRV
 - TBC
+
+### MAC heuristics based on AC-3
+- TBC
+
+## References
+- [Solving Sudoku by Heuristic Search](https://medium.com/@davidcarmel/solving-sudoku-by-heuristic-search-b0c2b2c5346e)
+- [A Sudoku Solver - Mike Schermerhorn](https://www.cs.rochester.edu/u/brown/242/assts/termprojs/Sudoku09.pdf)
+- [Study of Brute Force and Heuristic Approach to
+Solve Sudoku](https://www.ijettcs.org/Volume4Issue5(2)/IJETTCS-2015-10-10-17.pdf)
+
+
+
+
+
