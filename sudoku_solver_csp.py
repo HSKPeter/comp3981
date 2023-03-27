@@ -1,3 +1,8 @@
+import copy
+
+from assignment import Assignments
+from constraint import Constraints
+
 ROW = 0
 COL = 1
 
@@ -14,97 +19,107 @@ class InvalidAssignmentException(Exception):
     pass
 
 
+class Node:
+    def __init__(self, assignment, constraint=None, cell_changed=None) -> None:
+        self.assignment = assignment
+        self.constraint = Constraints(assignment) if constraint is None else constraint
+        self.cell_changed = cell_changed
+        # self.infer(cell_changed)
+
+        self.is_checked = False
+        self.children_nodes = []
+
+    def infer(self, cell_changed):
+        inferences = self.assignment.infer(cell_changed, self.constraint)
+
+        if inferences is not None:
+            self.constraint.add_inferences(inferences)
+
+    def __str__(self):
+        return str(self.assignment)
+
+    def get_first_unchecked_child(self):
+        for node in self.children_nodes:
+            if not node.is_checked:
+                return node
+
+    def is_solution(self):
+        return self.assignment.is_complete()
+
+    def copy_assignment(self):
+        return copy.deepcopy(self.assignment)
+
+    def copy_constraint(self):
+        return copy.deepcopy(self.constraint)
+
+    def expand(self):
+        self.infer(self.cell_changed)
+
+        most_preferred_cell = self.assignment.select_unassigned_cell(self.constraint)
+
+        for value in self.assignment.find_ordered_domain_values(most_preferred_cell, self.constraint):
+            assignment_copy = self.copy_assignment()
+
+            assignment_copy.add(most_preferred_cell, value)
+            self.children_nodes.insert(0, Node(assignment_copy, cell_changed=most_preferred_cell))
+
+    def check(self):
+        self.is_checked = True
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+
 def get_sub_square_index(n, row, col) -> int:
     sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
     sub_m = n // sub_n  # number of sub-squares in each row or column
     sub_row = row // sub_m
     sub_col = col // sub_n
     sub_square_index = sub_row * sub_m + sub_col
+
     # sub_square_index starting from 0, counting from top-left to bottom-right of the board
     return sub_square_index
 
 
+class SudokuCspSolver:
+    def __init__(self, board) -> None:
+        assignment = Assignments(board)
+        node = Node(assignment)
+        self.stack = [node]
 
+    def solve(self):
+        while len(self.stack) > 0:
 
-def backtrack(constraints: Constraints, assignment: Assignments):
-    if assignment.is_complete():
-        return assignment
-    cell = assignment.select_unassigned_cell(
-        constraints)  # cell = (row, col, sub_square)
-    for value in assignment.find_ordered_domain_values(cell, constraints):
-        if assignment.is_consistent(cell, value, constraints):
-            assignment.add(cell, value)
-            inferences, revert_inferences = assignment.infer(cell, constraints.domains)
-            if inferences is not None:
-                constraints.add_inferences(inferences)
-                result = backtrack(constraints, assignment)
-                if result is not None:
-                    return result
-                constraints.add_inferences(revert_inferences)
-            assignment.remove(cell)
-            # constraints = prev_constraints
+            current_node = self.stack[-1]
 
-    return None
+            if current_node.is_solution():
+                return current_node
 
-def dev_stack(assignment):
-    stack = []
-    to_start = True
+            # print(current_node)
 
-    while len(stack) > 0 or to_start:
-        constraints, assignment = stack.pop()
+            current_node.expand()
+            next_node = current_node.get_first_unchecked_child()
 
-        if assignment.is_complete():
-            return assignment
-
-        cell = assignment.select_unassigned_cell(constraints)
-
-        for value in assignment.find_ordered_domain_values(cell, constraints):
-            if assignment.is_consistent(cell, value, constraints):
-                assignment.add(cell, value)
-                inferences, revert_inferences = assignment.infer(cell, constraints.domains)
-                if inferences is not None:
-                    constraints.add_inferences(inferences)
-                    stack.append(constraints, assignment)
-
-        to_start = False
+            if next_node is None:
+                current_node.check()
+                self.stack.pop()
+            else:
+                self.stack.append(next_node)
 
 
 
-def dev_backtrack(constraints: Constraints, assignment: Assignments):
-    """
-    TODO: this function is for dev and demo purpose only.  It would be removed in future.
-    """
-    print("Original assignments")
-    print(assignment.values)
-    print("Is complete")
-    print(assignment.is_complete())
-    print("Original constraints: ")
-    print(constraints.domains)
 
-    cell = (0, 1, 0)
-    print("\nCell: ")
-    print(cell)
-
-    inferences, revert_inferences = assignment.infer(cell, constraints.domains)
-
-    print("\nNew constraints inferred: ")
-    print(inferences)
-
-    print("These are updated from")
-    print(revert_inferences)
-
-
-def solve_with_csp(board, recursion_limit=None):
-    assignments = Assignments(board)
-    constraints = Constraints(assignments)
-
-    if recursion_limit is not None:
-        sys.setrecursionlimit(recursion_limit)
-        print("Recursion limit: ", recursion_limit)
-
-    result = backtrack(constraints, assignments)
-
-    return result.to_2d_array()
+# def solve_with_csp(board, recursion_limit=None):
+#     assignments = Assignments(board)
+#     constraints = Constraints(assignments)
+#
+#     if recursion_limit is not None:
+#         sys.setrecursionlimit(recursion_limit)
+#         print("Recursion limit: ", recursion_limit)
+#
+#     result = backtrack(constraints, assignments)
+#
+#     return result.to_2d_array()
 
 
 def main():
@@ -117,16 +132,12 @@ def main():
                    [0, 0, 2, 6, 0, 9, 5, 0, 0],
                    [8, 0, 0, 2, 0, 3, 0, 0, 9],
                    [0, 0, 5, 0, 1, 0, 3, 0, 0]]
-    test_assignments = Assignments(NINE_X_NINE)
-    test_constraints = Constraints(test_assignments)
+    # NINE_X_NINE = [[0, 6, 2, 4, 9, 8, 5, 1, 3], [9, 3, 1, 2, 5, 6, 4, 8, 7], [4, 5, 8, 1, 3, 7, 2, 6, 9], [5, 1, 9, 7, 8, 2, 3, 4, 6], [6, 8, 7, 9, 4, 3, 1, 5, 2], [3, 2, 4, 5, 6, 1, 9, 7, 8], [2, 9, 6, 8, 1, 4, 7, 3, 5], [8, 4, 5, 3, 7, 9, 6, 2, 1], [1, 7, 3, 6, 2, 5, 8, 9, 4]]
 
-    result = backtrack(test_constraints, test_assignments)
+
+    solver = SudokuCspSolver(NINE_X_NINE)
+    result = solver.solve()
     print(result)
-    # dev_backtrack(test_constraints, test_assignments)
-    # print("Values: \n", test_assignments.values)
-    # ordered_values = test_assignments.find_ordered_domain_values(
-    #     (0, 0, 0), test_constraints)
-    # print(ordered_values)
 
 
 if __name__ == '__main__':
