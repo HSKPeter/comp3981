@@ -91,7 +91,8 @@ def run_csp(seed=None):
 
 
 def main():
-    time_function_and_log_to_file(run_csp, "csp_test_results.txt", 100, "improved code with pop() and checking if arc in queue")
+    time_function_and_log_to_file(
+        run_csp, "csp_test_results.txt", 100, "9x9 with changes")
 
 
 if __name__ == '__main__':

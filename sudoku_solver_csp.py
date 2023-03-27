@@ -61,6 +61,7 @@ class Assignments:
         self.values = {(row, col, self.get_sub_square_index(
             row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
         self.all_arcs = self.find_all_arcs()
+        self.every_cell_neighbour = self.find_every_cell_neighbours()
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
@@ -99,11 +100,14 @@ class Assignments:
 
         While both MRV and Degree heuristics aim to improve the efficiency of the search process, they focus on different aspects of the problem. MRV looks at the remaining possibilities for a variable, while Degree looks at the relationships and constraints between unassigned variables. In some cases, it's beneficial to use a combination of both heuristics to select the most promising unassigned variable for the next step in the search process.
         """
-        unassigned_cells = [cell for cell in self.values.keys() if self.cell_is_empty(cell)]
+        unassigned_cells = [
+            cell for cell in self.values.keys() if self.cell_is_empty(cell)]
 
         # Find the cells with the smallest domain size
-        min_domain_size = min(len(constraints.domains[cell]) for cell in unassigned_cells)
-        min_domain_cells = [cell for cell in unassigned_cells if len(constraints.domains[cell]) == min_domain_size]
+        min_domain_size = min(
+            len(constraints.domains[cell]) for cell in unassigned_cells)
+        min_domain_cells = [cell for cell in unassigned_cells if len(
+            constraints.domains[cell]) == min_domain_size]
 
         if len(min_domain_cells) == 1:
             return min_domain_cells[0]
@@ -159,7 +163,7 @@ class Assignments:
 
         def count_constraints(cell_key, value):
             count = 0
-            for neighbor_key in self.find_cell_neighbours(cell_key):
+            for neighbor_key in self.every_cell_neighbour.get(cell_key):
                 # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
                 if value in constraints.domains.get(neighbor_key):
                     count += 1
@@ -191,17 +195,18 @@ class Assignments:
 
         while len(queue) > 0:
             current_cell, other_cell = queue.pop()
-            has_revised, constraints_copy = self.revise(constraints_copy, cell_to_revise=other_cell, cell_to_check=current_cell)
+            has_revised, constraints_copy = self.revise(
+                constraints_copy, cell_to_revise=other_cell, cell_to_check=current_cell)
             if has_revised:
                 if len(constraints_copy[other_cell]) == 0:
                     return None
-                other_cell_neighbors = self.find_cell_neighbours(other_cell)
-                other_cell_neighbors.remove(current_cell)
+                other_cell_neighbors = self.every_cell_neighbour[other_cell]
                 for neighbor in other_cell_neighbors:
-                    arc_to_prioritize = (other_cell, neighbor)
-                    if arc_to_prioritize in queue:
-                        queue.remove(arc_to_prioritize)
-                    queue.append(arc_to_prioritize)
+                    if neighbor != current_cell:
+                        arc_to_prioritize = (other_cell, neighbor)
+                        if arc_to_prioritize in queue:
+                            queue.remove(arc_to_prioritize)
+                        queue.append(arc_to_prioritize)
 
         result_constraints = dict()
         old_constraints = dict()
@@ -219,7 +224,8 @@ class Assignments:
         has_revised = False
         domain_of_cell_to_check: set = constraints[cell_to_check]
         if len(domain_of_cell_to_check) == 1:
-            domain_value = next(iter(domain_of_cell_to_check))  # get one element from the set
+            # get one element from the set
+            domain_value = next(iter(domain_of_cell_to_check))
             for value_in_cell_to_revise in list(constraints[cell_to_revise]):
                 if domain_value == value_in_cell_to_revise:
                     has_revised = True
@@ -254,6 +260,9 @@ class Assignments:
             all_arcs[cell] = arcs
         return all_arcs
 
+    def find_every_cell_neighbours(self):
+        return {cell: self.find_cell_neighbours(cell) for cell in self.values.keys()}
+
     def find_cell_neighbours(self, cell: (int, int, int)):
         cell_neighbours = set()
         row_index, col_index, sub_square_index = cell
@@ -271,7 +280,8 @@ class Assignments:
 
     def __str__(self):
         sub_square_size = int(self.n ** 0.5)
-        full_row = "+".join(["-" * (sub_square_size * 5 - 1)] * sub_square_size)
+        full_row = "+".join(["-" * (sub_square_size * 5 - 1)]
+                            * sub_square_size)
 
         board_str = ''
         for row in range(self.n):
@@ -279,7 +289,8 @@ class Assignments:
                 board_str += full_row + '\n'
             row_str = ' |'
             for col in range(self.n):
-                value = self.values[(row, col, self.get_sub_square_index(row, col))]
+                value = self.values[(
+                    row, col, self.get_sub_square_index(row, col))]
                 if value == 0:
                     row_str += '__'
                 else:
@@ -336,12 +347,14 @@ class Constraints:
                 # Remove filled value from row domains
                 for r in range(n):
                     if r != row:
-                        updated_domains[(r, col, base * (r // base) + col // base)].discard(filled_value)
+                        updated_domains[(
+                            r, col, base * (r // base) + col // base)].discard(filled_value)
 
                 # Remove filled value from column domains
                 for c in range(n):
                     if c != col:
-                        updated_domains[(row, c, base * (row // base) + c // base)].discard(filled_value)
+                        updated_domains[(
+                            row, c, base * (row // base) + c // base)].discard(filled_value)
 
                 # Remove filled value from subsquare domains
                 subsquare_row_start = base * (row // base)
@@ -349,7 +362,8 @@ class Constraints:
                 for r in range(subsquare_row_start, subsquare_row_start + 3):
                     for c in range(subsquare_col_start, subsquare_col_start + 3):
                         if r != row and c != col:
-                            updated_domains[(r, c, base * (r // base) + c // base)].discard(filled_value)
+                            updated_domains[(
+                                r, c, base * (r // base) + c // base)].discard(filled_value)
 
         return updated_domains
 
@@ -372,7 +386,8 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0,
             print("SOLUTION")
             print(assignment)
         return assignment
-    cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
+    cell = assignment.select_unassigned_cell(
+        constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
         assignment.add(cell, value)
         inference_results = assignment.infer(cell, constraints.domains)
