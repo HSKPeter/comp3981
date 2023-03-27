@@ -1,6 +1,3 @@
-import copy
-import sys
-
 ROW = 0
 COL = 1
 
@@ -95,6 +92,19 @@ def dev_backtrack(constraints: Constraints, assignment: Assignments):
 
     print("These are updated from")
     print(revert_inferences)
+
+
+def solve_with_csp(board, recursion_limit=None):
+    assignments = Assignments(board)
+    constraints = Constraints(assignments)
+
+    if recursion_limit is not None:
+        sys.setrecursionlimit(recursion_limit)
+        print("Recursion limit: ", recursion_limit)
+
+    result = backtrack(constraints, assignments)
+
+    return result.to_2d_array()
 
 
 def main():
