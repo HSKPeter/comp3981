@@ -96,14 +96,14 @@ def time_function_and_log_to_file(func, file_name, num_runs, description):
 
 
 def run_csp(seed=None):
-    board = mask_board(sudoku_solver.SIXTEEN_X_SIXTEEN_SOLVED, seed=seed)
+    board = mask_board(NINE_X_NINE_SOLVED, seed=seed)
     assignments = Assignments(board)
     constraints = Constraints(assignments)
     return backtrack(constraints, assignments, mute=True)
 
 
 def main():
-    time_function_and_log_to_file(run_csp, "csp_test_results.txt", 20, "16x16")
+    time_function_and_log_to_file(run_csp, "csp_test_results.txt", 20, "9x9 with changes profiled")
 
 
 if __name__ == '__main__':

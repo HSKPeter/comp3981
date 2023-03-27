@@ -61,6 +61,7 @@ class Assignments:
         self.values = {(row, col, self.get_sub_square_index(
             row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
         self.all_arcs = self.find_all_arcs()
+        self.every_cell_neighbour = self.find_every_cell_neighbours()
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
@@ -159,7 +160,7 @@ class Assignments:
 
         def count_constraints(cell_key, value):
             count = 0
-            for neighbor_key in self.find_cell_neighbours(cell_key):
+            for neighbor_key in self.every_cell_neighbour.get(cell_key):
                 # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
                 if value in constraints.domains.get(neighbor_key):
                     count += 1
@@ -172,9 +173,7 @@ class Assignments:
     # # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # # and the value would be a set of integers that represent the domain values of that cell
-    def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[
-                                                                                                     (int, int, int):
-                                                                                                     set[int]]:
+    def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
          AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
@@ -193,18 +192,17 @@ class Assignments:
 
         while len(queue) > 0:
             current_cell, other_cell = queue.pop()
-            has_revised, constraints_copy = self.revise(constraints_copy, cell_to_revise=other_cell,
-                                                        cell_to_check=current_cell)
+            has_revised, constraints_copy = self.revise(constraints_copy, cell_to_revise=other_cell, cell_to_check=current_cell)
             if has_revised:
                 if len(constraints_copy[other_cell]) == 0:
                     return None
-                other_cell_neighbors = self.find_cell_neighbours(other_cell)
-                other_cell_neighbors.remove(current_cell)
+                other_cell_neighbors = self.every_cell_neighbour[other_cell]
                 for neighbor in other_cell_neighbors:
-                    arc_to_prioritize = (other_cell, neighbor)
-                    if arc_to_prioritize in queue:
-                        queue.remove(arc_to_prioritize)
-                    queue.append(arc_to_prioritize)
+                    if neighbor != current_cell:
+                        arc_to_prioritize = (other_cell, neighbor)
+                        if arc_to_prioritize in queue:
+                            queue.remove(arc_to_prioritize)
+                        queue.append(arc_to_prioritize)
 
         result_constraints = dict()
         old_constraints = dict()
@@ -222,7 +220,8 @@ class Assignments:
         has_revised = False
         domain_of_cell_to_check: set = constraints[cell_to_check]
         if len(domain_of_cell_to_check) == 1:
-            domain_value = next(iter(domain_of_cell_to_check))  # get one element from the set
+            # get one element from the set
+            domain_value = next(iter(domain_of_cell_to_check))
             for value_in_cell_to_revise in list(constraints[cell_to_revise]):
                 if domain_value == value_in_cell_to_revise:
                     has_revised = True
@@ -256,6 +255,9 @@ class Assignments:
             arcs = self.compute_arcs(cell)
             all_arcs[cell] = arcs
         return all_arcs
+
+    def find_every_cell_neighbours(self):
+        return {cell: self.find_cell_neighbours(cell) for cell in self.values.keys()}
 
     def find_cell_neighbours(self, cell: (int, int, int)):
         cell_neighbours = set()
