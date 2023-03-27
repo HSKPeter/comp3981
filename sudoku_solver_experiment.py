@@ -80,10 +80,12 @@ class SudokuSolver:
         timeout = 0
         stack_size = len(self.stack)
         while stack_size > 0:
+            print(stack_size)
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
                 raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
             
             current_node = self.stack[-1]
+
             if current_node.is_solution():
                 if not mute:
                     print(f"result found: i = {i}")
@@ -296,23 +298,8 @@ def mask_board(original_board, p=0.75):
 
 
 def main():
-    # board = mask_board(SIXTEEN_X_SIXTEEN_SOLVED)
-    board = [[15, 0, 0, 0, 9, 13, 0, 0, 0, 3, 0, 4, 10, 0, 0, 0],
-                    [6, 0, 11, 7, 0, 0, 10, 8, 1, 14, 0, 0, 13, 0, 0, 15],
-                    [0, 13, 0, 0, 0, 16, 2, 0, 0, 11, 0, 12, 0, 0, 0, 0],
-                    [0, 0, 0, 4, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 7, 0],
-                    [0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0],
-                    [0, 0, 10, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0],
-                    [1, 0, 0, 15, 0, 0, 12, 0, 0, 0, 0, 0, 0, 16, 0, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [10, 4, 8, 0, 0, 0, 5, 0, 0, 1, 0, 0, 0, 15, 0, 0],
-                    [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0],
-                    [0, 0, 7, 0, 1, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0],
-                    [13, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 4],
-                    [0, 5, 0, 0, 6, 0, 0, 0, 0, 9, 2, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 9, 0, 0, 0, 14, 13, 0, 0, 0, 0, 0, 2, 0],
-                    [0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 1, 0, 0, 6], [0, 0, 15, 0, 0, 0, 0, 5, 0, 6, 0, 0, 3, 0, 0, 0]]
-    solver = SudokuSolver([[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 5, 0, 9, 0, 0, 8, 0, 0], [3, 0, 0, 0, 0, 0, 0, 0, 0], [0, 2, 0, 0, 0, 0, 0, 0, 8], [5, 8, 0, 0, 1, 0, 0, 2, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0], [6, 7, 0, 2, 0, 0, 0, 0, 0], [8, 9, 2, 0, 5, 0, 0, 3, 0], [0, 3, 0, 0, 0, 0, 0, 8, 0]])
+    board = mask_board(SIXTEEN_X_SIXTEEN_SOLVED)
+    solver = SudokuSolver(board)
     solution_node = solver.solve()
     print(f"solution:\n{solution_node}")
     if solution_node:

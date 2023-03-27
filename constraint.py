@@ -14,15 +14,15 @@ class Constraints:
             else:
                 self.domains[cell_key] = {cell_value}
 
-        self.domains_copy = copy.deepcopy(self.domains)
+        # self.domains_copy = copy.deepcopy(self.domains)
 
-    def add_inferences(self, inferences_to_add):
+    def update_inferences(self, new_inferences):
         """
         Args:
-            inferences_to_add: a dict where the key is a tuple of (row_index, col_index, sub_square_index),
+            new_inferences: a dict where the key is a tuple of (row_index, col_index, sub_square_index),
             and the value is a set of numbers that represents the domain values
         """
-        self.domains.update(inferences_to_add)
+        self.domains.update(new_inferences)
 
     def copy(self):
         return copy.deepcopy(self)

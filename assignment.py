@@ -89,12 +89,13 @@ class Assignments:
                 max_degree_cell = cell
 
         return max_degree_cell
+
     def cell_is_empty(self, cell) -> bool:
         return self.values[cell] == 0
 
     def find_degree(self, cell) -> int:
         degree = 0
-        arcs = self.find_arcs(cell)
+        arcs = self.find_arc(cell)
         # print(arcs)
         for arc in arcs:
             other_cell = arc[1]
@@ -144,7 +145,7 @@ class Assignments:
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
 
-    def infer(self, cell: (int, int, int), constraint) -> dict[(int, int): set[int]]:
+    def infer(self, cell_changed, constraint) -> dict[(int, int): set[int]]:
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
          AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
@@ -154,25 +155,19 @@ class Assignments:
         If any of the domains reduce to none (size 0) then this function fails and returns None
 
         """
-
+        # print("X")
         constraint_domain = constraint.domains
 
-        constraints_copy = {key: value.copy()
-                            for (key, value) in constraint_domain.items()}
+        constraints_copy = {key: value.copy() for (key, value) in constraint_domain.items()}
 
-        queue = []
-
-        # if cell is None:
-        all_arcs = self.find_all_arcs()
-        for key, value in all_arcs.items():
-            for arc in value:
+        queue = list()
+        for _, arc_set in self.all_arcs.items():
+            for arc in arc_set:
                 queue.append(arc)
-        # else:
-        #     constraints_copy[cell] = {self.values[cell]}
-        #     initial_arcs = self.find_arcs(cell)
-        #     queue = list(initial_arcs)
+        # queue = list(self.find_arc(cell_changed)) if cell_changed is not None else []
 
         while len(queue) > 0:
+
             cell_i, cell_j = queue.pop()
             has_revised, constraints_copy = self.revise(
                 constraints_copy, cell_i, cell_j)
@@ -183,17 +178,14 @@ class Assignments:
                 cell_neighbours_excluding_cell_j = [
                     cell_neighbour for cell_neighbour in cell_neighbours if cell_neighbour != cell_j]
                 for cell_neighbour in cell_neighbours_excluding_cell_j:
-                    queue.append((cell_neighbour, cell_i))
+                    arc_to_add = (cell_neighbour, cell_i)
+                    if arc_to_add in queue:
+                        queue.remove(arc_to_add)
+                    queue.append(arc_to_add)
 
-        result_constraints = dict()
+        return constraints_copy
 
-        for key, value in constraints_copy.items():
-            if constraints_copy[key] != constraint_domain[key]:
-                result_constraints[key] = value
-
-        return result_constraints
-
-    def find_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
+    def find_arc(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
         return self.all_arcs[cell]
 
     # (int, int, int) = cell

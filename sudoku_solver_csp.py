@@ -137,15 +137,32 @@ class Node:
                 cell_neighbours = self.find_cell_neighbours(cell_i)
                 cell_neighbours_excluding_cell_j = [
                     cell_neighbour for cell_neighbour in cell_neighbours if cell_neighbour != cell_j]
-                assigned_value_of_cell_i = next(iter(domains_copy[cell_i])) if len(domains_copy[cell_i]) == 1 else None
+                # assigned_value_of_cell_i = next(iter(domains_copy[cell_i])) if len(domains_copy[cell_i]) == 1 else None
                 for cell_neighbour in cell_neighbours_excluding_cell_j:
-                    if assigned_value_of_cell_i is not None:
-                        cell_neighbour_domain = domains_copy[cell_neighbour]
-                        if assigned_value_of_cell_i in cell_neighbour_domain:
-                            cell_neighbour_domain.remove(assigned_value_of_cell_i)
+                    # if assigned_value_of_cell_i is not None:
+                    #     cell_neighbour_domain = domains_copy[cell_neighbour]
+                    #     if assigned_value_of_cell_i in cell_neighbour_domain:
+                    #         cell_neighbour_domain.remove(assigned_value_of_cell_i)
                     arc_to_add = (cell_neighbour, cell_i)
                     data_structure.append(arc_to_add)
 
+        # for key, value in domains_copy.items():
+        #     if self.domains[key] != domains_copy[key]:
+        #         print(key, value)
+
+
+            # if self.domains[key] == domains_copy[key]:
+            #     print(key, value)
+
+        # return result_constraints, old_constraints
+
+        for key, value in domains_copy.items():
+                # print(key)
+                # print(value)
+                # print(self.domains[key])
+                # print(value == self.domains[key])
+            if (value != self.domains[key]):
+                print(key, value, self.domains[key])
         self.domains.update(domains_copy)
         return True
 
@@ -380,19 +397,24 @@ class SudokuCspSolver:
             else:
                 has_inferred = current_node.infer()
                 if has_inferred:
+                    current_node.trim_domains()
                     print(current_node)
-
-                    if current_node.is_solution():
-                        return current_node
-
-                    current_node.expand()
-                    next_node = current_node.get_first_unchecked_child()
-
-                    if next_node is None:
+                    if current_node.has_cell_with_empty_domain():
                         current_node.check()
                         self.stack.pop()
                     else:
-                        self.stack.append(next_node)
+
+                        if current_node.is_solution():
+                            return current_node
+
+                        current_node.expand()
+                        next_node = current_node.get_first_unchecked_child()
+
+                        if next_node is None:
+                            current_node.check()
+                            self.stack.pop()
+                        else:
+                            self.stack.append(next_node)
                 else:
                     current_node.check()
                     self.stack.pop()

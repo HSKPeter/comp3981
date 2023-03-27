@@ -28,9 +28,9 @@ class SudokuSolver:
                 assignments.add(cell, value)
                 inferences, revert_inferences = assignments.infer(cell, constraints.domains)
                 if inferences is not None:
-                    constraints.add_inferences(inferences)
+                    constraints.update_inferences(inferences)
                     self.stack.append(Node(assignments, constraints))
-                    constraints.add_inferences(revert_inferences)
+                    constraints.update_inferences(revert_inferences)
                     break
                 assignments.remove(cell)
 
@@ -92,9 +92,9 @@ class Node:
                 self.assignments.add(cell, value)
                 inferences, revert_inferences = self.assignments.infer(cell, self.constraints.domains)
                 if inferences is not None:
-                    self.constraints.add_inferences(inferences)
+                    self.constraints.update_inferences(inferences)
                     self.children.append(Node(self.assignments.copy(), self.constraints.copy()))
-                    self.constraints.add_inferences(revert_inferences)
+                    self.constraints.update_inferences(revert_inferences)
                 self.assignments.remove(cell)
 
 
