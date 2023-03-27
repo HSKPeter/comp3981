@@ -54,6 +54,7 @@ class Assignments:
         self.values = {(row, col, self.get_sub_square_index(
             row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
         self.all_arcs = self.find_all_arcs()
+        self.cell_neighbours_dictionary = self.find_every_cell_neighbours()
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
@@ -155,7 +156,7 @@ class Assignments:
 
         def count_constraints(cell_key, value):
             count = 0
-            for neighbor_key in self.find_cell_neighbours(cell_key):
+            for neighbor_key in self.cell_neighbours_dictionary.get(cell_key):
                 # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
                 if value in constraints.domains.get(neighbor_key):
                     count += 1
@@ -196,7 +197,7 @@ class Assignments:
             if has_revised:
                 if len(constraints_copy[cell_i]) == 0:
                     return None
-                cell_neighbours = self.find_cell_neighbours(cell_i)
+                cell_neighbours = self.cell_neighbours_dictionary.get(cell_i)
                 cell_neighbours_excluding_cell_j = [
                     cell_neighbour for cell_neighbour in cell_neighbours if cell_neighbour != cell_j]
                 for cell_neighbour in cell_neighbours_excluding_cell_j:
@@ -240,6 +241,9 @@ class Assignments:
             all_arcs[cell] = arcs
         return all_arcs
 
+    def find_every_cell_neighbours(self):
+        return {cell: self.find_cell_neighbours(cell) for cell in self.values.keys()}
+
     def find_cell_neighbours(self, cell: (int, int, int)):
         cell_neighbours = set()
         row_index, col_index, sub_square_index = cell
@@ -257,14 +261,16 @@ class Assignments:
 
     def print_board(self):
         sub_square_size = int(self.n ** 0.5)
-        full_row = "+".join(["-" * (sub_square_size * 5 - 1)] * sub_square_size)
+        full_row = "+".join(["-" * (sub_square_size * 5 - 1)]
+                            * sub_square_size)
 
         for row in range(self.n):
             if row % sub_square_size == 0:
                 print(full_row)
             row_str = ' |'
             for col in range(self.n):
-                value = self.values[(row, col, self.get_sub_square_index(row, col))]
+                value = self.values[(
+                    row, col, self.get_sub_square_index(row, col))]
                 if value == 0:
                     row_str += '__'
                 else:
@@ -275,7 +281,6 @@ class Assignments:
             print(row_str)
         print(full_row)
         print()
-
 
     @staticmethod
     def revise(constraints, cell_i, cell_j):
@@ -341,7 +346,8 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0)
         print()
     if assignment.is_complete():
         return assignment
-    cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
+    cell = assignment.select_unassigned_cell(
+        constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
         if assignment.is_consistent(cell, value, constraints):
             assignment.add(cell, value)
@@ -405,7 +411,6 @@ def main():
     result = backtrack(test_constraints, test_assignments)
     print("Solution")
     result.print_board()
-
 
 
 if __name__ == '__main__':
