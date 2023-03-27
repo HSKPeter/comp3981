@@ -1,5 +1,6 @@
 import copy
 import sys
+import time
 
 import sudoku_solver
 
@@ -16,6 +17,10 @@ FLOOR_SQUARE_ROOTS = {
 
 
 class InvalidAssignmentException(Exception):
+    pass
+
+
+class EmptyDomainException(Exception):
     pass
 
 
@@ -182,15 +187,7 @@ class Assignments:
                             for (key, value) in constraints.items()}
         constraints_copy[assigned_cell] = {assigned_value}
 
-        assigned_cell_neighbors = self.find_cell_neighbours(assigned_cell)
-        for neighbor in assigned_cell_neighbors:
-            constraints_copy[neighbor].discard(assigned_value)
-
-        # queue = list(self.get_arcs(assigned_cell)) # TODO: consider using this line for optimization
-        queue = list()
-        for _, arc_set in self.all_arcs.items():
-            for arc in arc_set:
-                queue.append(arc)
+        queue = list(self.get_arcs(assigned_cell))
 
         while len(queue) > 0:
             current_cell, other_cell = queue.pop()
@@ -210,11 +207,24 @@ class Assignments:
         old_constraints = dict()
         for key, value in constraints_copy.items():
             if constraints_copy[key] != constraints[key]:
+                if len(value) == 0:
+                    raise EmptyDomainException(f"{key}: {value}")
                 result_constraints[key] = value
                 old_constraints[key] = constraints[key]
 
-
         return result_constraints, old_constraints
+
+    @staticmethod
+    def revise(constraints, cell_to_revise, cell_to_check):
+        has_revised = False
+        domain_of_cell_to_check: set = constraints[cell_to_check]
+        if len(domain_of_cell_to_check) == 1:
+            domain_value = next(iter(domain_of_cell_to_check))  # get one element from the set
+            for value_in_cell_to_revise in list(constraints[cell_to_revise]):
+                if domain_value == value_in_cell_to_revise:
+                    has_revised = True
+                    constraints[cell_to_revise].remove(value_in_cell_to_revise)
+        return has_revised, constraints
 
     def get_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
         return self.all_arcs[cell]
@@ -281,17 +291,6 @@ class Assignments:
         board_str += full_row
 
         return board_str + '\n'
-
-    @staticmethod
-    def revise(constraints, cell_to_revise, cell_to_check):
-        has_revised = False
-        domain_of_cell_to_check: set = constraints[cell_to_check]
-        if len(domain_of_cell_to_check) == 1:
-            domain_value = next(iter(domain_of_cell_to_check))  # get one element from the set
-            for value_in_cell_to_revise in list(constraints[cell_to_revise]):
-                if domain_value == value_in_cell_to_revise:
-                    constraints[cell_to_revise].remove(value_in_cell_to_revise)
-        return has_revised, constraints
 
     def get_sub_square_index(self, row, col) -> int:
         return get_sub_square_index(self.n, row, col)
@@ -364,28 +363,26 @@ class Constraints:
 
 
 def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0, mute=True):
-    if not mute and depth % 10 == 0:
+    if depth % 10 == 0 and not mute:
         print(f"depth {depth}")
         print(assignment)
         print()
     if assignment.is_complete():
+        if not mute:
+            print("SOLUTION")
+            print(assignment)
         return assignment
     cell = assignment.select_unassigned_cell(constraints)  # cell = (row, col, sub_square)
     for value in assignment.find_ordered_domain_values(cell, constraints):
-        # print(f"testing {value} in {cell}")
         assignment.add(cell, value)
-        # print(assignment)
         inference_results = assignment.infer(cell, constraints.domains)
-        # print(f"inference result {inference_results}")
         if inference_results is not None:
             inferences, revert_inferences = inference_results
-            # print(f"inferences {inferences}")
             constraints.add_inferences(inferences)
-            result = backtrack(constraints, assignment, depth + 1)
+            result = backtrack(constraints, assignment, depth + 1, mute)
             if result is not None:
                 return result
             constraints.add_inferences(revert_inferences)
-            # print("backtracking")
         assignment.remove(cell)
 
     return None
@@ -415,21 +412,18 @@ def main():
                    [8, 0, 0, 2, 0, 3, 0, 0, 9],
                    [0, 0, 5, 0, 1, 0, 3, 0, 0]]
 
-
     sys.setrecursionlimit(1000000)
 
-    board = sudoku_solver.mask_board(NINE_X_NINE)
+    board = sudoku_solver.mask_board(sudoku_solver.SIXTEEN_X_SIXTEEN_SOLVED)
     # first algo
     assignments = Assignments(board)
     constraints = Constraints(assignments)
-    first_result = backtrack(constraints, assignments)
-    # second algo
-    solver = sudoku_solver.SudokuSolver(board)
-    solution = solver.solve()
-    if solution is not None:
-        second_result = solution.board
-    # print("Solution")
-    # print(result)
+    start_time = time.time()
+    result = backtrack(constraints, assignments, mute=False)
+    end_time = time.time()
+    print("Solution")
+    print(result)
+    print(f"Solved in {end_time - start_time} seconds")
     # print(result.to_2d_array())
 
 
