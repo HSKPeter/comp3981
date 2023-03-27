@@ -368,15 +368,18 @@ class Constraints:
 
 
 backtrack_counter = 0
-
+target_depth = 0
 
 def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0, mute=True):
     global backtrack_counter
-
-    if backtrack_counter > 5_000:
-        if depth > 1:
+    global target_depth
+    if backtrack_counter > 1000:
+        if target_depth == 0:
+            target_depth = depth/2
+        if depth > target_depth:
             return None
         else:
+            target_depth = 0
             backtrack_counter = 0
     backtrack_counter += 1
 
@@ -431,7 +434,7 @@ def main():
 
     sys.setrecursionlimit(1000000)
 
-    board = sudoku_solver.mask_board(sudoku_solver.SIXTEEN_X_SIXTEEN_SOLVED)
+    board = sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
     # first algo
     assignments = Assignments(board)
     constraints = Constraints(assignments)
