@@ -172,7 +172,9 @@ class Assignments:
     # # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # # and the value would be a set of integers that represent the domain values of that cell
-    def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
+    def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[
+                                                                                                     (int, int, int):
+                                                                                                     set[int]]:
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
          AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
@@ -191,7 +193,8 @@ class Assignments:
 
         while len(queue) > 0:
             current_cell, other_cell = queue.pop()
-            has_revised, constraints_copy = self.revise(constraints_copy, cell_to_revise=other_cell, cell_to_check=current_cell)
+            has_revised, constraints_copy = self.revise(constraints_copy, cell_to_revise=other_cell,
+                                                        cell_to_check=current_cell)
             if has_revised:
                 if len(constraints_copy[other_cell]) == 0:
                     return None
@@ -362,9 +365,21 @@ class Constraints:
         self.domains.update(inferences_to_add)
 
 
+backtrack_counter = 0
+
+
 def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0, mute=True):
+    global backtrack_counter
+
+    if backtrack_counter > 5_000:
+        if depth > 1:
+            return None
+        else:
+            backtrack_counter = 0
+    backtrack_counter += 1
+
     if depth % 10 == 0 and not mute:
-        print(f"depth {depth}")
+        print(f"depth {depth}    backtrack_counter {backtrack_counter}")
         print(assignment)
         print()
     if assignment.is_complete():
