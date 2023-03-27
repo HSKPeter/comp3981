@@ -1,5 +1,7 @@
 import time
 import numpy as np
+
+import sudoku_solver
 from sudoku_solver_csp import Assignments, Constraints, backtrack
 from sudoku_solver import mask_board, SudokuSolver
 
@@ -67,31 +69,41 @@ def test_algorithms(solved_board, n):
 
 def time_function_and_log_to_file(func, file_name, num_runs, description):
     total_elapsed_time = 0
+    failure_count = 0
+    total_failure_time = 0
 
     for i in range(num_runs):
         start_time = time.time()
-        func(i)
+        result = func(i)
         end_time = time.time()
         elapsed_time = end_time - start_time
-        total_elapsed_time += elapsed_time
 
-    average_elapsed_time = total_elapsed_time / num_runs
+        if result is None:
+            failure_count += 1
+            total_failure_time += elapsed_time
+        else:
+            total_elapsed_time += elapsed_time
+
+    successful_runs = num_runs - failure_count
+    average_elapsed_time = total_elapsed_time / successful_runs if successful_runs > 0 else 0
+    average_failure_time = total_failure_time / failure_count if failure_count > 0 else 0
     result = f"{func.__name__}\ndescription: {description}\n" \
-             f"average runtime (seconds) over {num_runs} runs: {average_elapsed_time:.6f}\n\n"
+             f"average runtime (seconds) over {successful_runs} successful runs: {average_elapsed_time:.6f}\n" \
+             f"failures: {failure_count} (average time for failures: {average_failure_time:.6f})\n\n"
     print(result)
     with open(file_name, 'a') as file:
         file.write(result)
 
 
 def run_csp(seed=None):
-    board = mask_board(NINE_X_NINE_SOLVED, seed=seed)
+    board = mask_board(sudoku_solver.SIXTEEN_X_SIXTEEN_SOLVED, seed=seed)
     assignments = Assignments(board)
     constraints = Constraints(assignments)
-    backtrack(constraints, assignments, mute=True)
+    return backtrack(constraints, assignments, mute=True)
 
 
 def main():
-    time_function_and_log_to_file(run_csp, "csp_test_results.txt", 100, "improved code with pop() and checking if arc in queue")
+    time_function_and_log_to_file(run_csp, "csp_test_results.txt", 20, "16x16")
 
 
 if __name__ == '__main__':
