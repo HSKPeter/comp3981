@@ -66,12 +66,13 @@ class SolverExecutionExpiredException(Exception):
 
 class PuzzleUnsolvedException(Exception):
     def __init__(self, *args: object) -> None:
-        super().__init__(*args)        
+        super().__init__(*args)
 
 class SudokuSolver:
     def __init__(self, raw_board: List[List[int]]) -> None:
         self.board = raw_board
         self.stack = [Node(self.board)]
+        self.reserved_stack = list()
 
     def solve(self, max_process_seconds=None, mute=True):
         expiry_timestamp = (datetime.now() + timedelta(seconds=max_process_seconds)).timestamp() if max_process_seconds is not None else None
@@ -82,14 +83,14 @@ class SudokuSolver:
         while stack_size > 0:
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
                 raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
-            
+
             current_node = self.stack[-1]
             if current_node.is_solution():
                 if not mute:
                     print(f"result found: i = {i}")
                 return current_node
             current_node.expand()
-            next_node = current_node.get_first_unchecked_child()
+            next_node = current_node.get_first_traversable_child()
             if next_node is None:
                 current_node.check()
                 self.stack.remove(current_node)
@@ -97,16 +98,30 @@ class SudokuSolver:
                 self.stack.append(next_node)
             i += 1
             timeout += 1
-            stack_size = len(self.stack)
-            if timeout > 10000:
+            if timeout > 5000:
                 timeout = 0
-                for node in self.stack[1:]:
-                    node.check()
-                    self.stack.remove(node)
+                self.migrate_nodes_to_reserved_stack()
+
+            if len(self.stack) == 0:
+                self.migrate_nodes_in_reserved_stack()
+
+            stack_size = len(self.stack)
             if not mute and i % 1000 == 0:
                 print()
                 print(f"searching (i = {i}; timeout = {timeout}; stack size = {stack_size})")
                 print(current_node)
+
+    def migrate_nodes_to_reserved_stack(self):
+        for node in self.stack[1:]:
+            node.reserve()
+            self.reserved_stack.append(node)
+
+        self.stack = self.stack[:1]
+        self.reserved_stack.sort()
+
+    def migrate_nodes_in_reserved_stack(self):
+        self.stack = [Node.mark_node_as_unreserved(node) for node in self.reserved_stack]
+        self.reserved_stack = []
 
 
 class Node:
@@ -118,6 +133,18 @@ class Node:
         self.heuristic_value = self.compute_heuristic_value()
         self.isChecked = False
         self.isExpanded = False
+        self.is_reserved = False
+
+    @staticmethod
+    def mark_node_as_unreserved(node):
+        node.unreserve()
+        return node
+
+    def reserve(self):
+        self.is_reserved = True
+
+    def unreserve(self):
+        self.is_reserved = False
 
     def compute_heuristic_value(self):
         # Sum the length of all domains
@@ -147,9 +174,10 @@ class Node:
                 return False
         return True
 
-    def get_first_unchecked_child(self):
+    # Traversable node means the node is not checked and not in reserved stack
+    def get_first_traversable_child(self):
         for node in self.children:
-            if not node.isChecked:
+            if not node.isChecked and (node.is_reserved is False):
                 return node
         return None
 
@@ -300,9 +328,9 @@ def mask_board(original_board, p=0.75, seed=None):
 
 
 def main():
-    board = mask_board(SIXTEEN_X_SIXTEEN_SOLVED)
-    solver = SudokuSolver(board)
-    solution_node = solver.solve()
+    # board = mask_board(TWENTY_FIVE_X_TWENTY_FIVE)
+    solver = SudokuSolver(TWENTY_FIVE_X_TWENTY_FIVE)
+    solution_node = solver.solve(mute=False)
     print(f"solution:\n{solution_node}")
     if solution_node:
         board = solution_node.board
@@ -311,10 +339,10 @@ def main():
 def solve_with_brute_force(board):
     solver = SudokuSolver(board)
     solution_node = solver.solve(max_process_seconds=20)
-    
+
     if solution_node is None:
         raise PuzzleUnsolvedException()
-    
+
     return solution_node.board
 
 
