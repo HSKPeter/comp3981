@@ -1,6 +1,8 @@
 from typing import List
 import time
 from sudoku_solver_csp import InvalidAssignmentException, EmptyDomainException, Constraints, get_sub_square_index
+from sudoku_solver import mask_board
+import copy
 
 NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
                [0, 0, 8, 1, 0, 2, 9, 0, 0], [
@@ -67,7 +69,7 @@ FLOOR_SQUARE_ROOTS = {
 class Assignments:
     def __init__(self, n, values):
         self.n = n
-        self.values = values
+        self.values = copy.deepcopy(values)
         self.all_arcs = self.find_all_arcs()
         self.every_cell_neighbour = self.find_every_cell_neighbours()
 
@@ -195,16 +197,16 @@ class Assignments:
         constraints_copy = {key: value.copy()
                             for (key, value) in constraints.items()}
 
-        if assigned_cell is None:
-            for _, arc_set in self.all_arcs.items():
-                for arc in arc_set:
-                    queue.append(arc)
-        else:
-            assigned_value = self.values[assigned_cell]
-            constraints_copy[assigned_cell] = {assigned_value}
-
-            for arc in self.get_arcs(assigned_cell):
+        # if assigned_cell is None:
+        for _, arc_set in self.all_arcs.items():
+            for arc in arc_set:
                 queue.append(arc)
+        # else:
+        #     assigned_value = self.values[assigned_cell]
+        #     constraints_copy[assigned_cell] = {assigned_value}
+        #
+        #     for arc in self.get_arcs(assigned_cell):
+        #         queue.append(arc)
 
         while len(queue) > 0:
             current_cell, other_cell = queue.pop()
@@ -220,16 +222,17 @@ class Assignments:
                             queue.remove(arc_to_prioritize)
                         queue.append(arc_to_prioritize)
 
-        result_constraints = dict()
-        old_constraints = dict()
-        for key, value in constraints_copy.items():
-            if constraints_copy[key] != constraints[key]:
-                if len(value) == 0:
-                    raise EmptyDomainException(f"{key}: {value}")
-                result_constraints[key] = value
-                old_constraints[key] = constraints[key]
-
-        return result_constraints, old_constraints
+        # result_constraints = dict()
+        # old_constraints = dict()
+        # for key, value in constraints_copy.items():
+        #     if constraints_copy[key] != constraints[key]:
+        #         if len(value) == 0:
+        #             raise EmptyDomainException(f"{key}: {value}")
+        #         result_constraints[key] = value
+        #         old_constraints[key] = constraints[key]
+        #
+        # return result_constraints, old_constraints
+        return constraints_copy
 
     @staticmethod
     def revise(constraints, cell_to_revise, cell_to_check):
@@ -351,14 +354,23 @@ class SudokuSolver:
         self.stack = [first_node]
 
     def solve(self):
+        counter = 0
         while len(self.stack) > 0:
+            counter += 1
+            # print(f'Iteration: {counter}')
+
             current_node = self.stack[-1]
+            if current_node.cell_assigned_in_prev_move == (14, 0, 12) and current_node.value_assigned_in_prev_move == 8:
+                print('break')
+                print(current_node.constraints.domains)
+            print(counter, current_node.cell_assigned_in_prev_move, current_node.value_assigned_in_prev_move)
 
             is_valid_after_inference = current_node.infer()
 
             if not is_valid_after_inference:
                 current_node.check()
                 self.stack.pop()
+                # self.stack.remove(current_node)
                 continue
 
             if current_node.is_solution():
@@ -371,35 +383,39 @@ class SudokuSolver:
 
             if next_node is None:
                 current_node.check()
-                self.stack.remove(current_node)
+                self.stack.pop()
             else:
                 self.stack.append(next_node)
 
 
 class Node:
-    def __init__(self, n, values, value_assigned_in_prev_move=None) -> None:
+    def __init__(self, n, values,
+                 cell_assigned_in_prev_move=None,
+                 value_assigned_in_prev_move=None) -> None:
         self.n = n
+        # copy.deepcopy(values)
         self.assignments = Assignments(n, values)
         self.constraints = Constraints(self.assignments)
         self.children = []
         self.is_checked = False
         self.is_expanded = False
+        self.cell_assigned_in_prev_move = cell_assigned_in_prev_move
         self.value_assigned_in_prev_move = value_assigned_in_prev_move
 
     def infer(self):
-        constraints_result = self.assignments.infer(self.value_assigned_in_prev_move, self.constraints.domains)
-        if constraints_result is None:
+        new_constraints_inferred = self.assignments.infer(self.cell_assigned_in_prev_move, self.constraints.domains)
+        if new_constraints_inferred is None:
             return False
 
-        new_constraints_inferred, _ = constraints_result
+        # new_constraints_inferred, _ = constraints_result
         self.constraints.add_inferences(new_constraints_inferred)
 
         for key, value in new_constraints_inferred.items():
             if len(value) == 1:
                 cell_value = next(iter(value))
                 self.assignments.add(key, cell_value)
-                for neighbor_key in self.assignments.every_cell_neighbour.get(key):
-                    self.constraints.delete_domain_value(neighbor_key, cell_value)
+                # for neighbor_key in self.assignments.every_cell_neighbour.get(key):
+                #     self.constraints.delete_domain_value(neighbor_key, cell_value)
 
         return True
 
@@ -410,7 +426,9 @@ class Node:
             for value in self.assignments.find_ordered_domain_values(cell_selected, self.constraints):
                 values_copy = {key: value for key, value in self.assignments.values.items()}
                 values_copy[cell_selected] = value
-                new_node = Node(self.n, values_copy, value_assigned_in_prev_move=cell_selected)
+                new_node = Node(self.n, values_copy,
+                                cell_assigned_in_prev_move=cell_selected,
+                                value_assigned_in_prev_move=value)
                 self.children.append(new_node)
             self.is_expanded = True
 
@@ -441,21 +459,24 @@ def solve_with_csp_iterative(board):
 
 
 def main():
+    puzzle = [[16, 15, 21, 10, 22, 18, 20, 25, 24, 4, 23, 8, 19, 7, 9, 6, 13, 3, 14, 5, 2, 11, 1, 17, 12], [7, 20, 4, 11, 23, 3, 15, 10, 5, 21, 12, 1, 14, 18, 17, 19, 16, 22, 2, 9, 25, 6, 8, 13, 24], [13, 25, 19, 2, 8, 17, 22, 11, 9, 6, 4, 24, 10, 15, 3, 12, 21, 7, 1, 18, 5, 14, 20, 23, 16], [17, 18, 9, 6, 5, 12, 7, 19, 14, 1, 11, 16, 2, 25, 13, 15, 20, 23, 24, 8, 3, 22, 10, 4, 21], [12, 1, 3, 24, 14, 23, 2, 16, 8, 13, 22, 21, 20, 6, 5, 4, 11, 10, 25, 17, 15, 9, 18, 19, 7], [14, 24, 12, 3, 1, 13, 16, 23, 2, 8, 20, 22, 6, 5, 21, 11, 17, 25, 10, 4, 19, 7, 9, 18, 15], [5, 6, 17, 9, 18, 1, 19, 12, 7, 14, 2, 11, 25, 13, 16, 20, 8, 24, 23, 15, 4, 21, 22, 10, 3], [23, 11, 7, 4, 20, 21, 10, 3, 15, 5, 14, 12, 18, 17, 1, 16, 9, 2, 22, 19, 13, 24, 6, 8, 25], [8, 2, 13, 19, 25, 6, 11, 17, 22, 9, 10, 4, 15, 3, 24, 21, 18, 1, 7, 12, 23, 16, 14, 20, 5], [22, 10, 16, 21, 15, 4, 25, 18, 20, 24, 19, 23, 7, 9, 8, 13, 5, 14, 3, 6, 17, 12, 11, 1, 2], [2, 19, 8, 25, 13, 9, 6, 22, 11, 17, 3, 10, 4, 24, 15, 1, 12, 21, 18, 7, 14, 20, 5, 16, 23], [10, 21, 22, 15, 16, 24, 4, 20, 25, 18, 9, 19, 23, 8, 7, 14, 6, 13, 5, 3, 11, 1, 2, 12, 17], [6, 9, 5, 18, 17, 14, 1, 7, 19, 12, 13, 2, 11, 16, 25, 24, 15, 20, 8, 23, 22, 10, 3, 21, 4], [24, 3, 14, 1, 12, 8, 13, 2, 16, 23, 5, 20, 22, 21, 6, 25, 4, 11, 17, 10, 9, 18, 15, 7, 19], [11, 4, 23, 20, 7, 5, 21, 15, 10, 3, 17, 14, 12, 1, 18, 2, 19, 16, 9, 22, 6, 8, 25, 24, 13], [9, 5, 18, 17, 6, 7, 14, 1, 12, 19, 16, 25, 13, 11, 2, 23, 24, 8, 15, 20, 21, 3, 4, 22, 10], [3, 14, 1, 12, 24, 2, 8, 13, 23, 16, 21, 6, 5, 22, 20, 10, 25, 17, 4, 11, 7, 15, 19, 9, 18], [21, 22, 15, 16, 10, 20, 24, 4, 18, 25, 8, 7, 9, 23, 19, 3, 14, 5, 6, 13, 12, 2, 17, 11, 1], [4, 23, 20, 7, 11, 15, 5, 21, 3, 10, 1, 18, 17, 12, 14, 22, 2, 9, 19, 16, 24, 25, 13, 6, 8], [19, 8, 25, 13, 2, 22, 9, 6, 17, 11, 24, 15, 3, 4, 10, 7, 1, 18, 12, 21, 16, 5, 23, 14, 20], [25, 13, 2, 8, 19, 11, 17, 9, 6, 22, 15, 3, 24, 10, 4, 18, 7, 12, 21, 1, 20, 23, 16, 5, 14], [15, 16, 10, 22, 21, 25, 18, 24, 4, 20, 7, 9, 8, 19, 23, 5, 3, 6, 13, 14, 1, 17, 12, 2, 11], [18, 17, 6, 5, 9, 19, 12, 14, 1, 7, 25, 13, 16, 2, 11, 8, 23, 15, 20, 24, 10, 4, 21, 3, 22], [1, 12, 24, 14, 3, 16, 23, 8, 13, 2, 6, 5, 21, 20, 22, 17, 10, 4, 11, 25, 18, 19, 7, 15, 9], [20, 7, 11, 23, 4, 10, 3, 5, 21, 15, 18, 17, 1, 14, 12, 9, 22, 19, 16, 2, 8, 13, 24, 25, 6]]
+    masked_board = mask_board(puzzle)
+    print(masked_board)
     # board = [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
-    board = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
-               [9, 0, 0, 3, 0, 5, 0, 0, 1],
-               [0, 0, 1, 8, 0, 6, 4, 0, 0],
-               [0, 0, 8, 1, 0, 2, 9, 0, 0],
-               [7, 0, 0, 0, 0, 0, 0, 0, 8],
-               [0, 0, 6, 7, 0, 8, 2, 0, 0],
-               [0, 0, 2, 6, 0, 9, 5, 0, 0],
-               [8, 0, 0, 2, 0, 3, 0, 0, 9],
-               [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+    # board = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
+    #            [9, 0, 0, 3, 0, 5, 0, 0, 1],
+    #            [0, 0, 1, 8, 0, 6, 4, 0, 0],
+    #            [0, 0, 8, 1, 0, 2, 9, 0, 0],
+    #            [7, 0, 0, 0, 0, 0, 0, 0, 8],
+    #            [0, 0, 6, 7, 0, 8, 2, 0, 0],
+    #            [0, 0, 2, 6, 0, 9, 5, 0, 0],
+    #            [8, 0, 0, 2, 0, 3, 0, 0, 9],
+    #            [0, 0, 5, 0, 1, 0, 3, 0, 0]]
     # [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
 
 
     start_time = time.time()
-    sudoku_solver = SudokuSolver(board)
+    sudoku_solver = SudokuSolver(masked_board)
     result = sudoku_solver.solve()
     end_time = time.time()
     print("Solution")
