@@ -366,6 +366,10 @@ class Constraints:
         """
         self.domains.update(inferences_to_add)
 
+    def delete_domain_value(self, key, value_to_delete):
+        if value_to_delete in self.domains[key]:
+            self.domains[key].remove(value_to_delete)
+
 
 backtrack_counter = 0
 target_depth = 0
@@ -434,7 +438,8 @@ def main():
 
     sys.setrecursionlimit(1000000)
 
-    board = sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
+    board = [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
+        # sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
     # first algo
     assignments = Assignments(board)
     constraints = Constraints(assignments)

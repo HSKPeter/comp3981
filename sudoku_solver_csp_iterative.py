@@ -1,7 +1,4 @@
-import copy
 from typing import List
-import random
-from datetime import datetime, timedelta
 import time
 from sudoku_solver_csp import InvalidAssignmentException, EmptyDomainException, Constraints, get_sub_square_index
 
@@ -194,12 +191,20 @@ class Assignments:
         If any of the domains reduce to none (size 0) then this function fails and returns None
 
         """
-        assigned_value = self.values[assigned_cell]
+        queue = []
         constraints_copy = {key: value.copy()
                             for (key, value) in constraints.items()}
-        constraints_copy[assigned_cell] = {assigned_value}
 
-        queue = list(self.get_arcs(assigned_cell))
+        if assigned_cell is None:
+            for _, arc_set in self.all_arcs.items():
+                for arc in arc_set:
+                    queue.append(arc)
+        else:
+            assigned_value = self.values[assigned_cell]
+            constraints_copy[assigned_cell] = {assigned_value}
+
+            for arc in self.get_arcs(assigned_cell):
+                queue.append(arc)
 
         while len(queue) > 0:
             current_cell, other_cell = queue.pop()
@@ -339,17 +344,27 @@ class PuzzleUnsolvedException(Exception):
 
 class SudokuSolver:
     def __init__(self, raw_board: List[List[int]]) -> None:
-        # self.board = raw_board
         self.n = len(raw_board)
         values = {(row, col, get_sub_square_index(self.n, row, col)): raw_board[row][col] for row in range(self.n) for col in range(self.n)}
-        self.stack = [Node(self.n, values)]
+        first_node = Node(self.n, values)
+        first_node.infer()
+        self.stack = [first_node]
 
     def solve(self):
-        stack_size = len(self.stack)
-        while stack_size > 0:
+        while len(self.stack) > 0:
             current_node = self.stack[-1]
+
+            is_valid_after_inference = current_node.infer()
+
+            if not is_valid_after_inference:
+                current_node.check()
+                self.stack.pop()
+                continue
+
             if current_node.is_solution():
                 return current_node
+
+            print(current_node)
 
             current_node.expand()
             next_node = current_node.get_first_unchecked_child()
@@ -362,21 +377,41 @@ class SudokuSolver:
 
 
 class Node:
-    def __init__(self, n, values) -> None:
+    def __init__(self, n, values, value_assigned_in_prev_move=None) -> None:
         self.n = n
         self.assignments = Assignments(n, values)
         self.constraints = Constraints(self.assignments)
         self.children = []
         self.is_checked = False
         self.is_expanded = False
+        self.value_assigned_in_prev_move = value_assigned_in_prev_move
+
+    def infer(self):
+        constraints_result = self.assignments.infer(self.value_assigned_in_prev_move, self.constraints.domains)
+        if constraints_result is None:
+            return False
+
+        new_constraints_inferred, _ = constraints_result
+        self.constraints.add_inferences(new_constraints_inferred)
+
+        for key, value in new_constraints_inferred.items():
+            if len(value) == 1:
+                cell_value = next(iter(value))
+                self.assignments.add(key, cell_value)
+                for neighbor_key in self.assignments.every_cell_neighbour.get(key):
+                    self.constraints.delete_domain_value(neighbor_key, cell_value)
+
+        return True
 
     def expand(self):
         if not self.is_expanded:
             cell_selected = self.assignments.select_unassigned_cell(self.constraints)
+
             for value in self.assignments.find_ordered_domain_values(cell_selected, self.constraints):
-                values_copy = copy.deepcopy(self.assignments.values)
+                values_copy = {key: value for key, value in self.assignments.values.items()}
                 values_copy[cell_selected] = value
-                self.children.append(Node(self.n, values_copy))
+                new_node = Node(self.n, values_copy, value_assigned_in_prev_move=cell_selected)
+                self.children.append(new_node)
             self.is_expanded = True
 
     def check(self):
@@ -393,34 +428,34 @@ class Node:
             if not node.is_checked:
                 return node
         return None
+    
+    def to_2d_array(self):
+        return self.assignments.to_2d_array()
 
-    def find_valid_children(self):
-        cell = self.find_min_domain_cell()
-        if cell is None:
-            return
-        row, col = cell
-        for i in self.domains[row][col]:
-            if self.is_valid_insertion(row, col, i):
-                new_board = copy.deepcopy(self.board)
-                new_board[row][col] = i
-                self.children.append(Node(new_board))
-        self.children.sort()
+
+def solve_with_csp_iterative(board):
+    sudoku_solver = SudokuSolver(board)
+    result = sudoku_solver.solve()
+
+    return result.to_2d_array()
 
 
 def main():
-    NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
-                   [9, 0, 0, 3, 0, 5, 0, 0, 1],
-                   [0, 0, 1, 8, 0, 6, 4, 0, 0],
-                   [0, 0, 8, 1, 0, 2, 9, 0, 0],
-                   [7, 0, 0, 0, 0, 0, 0, 0, 8],
-                   [0, 0, 6, 7, 0, 8, 2, 0, 0],
-                   [0, 0, 2, 6, 0, 9, 5, 0, 0],
-                   [8, 0, 0, 2, 0, 3, 0, 0, 9],
-                   [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+    # board = [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
+    board = [[0, 0, 3, 0, 2, 0, 6, 0, 0],
+               [9, 0, 0, 3, 0, 5, 0, 0, 1],
+               [0, 0, 1, 8, 0, 6, 4, 0, 0],
+               [0, 0, 8, 1, 0, 2, 9, 0, 0],
+               [7, 0, 0, 0, 0, 0, 0, 0, 8],
+               [0, 0, 6, 7, 0, 8, 2, 0, 0],
+               [0, 0, 2, 6, 0, 9, 5, 0, 0],
+               [8, 0, 0, 2, 0, 3, 0, 0, 9],
+               [0, 0, 5, 0, 1, 0, 3, 0, 0]]
+    # [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
 
 
     start_time = time.time()
-    sudoku_solver = SudokuSolver(NINE_X_NINE)
+    sudoku_solver = SudokuSolver(board)
     result = sudoku_solver.solve()
     end_time = time.time()
     print("Solution")
