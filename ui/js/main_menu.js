@@ -34,51 +34,34 @@ fileInput.addEventListener('change', (e) => {
         reader.readAsText(file);
         reader.onload = () => {
             const textContent = reader.result;
-            if (isValidTextContent(textContent)) {
-                const {board, size} = parseBoard(textContent);
-                localStorage.setItem("board", board);
-                localStorage.setItem("size", size);
-                window.location.href = "solver_screen.html?source=file";
-            } else {
-                alert("Invalid content of text file");
-                e.target.value = null;
+            const rows = textContent.trim().split('\n');
+            var board = [];
+            for (let i = 0; i < rows.length; i++) {
+                const rowValues = rows[i].trim().split(',').map(value => parseInt(value));
+                board.push(rowValues);
             }
+            const size = getBoardSize(board);
+            localStorage.setItem("board", JSON.stringify(board));
+            localStorage.setItem("size", size);
+            console.log("Board: ", localStorage.getItem("board"));
+            console.log("Size: ", localStorage.getItem("size"))
+            window.location.href = "solver_screen.html?source=file"
         };
     }
 });
 
 const isValidLength = (num) => {
-    const acceptableValues = [9 , 12, 16, 25, 100];
+    const acceptableValues = [9, 12, 16, 25, 100];
     return acceptableValues.includes(num);
 }
 
 const isValidTextContent = (textContent) => {
     try {
-        const board = JSON.parse(textContent);
-        const columnCountOfFirstRow = board[0].length;
+        console.log("Inside isValidTextContent!");
 
-        if (!isValidLength(columnCountOfFirstRow)) {
-            return false;
-        }
+        
 
-        let rowCount = 0;
-
-        for (const row of board) {
-            let columnCounter = 0;
-
-            for (const cell of row) {
-                if (isNaN(cell)) {
-                    return false
-                }
-                columnCounter ++;
-            }
-
-            if (columnCounter !== columnCountOfFirstRow) {
-                return false;
-            }
-
-            rowCount ++;
-        }
+        
 
         return isValidLength(rowCount) && rowCount === columnCountOfFirstRow;
 
@@ -87,12 +70,6 @@ const isValidTextContent = (textContent) => {
     }
 }
 
-const parseBoard = (boardInput) => {
-    const board = JSON.parse(boardInput);
-    const size = board[0].length;
-
-    return {
-        board: boardInput,
-        size
-    };    
+const getBoardSize = (boardInput) => {
+    return boardInput[0].length;
 }
