@@ -68,11 +68,16 @@ FLOOR_SQUARE_ROOTS = {
 
 
 class Assignments:
+    all_arcs = None
+    every_cell_neighbour = None
+
     def __init__(self, n, values):
         self.n = n
         self.values = {key: values for key, values in values.items()}
-        self.all_arcs = self.find_all_arcs()
-        self.every_cell_neighbour = self.find_every_cell_neighbours()
+        if Assignments.all_arcs is None:
+            Assignments.all_arcs = self.find_all_arcs()
+        if Assignments.every_cell_neighbour is None:
+            Assignments.every_cell_neighbour = self.find_every_cell_neighbours()
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
@@ -89,7 +94,7 @@ class Assignments:
         for value in self.values.values():
             if value == 0:
                 return False
-        all_arcs = set.union(*self.all_arcs.values())
+        all_arcs = set.union(*Assignments.all_arcs.values())
         for arc in all_arcs:
             cell_one, cell_two = arc
             if self.values[cell_one] == self.values[cell_two]:
@@ -171,7 +176,7 @@ class Assignments:
 
         def count_constraints(cell_key, value):
             count = 0
-            for neighbor_key in self.every_cell_neighbour.get(cell_key):
+            for neighbor_key in Assignments.every_cell_neighbour.get(cell_key):
                 # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
                 if value in constraints.domains.get(neighbor_key):
                     count += 1
@@ -201,7 +206,7 @@ class Assignments:
                             for (key, value) in constraints.items()}
 
         if assigned_cell is None:
-            for _, arc_set in self.all_arcs.items():
+            for _, arc_set in Assignments.all_arcs.items():
                 for arc in arc_set:
                     lifo_queue.append(arc)
                     set_for_duplication_check.add(arc)
@@ -223,7 +228,7 @@ class Assignments:
                 if len(constraints_copy[other_cell]) == 0:
                     return None
                 else:
-                    other_cell_neighbors = self.every_cell_neighbour[other_cell]
+                    other_cell_neighbors = Assignments.every_cell_neighbour[other_cell]
                     for neighbor in other_cell_neighbors:
                         if neighbor != current_cell:
                             arc_to_prioritize = (other_cell, neighbor)
@@ -257,7 +262,7 @@ class Assignments:
         return has_revised, constraints
 
     def get_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
-        return self.all_arcs[cell]
+        return Assignments.all_arcs[cell]
 
     # (int, int, int) = cell
     # ((int, int, int), (int, int, int)) = binary arc
@@ -396,7 +401,7 @@ class PuzzleUnsolvedException(Exception):
         super().__init__(*args)
 
 
-class SudokuSolver:
+class SudokuSolverCsp:
     def __init__(self, raw_board: List[List[int]], apply_rules=False) -> None:
         self.n = len(raw_board)
         values = {(row, col, get_sub_square_index(self.n, row, col)): raw_board[row][col] for row in range(self.n) for col in range(self.n)}
@@ -634,7 +639,7 @@ class Node:
 
 
 def solve_with_csp_iterative(board):
-    sudoku_solver = SudokuSolver(board)
+    sudoku_solver = SudokuSolverCsp(board)
     result = sudoku_solver.solve()
 
     return result.to_2d_array()
@@ -663,7 +668,7 @@ def main():
     print(masked_board)
     # masked_board = [[5, 11, 0, 15, 1, 0, 0, 0, 0, 0, 12, 0, 0, 0, 8, 7], [8, 0, 13, 0, 0, 0, 0, 5, 0, 0, 0, 11, 0, 0, 0, 0], [0, 1, 7, 0, 0, 12, 0, 0, 0, 0, 0, 3, 0, 0, 11, 0], [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 16, 0, 5], [3, 2, 0, 6, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0], [12, 13, 0, 0, 10, 0, 0, 0, 0, 0, 7, 16, 0, 0, 0, 6], [0, 0, 4, 0, 0, 0, 7, 0, 12, 0, 14, 6, 0, 0, 5, 0], [11, 0, 0, 0, 0, 0, 0, 12, 5, 0, 9, 0, 8, 0, 0, 0], [0, 4, 0, 0, 9, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 4, 13, 0, 15], [0, 0, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0], [13, 0, 0, 0, 0, 5, 0, 0, 0, 2, 0, 15, 0, 0, 9, 0], [7, 0, 0, 4, 0, 0, 12, 11, 0, 10, 3, 8, 0, 0, 13, 14], [0, 0, 0, 13, 3, 0, 4, 0, 0, 5, 16, 9, 2, 15, 7, 0], [15, 5, 3, 0, 16, 7, 13, 10, 0, 12, 0, 0, 9, 0, 0, 0], [14, 10, 6, 0, 0, 8, 9, 0, 0, 7, 15, 0, 16, 3, 12, 4]]
     start_time = time.time()
-    sudoku_solver = SudokuSolver(masked_board)
+    sudoku_solver = SudokuSolverCsp(masked_board)
     result = sudoku_solver.solve()
     end_time = time.time()
     print("Solution")
