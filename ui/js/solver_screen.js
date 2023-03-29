@@ -13,9 +13,7 @@ const clearButton = document.getElementById("clear")
 const FAIL = "Fail"
 const SUCCESS = "Success"
 
-let deltaTime;
 var startTime;
-let endTime;
 let intervalId;
 
 bruteForceButton.addEventListener("click", function () {
@@ -69,7 +67,6 @@ function formatAlgorithmNameToApiRoute(algorithmName) {
 async function solveWithBruteForce() {
     await solve("Brute Force")
 }
-
 
 async function solveWithCSP() {
     await solve("CSP")
