@@ -136,7 +136,8 @@ class Assignments:
     # cell_key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
-    def find_ordered_domain_values(self, cell_key, constraints) -> list[int]:
+    # def find_ordered_domain_values(self, cell_key, constraints) -> list[int]:
+    def find_ordered_domain_values(self, cell_key, constraints):
         """
         Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
         which selects the value that imposes the fewest constraints on the remaining variables.
@@ -173,7 +174,8 @@ class Assignments:
     # # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # # and the value would be a set of integers that represent the domain values of that cell
-    def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
+    # def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
+    def infer(self, assigned_cell: (int, int, int), constraints):
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
          AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
@@ -234,7 +236,9 @@ class Assignments:
     # (int, int, int) = cell
     # ((int, int, int), (int, int, int)) = binary arc
     # set(((int, int, int), (int, int, int))) = set of binary arc
-    def compute_arcs(self, cell: (int, int, int)) -> set[((int, int, int), (int, int, int))]:
+
+    # def compute_arcs(self, cell: (int, int, int)) -> set[((int, int, int), (int, int, int))]:
+    def compute_arcs(self, cell: (int, int, int)):
         arcs = set()
         row_index, col_index, sub_square_index = cell
         for counter_cell in self.values.keys():
@@ -249,7 +253,8 @@ class Assignments:
 
         return arcs
 
-    def find_all_arcs(self) -> dict[(int, int, int), set]:
+    # def find_all_arcs(self) -> dict[(int, int, int), set]:
+    def find_all_arcs(self):
         all_arcs = dict()
         for cell in self.values.keys():
             arcs = self.compute_arcs(cell)
@@ -438,7 +443,8 @@ def main():
 
     sys.setrecursionlimit(1000000)
 
-    board = [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
+    board = [[5, 11, 0, 15, 1, 0, 0, 0, 0, 0, 12, 0, 0, 0, 8, 7], [8, 0, 13, 0, 0, 0, 0, 5, 0, 0, 0, 11, 0, 0, 0, 0], [0, 1, 7, 0, 0, 12, 0, 0, 0, 0, 0, 3, 0, 0, 11, 0], [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 16, 0, 5], [3, 2, 0, 6, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0], [12, 13, 0, 0, 10, 0, 0, 0, 0, 0, 7, 16, 0, 0, 0, 6], [0, 0, 4, 0, 0, 0, 7, 0, 12, 0, 14, 6, 0, 0, 5, 0], [11, 0, 0, 0, 0, 0, 0, 12, 5, 0, 9, 0, 8, 0, 0, 0], [0, 4, 0, 0, 9, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 4, 13, 0, 15], [0, 0, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0], [13, 0, 0, 0, 0, 5, 0, 0, 0, 2, 0, 15, 0, 0, 9, 0], [7, 0, 0, 4, 0, 0, 12, 11, 0, 10, 3, 8, 0, 0, 13, 14], [0, 0, 0, 13, 3, 0, 4, 0, 0, 5, 16, 9, 2, 15, 7, 0], [15, 5, 3, 0, 16, 7, 13, 10, 0, 12, 0, 0, 9, 0, 0, 0], [14, 10, 6, 0, 0, 8, 9, 0, 0, 7, 15, 0, 16, 3, 12, 4]]
+        # [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
         # sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
     # first algo
     assignments = Assignments(board)

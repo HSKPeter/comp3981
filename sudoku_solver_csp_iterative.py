@@ -70,7 +70,7 @@ FLOOR_SQUARE_ROOTS = {
 class Assignments:
     def __init__(self, n, values):
         self.n = n
-        self.values = copy.deepcopy(values)
+        self.values = {key: values for key, values in values.items()}
         self.all_arcs = self.find_all_arcs()
         self.every_cell_neighbour = self.find_every_cell_neighbours()
 
@@ -147,7 +147,7 @@ class Assignments:
     # cell_key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # and the value would be a set of integers that represent the domain values of that cell
-    def find_ordered_domain_values(self, cell_key, constraints) -> list[int]:
+    def find_ordered_domain_values(self, cell_key, constraints) -> List[int]:
         """
         Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
         which selects the value that imposes the fewest constraints on the remaining variables.
@@ -184,7 +184,8 @@ class Assignments:
     # # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # # and the value would be a set of integers that represent the domain values of that cell
-    def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
+    # def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
+    def infer(self, assigned_cell: (int, int, int), constraints):
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
          AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
@@ -261,7 +262,9 @@ class Assignments:
     # (int, int, int) = cell
     # ((int, int, int), (int, int, int)) = binary arc
     # set(((int, int, int), (int, int, int))) = set of binary arc
-    def compute_arcs(self, cell: (int, int, int)) -> set[((int, int, int), (int, int, int))]:
+
+    # def compute_arcs(self, cell: (int, int, int)) -> set[((int, int, int), (int, int, int))]:
+    def compute_arcs(self, cell: (int, int, int)):
         arcs = set()
         row_index, col_index, sub_square_index = cell
         for counter_cell in self.values.keys():
@@ -276,7 +279,8 @@ class Assignments:
 
         return arcs
 
-    def find_all_arcs(self) -> dict[(int, int, int), set]:
+    # def find_all_arcs(self) -> dict[(int, int, int), set]:
+    def find_all_arcs(self):
         all_arcs = dict()
         for cell in self.values.keys():
             arcs = self.compute_arcs(cell)
@@ -297,6 +301,45 @@ class Assignments:
             is_different_cell = cell != counter_cell
 
             if is_different_cell and (is_same_row or is_same_col or is_same_sub_square):
+                cell_neighbours.add(counter_cell)
+
+        return cell_neighbours
+
+    def find_cell_neighbours_in_same_row(self, cell: (int, int, int)):
+        cell_neighbours = set()
+        row_index, col_index, sub_square_index = cell
+        for counter_cell in self.values.keys():
+            counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
+            is_same_row = row_index == counter_cell_row_index
+            is_different_cell = cell != counter_cell
+
+            if is_different_cell and is_same_row:
+                cell_neighbours.add(counter_cell)
+
+        return cell_neighbours
+
+    def find_cell_neighbours_in_same_col(self, cell: (int, int, int)):
+        cell_neighbours = set()
+        row_index, col_index, sub_square_index = cell
+        for counter_cell in self.values.keys():
+            counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
+            is_same_col = col_index == counter_cell_col_index
+            is_different_cell = cell != counter_cell
+
+            if is_different_cell and is_same_col:
+                cell_neighbours.add(counter_cell)
+
+        return cell_neighbours
+
+    def find_cell_neighbours_in_same_sub_square(self, cell: (int, int, int)):
+        cell_neighbours = set()
+        row_index, col_index, sub_square_index = cell
+        for counter_cell in self.values.keys():
+            counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
+            is_same_sub_square = sub_square_index == counter_cell_sub_square_index
+            is_different_cell = cell != counter_cell
+
+            if is_different_cell and is_same_sub_square:
                 cell_neighbours.add(counter_cell)
 
         return cell_neighbours
@@ -467,20 +510,89 @@ class Node:
                 self.assignments.add(key, cell_value)
                 for neighbor_key in self.assignments.every_cell_neighbour.get(key):
                     self.constraints.delete_domain_value(neighbor_key, cell_value)
+            elif len(value) == 2:
+                # Find if there is a pair of cells that have the same two values
+                # If so, delete those values from the domain of the other cells in the same sub-square, row, and column
+                for neighbor_key in self.assignments.every_cell_neighbour.get(key):
+                    neighbor_with_same_two_values = 0
+                    if new_constraints_inferred.get(neighbor_key) == value:
+                        neighbor_with_same_two_values += 1
+                    pair_found = neighbor_with_same_two_values == 2
+                    if pair_found:
+                        print("pair_found !!!")
+                        for other_key in self.assignments.every_cell_neighbour.get(key):
+                            if other_key != neighbor_key:
+                                self.constraints.delete_domain_value(other_key, value[0])
+                                self.constraints.delete_domain_value(other_key, value[1])
 
         return True
 
     def expand(self):
         if not self.is_expanded:
+            # constraint_domain_copy = {key: value for key, value in self.constraints.domains.items()}
+
+            # Implement the "hidden single" inference rule
+            # If a region contains only one square which can hold a specific number, then that number must go into that square
+            hidden_single_found = set()
+            # Iterate through every cell in the grid
+            for cell_key, assigned_value in self.assignments.values.items():
+                if assigned_value != 0:
+                    continue
+                # Iterate through the neighbour of cell
+                row_neighbours = self.assignments.find_cell_neighbours_in_same_row(cell_key)
+                col_neighbours = self.assignments.find_cell_neighbours_in_same_col(cell_key)
+                sub_square_neighbours = self.assignments.find_cell_neighbours_in_same_sub_square(cell_key)
+
+                union_domain_values_of_row_neighbours = set()
+                for neighbour in row_neighbours:
+                    union_domain_values_of_row_neighbours = union_domain_values_of_row_neighbours.union(self.constraints.domains.get(neighbour))
+
+                union_domain_values_of_col_neighbours = set()
+                for neighbour in col_neighbours:
+                    union_domain_values_of_col_neighbours = union_domain_values_of_col_neighbours.union(self.constraints.domains.get(neighbour))
+
+                union_domain_values_of_sub_square_neighbours = set()
+                for neighbour in sub_square_neighbours:
+                    union_domain_values_of_sub_square_neighbours = union_domain_values_of_sub_square_neighbours.union(self.constraints.domains.get(neighbour))
+
+                if len(union_domain_values_of_row_neighbours) == self.n and len(union_domain_values_of_col_neighbours) == self.n and len(union_domain_values_of_sub_square_neighbours) == self.n:
+                    continue
+                #  Iterate through domain values of the cell
+                for domain_value in self.constraints.domains.get(cell_key):
+                    if (domain_value not in union_domain_values_of_row_neighbours) or (domain_value not in union_domain_values_of_col_neighbours) or (domain_value not in union_domain_values_of_sub_square_neighbours):
+                        values_copy = {key: value for key, value in self.assignments.values.items()}
+                        values_copy[cell_key] = domain_value
+                        hidden_single_found.add((cell_key, domain_value))
+                        # new_node = Node(self.n, values_copy,
+                        #                 cell_assigned_in_prev_move=cell_key,
+                        #                 value_assigned_in_prev_move=domain_value)
+                        # self.children.append(new_node)
+                        # found_hidden_single = True
+
+                # if len(hidden_single_found) > 0:
+                # print("hidden_single_found !!!", len(hidden_single_found))
+
+
+                # for hidden_single in hidden_single_found:
+                #     cell_to_assign, value_to_assign = hidden_single
+                #     new_node = Node(self.n, values_copy,
+                #                     cell_assigned_in_prev_move=cell_to_assign,
+                #                     value_assigned_in_prev_move=value_to_assign)
+                #     self.children.append(new_node)
+
             cell_selected = self.assignments.select_unassigned_cell(self.constraints)
 
             for value in self.assignments.find_ordered_domain_values(cell_selected, self.constraints):
                 values_copy = {key: value for key, value in self.assignments.values.items()}
                 values_copy[cell_selected] = value
+                # if (cell_selected, value) not in hidden_single_found:
                 new_node = Node(self.n, values_copy,
                                 cell_assigned_in_prev_move=cell_selected,
                                 value_assigned_in_prev_move=value)
                 self.children.append(new_node)
+                # else:
+                #     print("oops")
+
             self.is_expanded = True
 
     def check(self):
@@ -518,11 +630,15 @@ def main():
     # SIXTEEN = [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
 
     puzzle_loader = PuzzleLoader()
-    board = puzzle_loader.load(16)
+    board = puzzle_loader.load(25)
     # masked_board = [[0, 0, 0, 0, 0, 4, 11, 3, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 24, 0, 0, 25, 0, 0, 0], [0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 15, 0, 0, 0, 20, 0, 0, 0, 0, 0], [0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 19, 0, 0, 0, 3], [0, 0, 0, 0, 13, 0, 0, 12, 22, 19, 0, 0, 0, 0, 7, 0, 0, 17, 14, 0, 0, 0, 0, 1, 8], [0, 0, 0, 0, 2, 0, 0, 18, 0, 0, 11, 13, 20, 0, 19, 0, 0, 16, 0, 0, 24, 0, 0, 0, 0], [22, 1, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 14, 0, 0, 8, 4, 0, 0, 2, 0, 13, 0, 0, 0], [0, 0, 0, 0, 14, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 24, 0, 0, 19, 0, 0, 15, 0, 9], [8, 0, 0, 2, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 22, 23, 0, 10, 0], [15, 10, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 1, 22, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 16], [0, 0, 0, 13, 25, 19, 0, 0, 12, 2, 0, 0, 0, 0, 0, 0, 14, 18, 0, 0, 0, 5, 21, 6, 0], [0, 0, 0, 0, 20, 0, 0, 0, 19, 0, 0, 0, 0, 0, 24, 0, 3, 14, 0, 0, 0, 21, 0, 0, 0], [0, 0, 0, 0, 12, 0, 25, 0, 0, 0, 0, 0, 0, 13, 20, 0, 0, 0, 0, 0, 0, 24, 0, 22, 0], [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0], [6, 23, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 15, 0, 8, 20, 0, 0, 0, 0, 0, 0, 0, 22, 13, 23, 12, 0, 6, 0, 0, 0, 0, 0], [11, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 2, 18, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 4], [0, 9, 0, 0, 0, 0, 0, 19, 0, 0, 24, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0], [14, 6, 0, 18, 0, 0, 0, 0, 11, 0, 12, 0, 0, 0, 21, 0, 0, 19, 0, 0, 0, 9, 0, 0, 0], [17, 0, 2, 0, 8, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 22, 0, 23], [0, 24, 0, 0, 0, 0, 0, 7, 0, 5, 0, 0, 6, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 17, 0], [21, 15, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 25, 6, 0, 0, 12, 16, 0, 0, 0, 0], [0, 16, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 0, 4, 0, 17, 3, 0, 0, 1, 8, 6, 0, 0], [0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 1, 0, 0, 20, 25, 2, 0], [2, 0, 0, 17, 0, 0, 6, 15, 0, 0, 13, 0, 0, 19, 0, 0, 16, 0, 0, 0, 0, 0, 10, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0]]
-    masked_board = puzzle_loader.mask_puzzle(board)
+    masked_board = [[0, 0, 0, 0, 7, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0], [14, 0, 0, 0, 0, 11, 0, 0, 16, 0, 8, 0, 0, 0, 0, 0], [0, 0, 0, 0, 9, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 12, 0, 0, 0, 4, 0, 0, 0, 0, 3, 0, 0], [0, 0, 0, 0, 15, 0, 0, 7, 1, 0, 0, 0, 16, 6, 0, 10], [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7, 13, 0], [0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 13, 9, 0, 5, 12], [12, 13, 0, 0, 0, 6, 0, 16, 0, 0, 0, 0, 0, 1, 4, 0], [0, 7, 0, 0, 11, 0, 9, 0, 0, 10, 15, 0, 0, 13, 0, 0], [15, 4, 0, 0, 5, 10, 3, 6, 13, 0, 11, 0, 14, 0, 12, 0], [13, 16, 0, 14, 0, 0, 0, 0, 3, 0, 0, 4, 5, 10, 0, 0], [11, 12, 10, 5, 0, 0, 16, 0, 0, 0, 1, 7, 15, 8, 6, 3], [16, 0, 3, 0, 0, 0, 14, 0, 0, 1, 9, 0, 6, 0, 0, 0], [9, 0, 7, 0, 6, 3, 5, 10, 0, 0, 0, 0, 1, 16, 15, 4], [0, 0, 13, 2, 0, 0, 7, 0, 0, 0, 0, 0, 8, 9, 0, 14], [1, 14, 0, 0, 2, 0, 15, 9, 0, 5, 16, 3, 0, 12, 10, 0]]
+        # puzzle_loader.mask_puzzle(board)
+    # [[0, 0, 0, 0, 7, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0], [14, 0, 0, 0, 0, 11, 0, 0, 16, 0, 8, 0, 0, 0, 0, 0], [0, 0, 0, 0, 9, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 12, 0, 0, 0, 4, 0, 0, 0, 0, 3, 0, 0], [0, 0, 0, 0, 15, 0, 0, 7, 1, 0, 0, 0, 16, 6, 0, 10], [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7, 13, 0], [0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 13, 9, 0, 5, 12], [12, 13, 0, 0, 0, 6, 0, 16, 0, 0, 0, 0, 0, 1, 4, 0], [0, 7, 0, 0, 11, 0, 9, 0, 0, 10, 15, 0, 0, 13, 0, 0], [15, 4, 0, 0, 5, 10, 3, 6, 13, 0, 11, 0, 14, 0, 12, 0], [13, 16, 0, 14, 0, 0, 0, 0, 3, 0, 0, 4, 5, 10, 0, 0], [11, 12, 10, 5, 0, 0, 16, 0, 0, 0, 1, 7, 15, 8, 6, 3], [16, 0, 3, 0, 0, 0, 14, 0, 0, 1, 9, 0, 6, 0, 0, 0], [9, 0, 7, 0, 6, 3, 5, 10, 0, 0, 0, 0, 1, 16, 15, 4], [0, 0, 13, 2, 0, 0, 7, 0, 0, 0, 0, 0, 8, 9, 0, 14], [1, 14, 0, 0, 2, 0, 15, 9, 0, 5, 16, 3, 0, 12, 10, 0]]
+        # [[0, 8, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 2, 11, 0], [0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0], [5, 0, 0, 0, 0, 16, 0, 4, 8, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 7, 3], [0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 13, 0, 4, 0, 7, 2, 0, 9, 0, 0, 0, 0], [0, 0, 5, 15, 8, 0, 0, 2, 10, 0, 0, 11, 0, 0, 0, 0], [2, 0, 0, 12, 0, 7, 1, 0, 14, 16, 0, 8, 0, 0, 13, 0], [10, 0, 0, 16, 14, 0, 0, 7, 9, 0, 11, 13, 6, 15, 0, 2], [0, 0, 9, 0, 0, 0, 0, 0, 6, 12, 0, 0, 0, 0, 0, 1], [0, 15, 7, 0, 1, 10, 0, 3, 0, 4, 14, 0, 16, 0, 9, 0], [0, 14, 1, 3, 0, 0, 0, 6, 15, 7, 16, 10, 0, 0, 0, 4], [14, 0, 12, 0, 0, 0, 13, 11, 0, 0, 2, 7, 4, 0, 0, 0], [3, 0, 6, 0, 0, 0, 0, 0, 0, 8, 12, 0, 0, 0, 0, 0], [7, 0, 13, 8, 12, 2, 0, 16, 4, 5, 0, 0, 1, 0, 14, 0], [0, 0, 15, 2, 0, 0, 7, 0, 0, 6, 1, 0, 0, 0, 8, 13]]
+        # puzzle_loader.mask_puzzle(board)
     print(masked_board)
-
+    # masked_board = [[5, 11, 0, 15, 1, 0, 0, 0, 0, 0, 12, 0, 0, 0, 8, 7], [8, 0, 13, 0, 0, 0, 0, 5, 0, 0, 0, 11, 0, 0, 0, 0], [0, 1, 7, 0, 0, 12, 0, 0, 0, 0, 0, 3, 0, 0, 11, 0], [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 16, 0, 5], [3, 2, 0, 6, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0], [12, 13, 0, 0, 10, 0, 0, 0, 0, 0, 7, 16, 0, 0, 0, 6], [0, 0, 4, 0, 0, 0, 7, 0, 12, 0, 14, 6, 0, 0, 5, 0], [11, 0, 0, 0, 0, 0, 0, 12, 5, 0, 9, 0, 8, 0, 0, 0], [0, 4, 0, 0, 9, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 4, 13, 0, 15], [0, 0, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0], [13, 0, 0, 0, 0, 5, 0, 0, 0, 2, 0, 15, 0, 0, 9, 0], [7, 0, 0, 4, 0, 0, 12, 11, 0, 10, 3, 8, 0, 0, 13, 14], [0, 0, 0, 13, 3, 0, 4, 0, 0, 5, 16, 9, 2, 15, 7, 0], [15, 5, 3, 0, 16, 7, 13, 10, 0, 12, 0, 0, 9, 0, 0, 0], [14, 10, 6, 0, 0, 8, 9, 0, 0, 7, 15, 0, 16, 3, 12, 4]]
     start_time = time.time()
     sudoku_solver = SudokuSolver(masked_board)
     result = sudoku_solver.solve()
