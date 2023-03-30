@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Tuple
+from utils.benchmark_test.solved_board import get_solved_board
 
 
 class SolverExecutionExpiredException(Exception):
@@ -465,3 +466,18 @@ class Node:
             two_d_array[row_index][col_index] = value
 
         return two_d_array
+
+
+def main():
+    board = get_solved_board(9)
+    start_time = time.time()
+    sudoku_solver = SudokuSolverCsp(board)
+    result = sudoku_solver.solve()
+    end_time = time.time()
+    print("Solution")
+    print(result)
+    print(f"Solved in {end_time - start_time} seconds")
+
+
+if __name__ == '__main__':
+    main()
