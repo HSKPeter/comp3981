@@ -375,7 +375,27 @@ class Node:
         self.is_checked = True
 
     def __str__(self):
-        return str(self.assignments)
+        sub_square_size = int(self.n ** 0.5)
+        full_row = "+".join(["-" * (sub_square_size * 5 - 1)] * sub_square_size)
+
+        board_str = ''
+        for row in range(self.n):
+            if row % sub_square_size == 0:
+                board_str += full_row + '\n'
+            row_str = ' |'
+            for col in range(self.n):
+                value = self.domains[(row, col, get_sub_square_index(row, col))]
+                if value == 0:
+                    row_str += '__'
+                else:
+                    row_str += f'{value} ' if value < 10 else f'{value}'
+                if (col + 1) % sub_square_size == 0:
+                    row_str += '  |'
+                row_str += "  "
+            board_str += row_str + '\n'
+        board_str += full_row
+
+        return board_str + '\n'
 
     def is_solution(self):
         """
