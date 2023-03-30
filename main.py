@@ -2,10 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from puzzle_loader import *
-from sudoku_solver import solve_with_brute_force, SolverExecutionExpiredException, PuzzleUnsolvedException
+from sudoku_solver_brute_force import solve_with_brute_force, SolverExecutionExpiredException, PuzzleUnsolvedException
 from pydantic import BaseModel
 from typing import List
-from sudoku_solver_csp import solve_with_csp
+from sudoku_solver_csp_recursive import solve_with_csp_recursive
 import time
 
 app = FastAPI()
@@ -68,7 +68,7 @@ async def solve_csp(board_puzzle: BoardPuzzleData):
     try:
         start_time = time.perf_counter()
         board = board_puzzle.board
-        result = solve_with_csp(board)
+        result = solve_with_csp_recursive(board)
         end_time = time.perf_counter()
         duration =  end_time - start_time
         return {"board": result, "duration": convert_seconds_to_formatted_time(duration)}

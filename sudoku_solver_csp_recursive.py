@@ -2,7 +2,7 @@ import copy
 import sys
 import time
 
-import sudoku_solver
+import sudoku_solver_brute_force
 
 ROW = 0
 COL = 1
@@ -24,11 +24,12 @@ class EmptyDomainException(Exception):
     pass
 
 
+# n = length of board
 def get_sub_square_index(n, row, col) -> int:
     sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
     sub_m = n // sub_n  # number of sub-squares in each row or column
-    sub_row = row // sub_m
-    sub_col = col // sub_n
+    sub_row = row // sub_n
+    sub_col = col // sub_m
     sub_square_index = sub_row * sub_m + sub_col
     # sub_square_index starting from 0, counting from top-left to bottom-right of the board
     return sub_square_index
@@ -279,13 +280,18 @@ class Assignments:
 
         return cell_neighbours
 
+    # Original
     def __str__(self):
-        sub_square_size = int(self.n ** 0.5)
-        full_row = "+".join(["-" * (sub_square_size * 5 - 1)] * sub_square_size)
+        sub_square_size = (int(self.n ** 0.5), int(self.n ** 0.5))
+
+        if self.n == 12:
+            sub_square_size = (3, 4)
+
+        full_row = "+".join(["-" * (sub_square_size[1] * 5 - 1)] * sub_square_size[0])
 
         board_str = ''
         for row in range(self.n):
-            if row % sub_square_size == 0:
+            if row % sub_square_size[0] == 0:
                 board_str += full_row + '\n'
             row_str = ' |'
             for col in range(self.n):
@@ -294,13 +300,36 @@ class Assignments:
                     row_str += '__'
                 else:
                     row_str += f'{value} ' if value < 10 else f'{value}'
-                if (col + 1) % sub_square_size == 0:
+                if (col + 1) % sub_square_size[1] == 0:
                     row_str += '  |'
                 row_str += "  "
             board_str += row_str + '\n'
         board_str += full_row
 
         return board_str + '\n'
+
+    # def __str__(self):
+    #     sub_square_size = (int(self.n ** 0.5 / 3) * 3, int(self.n ** 0.5 / 4) * 4)
+    #     full_row = "+".join(["-" * (sub_square_size[1] * 5 - 1)] * sub_square_size[0])
+    #
+    #     board_str = ''
+    #     for row in range(self.n):
+    #         if row % sub_square_size[0] == 0:
+    #             board_str += full_row + '\n'
+    #         row_str = ' |'
+    #         for col in range(self.n):
+    #             value = self.values[(row, col, self.get_sub_square_index(row, col))]
+    #             if value == 0:
+    #                 row_str += '__'
+    #             else:
+    #                 row_str += f'{value:2}' if value < 10 else f'{value}'
+    #             if (col + 1) % sub_square_size[1] == 0:
+    #                 row_str += '  |'
+    #             row_str += "  "
+    #         board_str += row_str + '\n'
+    #     board_str += full_row
+    #
+    #     return board_str + '\n'
 
     def get_sub_square_index(self, row, col) -> int:
         return get_sub_square_index(self.n, row, col)
@@ -346,20 +375,25 @@ class Constraints:
                 # Remove filled value from row domains
                 for r in range(n):
                     if r != row:
-                        updated_domains[(r, col, base * (r // base) + col // base)].discard(filled_value)
+                        updated_domains[(r, col, get_sub_square_index(n, r, col))].discard(filled_value)
 
                 # Remove filled value from column domains
                 for c in range(n):
                     if c != col:
-                        updated_domains[(row, c, base * (row // base) + c // base)].discard(filled_value)
+                        updated_domains[(row, c, get_sub_square_index(n, row, c))].discard(filled_value)
 
                 # Remove filled value from subsquare domains
                 subsquare_row_start = base * (row // base)
                 subsquare_col_start = base * (col // base)
+
+                if n == 12:
+                    subsquare_row_start = 3 * (row // 3)
+                    subsquare_col_start = 4 * (col // 4)
+
                 for r in range(subsquare_row_start, subsquare_row_start + 3):
                     for c in range(subsquare_col_start, subsquare_col_start + 3):
                         if r != row and c != col:
-                            updated_domains[(r, c, base * (r // base) + c // base)].discard(filled_value)
+                            updated_domains[(r, c, get_sub_square_index(n, r, c))].discard(filled_value)
 
         return updated_domains
 
@@ -382,15 +416,15 @@ target_depth = 0
 def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0, mute=True):
     global backtrack_counter
     global target_depth
-    if backtrack_counter > 1000:
-        if target_depth == 0:
-            target_depth = depth/2
-        if depth > target_depth:
-            return None
-        else:
-            target_depth = 0
-            backtrack_counter = 0
-    backtrack_counter += 1
+    # if backtrack_counter > 100000000000:
+    #     if target_depth == 0:
+    #         target_depth = depth/2
+    #     if depth > target_depth:
+    #         return None
+    #     else:
+    #         target_depth = 0
+    #         backtrack_counter = 0
+    # backtrack_counter += 1
 
     if depth % 10 == 0 and not mute:
         print(f"depth {depth}    backtrack_counter {backtrack_counter}")
@@ -417,7 +451,7 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0,
     return None
 
 
-def solve_with_csp(board, recursion_limit=None):
+def solve_with_csp_recursive(board, recursion_limit=None):
     assignments = Assignments(board)
     constraints = Constraints(assignments)
 
@@ -441,13 +475,20 @@ def main():
                    [8, 0, 0, 2, 0, 3, 0, 0, 9],
                    [0, 0, 5, 0, 1, 0, 3, 0, 0]]
 
+    TWELVE_X_TWELVE = [[0, 0, 0, 11, 8, 0, 0, 0, 0, 0, 0, 6], [10, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 11],
+                       [0, 7, 0, 0, 0, 0, 2, 6, 0, 0, 1, 0], [7, 0, 12, 0, 0, 0, 9, 0, 0, 0, 0, 0],
+                       [0, 0, 0, 10, 6, 2, 0, 0, 5, 0, 0, 0], [0, 9, 0, 8, 0, 10, 0, 0, 0, 0, 0, 0],
+                       [0, 1, 0, 0, 5, 0, 7, 8, 0, 0, 6, 3], [0, 0, 0, 7, 2, 0, 10, 0, 8, 0, 12, 5],
+                       [0, 6, 0, 5, 0, 0, 12, 0, 0, 1, 0, 0], [6, 5, 7, 12, 0, 3, 8, 2, 0, 11, 0, 0],
+                       [0, 0, 8, 0, 0, 1, 5, 0, 0, 7, 3, 9], [9, 3, 4, 1, 0, 0, 6, 10, 12, 0, 0, 0]]
+
     sys.setrecursionlimit(1000000)
 
     board = [[5, 11, 0, 15, 1, 0, 0, 0, 0, 0, 12, 0, 0, 0, 8, 7], [8, 0, 13, 0, 0, 0, 0, 5, 0, 0, 0, 11, 0, 0, 0, 0], [0, 1, 7, 0, 0, 12, 0, 0, 0, 0, 0, 3, 0, 0, 11, 0], [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 16, 0, 5], [3, 2, 0, 6, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0], [12, 13, 0, 0, 10, 0, 0, 0, 0, 0, 7, 16, 0, 0, 0, 6], [0, 0, 4, 0, 0, 0, 7, 0, 12, 0, 14, 6, 0, 0, 5, 0], [11, 0, 0, 0, 0, 0, 0, 12, 5, 0, 9, 0, 8, 0, 0, 0], [0, 4, 0, 0, 9, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 4, 13, 0, 15], [0, 0, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0], [13, 0, 0, 0, 0, 5, 0, 0, 0, 2, 0, 15, 0, 0, 9, 0], [7, 0, 0, 4, 0, 0, 12, 11, 0, 10, 3, 8, 0, 0, 13, 14], [0, 0, 0, 13, 3, 0, 4, 0, 0, 5, 16, 9, 2, 15, 7, 0], [15, 5, 3, 0, 16, 7, 13, 10, 0, 12, 0, 0, 9, 0, 0, 0], [14, 10, 6, 0, 0, 8, 9, 0, 0, 7, 15, 0, 16, 3, 12, 4]]
         # [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
         # sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
     # first algo
-    assignments = Assignments(board)
+    assignments = Assignments(TWELVE_X_TWELVE)
     constraints = Constraints(assignments)
     start_time = time.time()
     result = backtrack(constraints, assignments, mute=False)
