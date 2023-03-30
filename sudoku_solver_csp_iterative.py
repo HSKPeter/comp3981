@@ -49,7 +49,7 @@ def get_sub_square_index(n, row, col) -> int:
 def solve_child(child, max_process_seconds=None):
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.stack = [child]  # Set the stack to contain the single child
-    return solver.solve(max_process_seconds)
+    return solver.solve_sequential(max_process_seconds)
 
 
 class SudokuSolverCsp:
@@ -84,7 +84,15 @@ class SudokuSolverCsp:
         self.stack = [Node.mark_node_as_unreserved(node) for node in self.reserved_stack]
         self.reserved_stack = []
 
-    def solve_parallel(self, max_process_seconds=None):
+    def solve(self, max_process_seconds=None, parallel=False):
+        if parallel:
+            print("solving parallel")
+            return self.solve_parallel(max_process_seconds)
+        else:
+            print("solving sequential")
+            return self.solve_sequential(max_process_seconds)
+
+    def solve_parallel(self, max_process_seconds):
         # Generate all possible child nodes from the root node
         root_node = self.stack[0]
         root_node.expand()
@@ -108,7 +116,7 @@ class SudokuSolverCsp:
                 pass
             return first_solution.value
 
-    def solve(self, max_process_seconds=None):
+    def solve_sequential(self, max_process_seconds):
         expiry_timestamp = (datetime.now() + timedelta(
             seconds=max_process_seconds)).timestamp() if max_process_seconds is not None else None
         i = 0

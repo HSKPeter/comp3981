@@ -28,9 +28,12 @@ class RecursiveCspAlgorithmRunner(AlgorithmRunner):
 
 
 class IterativeCspAlgorithmRunner(AlgorithmRunner):
+    def __init__(self, parallel=False):
+        self._parallel = parallel
+
     def solve_sudoku(self, board):
         sudoku_solver = SudokuSolverIterative(board)
-        return sudoku_solver.solve()
+        return sudoku_solver.solve(parallel=self._parallel)
 
 
 class BenchmarkTestRunner:
@@ -46,8 +49,10 @@ class BenchmarkTestRunner:
 
         if algo_type == Algorithm.CSP_RECURSIVE:
             self._algorithm_runners = RecursiveCspAlgorithmRunner()
-        elif algo_type == Algorithm.CSP_ITERATIVE:
-            self._algorithm_runners = IterativeCspAlgorithmRunner()
+        elif algo_type == Algorithm.CSP_ITERATIVE_SEQUENTIAL:
+            self._algorithm_runners = IterativeCspAlgorithmRunner(parallel=False)
+        elif algo_type == Algorithm.CSP_ITERATIVE_PARALLEL:
+            self._algorithm_runners = IterativeCspAlgorithmRunner(parallel=True)
         elif algo_type == Algorithm.BRUTE_FORCE:
             self._algorithm_runners = BruteForceAlgorithmRunner()
 
@@ -88,21 +93,25 @@ class BenchmarkTestRunner:
 class Algorithm(Enum):
     BRUTE_FORCE = auto()
     CSP_RECURSIVE = auto()
-    CSP_ITERATIVE = auto()
+    CSP_ITERATIVE_SEQUENTIAL = auto()
+    CSP_ITERATIVE_PARALLEL = auto()
 
 
 def main():
     board_size = 9
     benchmark_test_runner = BenchmarkTestRunner(board_size)
 
-    benchmark_test_runner.set_algorithm_runners(Algorithm.BRUTE_FORCE)
+    # benchmark_test_runner.set_algorithm_runners(Algorithm.BRUTE_FORCE)
+    # benchmark_test_runner.run_benchmark()
+
+    benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE_SEQUENTIAL)
     benchmark_test_runner.run_benchmark()
 
-    benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE)
+    benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE_PARALLEL)
     benchmark_test_runner.run_benchmark()
 
-    benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_RECURSIVE)
-    benchmark_test_runner.run_benchmark()
+    # benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_RECURSIVE)
+    # benchmark_test_runner.run_benchmark()
 
 
 if __name__ == '__main__':
