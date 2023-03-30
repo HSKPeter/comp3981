@@ -97,13 +97,13 @@ class BenchmarkTestRunner:
                  f"average runtime (seconds) over {successful_runs} successful runs: {average_elapsed_time:.6f}\n" \
                  f"failures: {failure_count} (average time for failures: {average_failure_time:.6f})\n\n"
 
-        self.write_report(result)
+        self.write_report(result, filename=self._algo_type_name)
 
-    def write_report(self, content, uuid_in_filename=False):
+    def write_report(self, content, filename="benchmarkreport", uuid_in_filename=False):
         now = datetime.now()
-        filename_uuid = uuid.uuid4().hex if uuid_in_filename else ""
+        filename_uuid = f"_{uuid.uuid4().hex}" if uuid_in_filename else ""
         formatted_date_time = now.strftime('%Y-%m-%d_%H%M')
-        file_path = os.path.join(self._package_directory, "benchmark_reports", f"{formatted_date_time}_{self._algo_type_name}_{filename_uuid}.txt")
+        file_path = os.path.join(self._package_directory, "benchmark_reports", f"{formatted_date_time}_{filename}{filename_uuid}.txt")
         with open(file_path, 'a') as file:
             file.write(content)
 
@@ -122,14 +122,22 @@ def main():
 
     report_content = f"Loaded puzzle from {file_path}:\n{raw_content}\n\n"
 
-    benchmark_test_runner.set_algorithm_runners(Algorithm.BRUTE_FORCE)
-    report_content += benchmark_test_runner.run_benchmark(board)
+    print(report_content)
+
+    # benchmark_test_runner.set_algorithm_runners(Algorithm.BRUTE_FORCE)
+    # benchmark_test_result += benchmark_test_runner.run_benchmark(board)
+    # print(benchmark_test_result)
+    # report_content += benchmark_test_result
 
     benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_RECURSIVE)
-    report_content += benchmark_test_runner.run_benchmark(board)
+    benchmark_test_result = benchmark_test_runner.run_benchmark(board)
+    print(benchmark_test_result)
+    report_content += benchmark_test_result
 
     benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE)
-    report_content += benchmark_test_runner.run_benchmark(board)
+    benchmark_test_result += benchmark_test_runner.run_benchmark(board)
+    print(benchmark_test_result)
+    report_content += benchmark_test_result
 
     benchmark_test_runner.write_report(report_content, uuid_in_filename=True)
 
