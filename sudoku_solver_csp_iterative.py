@@ -184,6 +184,13 @@ class Node:
         if Node.every_cell_neighbour_by_type is None:
             Node.every_cell_neighbour_by_type = self.find_every_cell_neighbours_by_type()
 
+    @classmethod
+    def reset(cls):
+        cls.all_arcs = None
+        cls.every_cell_neighbour = None
+        cls.every_cell_neighbour_by_type = None
+        cls.n = None
+        
     @staticmethod
     def get_arcs(cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
         return Node.all_arcs[cell]
@@ -528,13 +535,23 @@ class Node:
         return two_d_array
 
 
+def solve_with_csp_iterative(board):
+    Node.reset()
+    solver = SudokuSolverCsp(board)
+    if Node.n <= 12:
+        result = solver.solve(parallel=False)
+    else:
+        result = solver.solve(parallel=True)
+    return result.to_2d_array()
+
+
 def main():
     board = get_solved_board(12)
     masked_board = mask_board(board)
     print(masked_board)
     start_time = time.time()
     sudoku_solver = SudokuSolverCsp(masked_board)
-    result = sudoku_solver.solve_parallel()
+    result = sudoku_solver.solve(parallel=True)
     end_time = time.time()
     print("Solution")
     print(result)

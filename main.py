@@ -6,6 +6,7 @@ from sudoku_solver_brute_force import solve_with_brute_force, SolverExecutionExp
 from pydantic import BaseModel
 from typing import List
 from sudoku_solver_csp_recursive import solve_with_csp_recursive
+from sudoku_solver_csp_iterative import solve_with_csp_iterative
 import time
 
 app = FastAPI()
@@ -68,10 +69,11 @@ async def solve_csp(board_puzzle: BoardPuzzleData):
     try:
         start_time = time.perf_counter()
         board = board_puzzle.board
-        result = solve_with_csp_recursive(board)
+        result = solve_with_csp_iterative(board)
         end_time = time.perf_counter()
         duration =  end_time - start_time
         return {"board": result, "duration": convert_seconds_to_formatted_time(duration)}
     except Exception as e:
-        # print(e)
+        print("error")
+        print(e)
         return error_response_with_message("Solution not found within reasonable amount of time.")
