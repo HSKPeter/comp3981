@@ -18,9 +18,13 @@ let intervalId;
 
 bruteForceButton.addEventListener("click", function () {
     displayTime(solveWithBruteForce);
+    document.getElementById("solve-brute-force").remove()
+    document.getElementById("solve-csp").remove()
 });
 cspButton.addEventListener("click", function () {
     displayTime(solveWithCSP);
+    document.getElementById("solve-brute-force").remove()
+    document.getElementById("solve-csp").remove()
 });
 clearButton.addEventListener("click", function () {
     window.location.href = "main_menu.html";
