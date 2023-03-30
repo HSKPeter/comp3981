@@ -364,7 +364,7 @@ class Node:
         3. Assign the values to the current variable in the order determined by the LCV heuristic.
         By using the LCV heuristic, you can increase the likelihood of finding a solution without the need for excessive backtracking. This can result in a more efficient search process and, ultimately, a faster solution to the CSP.
         """
-        domain_values = list(self.domains.get[cell_key])
+        domain_values = list(self.domains[cell_key])
         if len(domain_values) == 1:
             return domain_values
 
@@ -376,10 +376,9 @@ class Node:
         count = 0
         for neighbor_key in self.every_cell_neighbour.get(cell_key):
             # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
-            if value in self.domains.get(neighbor_key):
+            if value in self.domains[neighbor_key]:
                 count += 1
         return count
-
 
     def check(self):
         self.is_checked = True
