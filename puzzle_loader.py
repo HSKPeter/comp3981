@@ -20,7 +20,7 @@ class PuzzleLoader:
         difficulty = "easy" if is_easy else "hard"
         file_path = os.path.join(self._package_directory, "assets", "standard_samples", "9x9", difficulty, f"{difficulty}_sample_{str(sample).zfill(2)}.txt")
         file_content = self.read_file(file_path)
-        return file_path, file_content
+        return file_path.split(self._package_directory)[1], file_content
 
     def load_from_2d_array_txt_file(self, size):
         """
