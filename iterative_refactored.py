@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Tuple
 from utils.benchmark_test.solved_board import get_solved_board
+from sudoku_solver import mask_board
 
 
 class SolverExecutionExpiredException(Exception):
@@ -85,6 +86,8 @@ class SudokuSolverCsp:
 
             is_valid = current_node.do_forward_checking()
 
+            # print(current_node)
+
             if not is_valid:
                 current_node.check()
                 self.stack.pop()
@@ -138,7 +141,7 @@ class Node:
     def get_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
         return self.all_arcs[cell]
 
-    def find_all_arcs(self, cell):
+    def find_all_arcs(self):
         all_arcs = dict()
         for cell in self.domains.keys():
             cell_arcs = set()
@@ -402,8 +405,10 @@ class Node:
                 board_str += full_row + '\n'
             row_str = ' |'
             for col in range(self.n):
-                domain_value = self.domains[(row, col, get_sub_square_index(Node.n, row, col))]
-                value = next(iter(domain_value))
+                domain_values = self.domains[(row, col, get_sub_square_index(Node.n, row, col))]
+                value = 0
+                if (len(domain_values) == 1):
+                    value = next(iter(domain_values))
                 if value == 0:
                     row_str += '__'
                 else:
@@ -421,13 +426,13 @@ class Node:
         Check if this set of assignments is a solution to the problem (the whole board is filled and satisfies the constraints)
         """
         for domain_values in self.domains.values():
-            if len(domain_values) == 0:
+            if len(domain_values) != 1:
                 return False
         all_arcs = set.union(*self.all_arcs.values())
         for arc in all_arcs:
             cell_one, cell_two = arc
             cell_one_value = next(iter(self.domains[cell_one]))
-            cell_two_value = next(iter(self.domains[cell_one]))
+            cell_two_value = next(iter(self.domains[cell_two]))
             if cell_one_value == cell_two_value:
                 raise InvalidAssignmentException(
                     f"{cell_one} and {cell_two} were both assigned the same value of {cell_one_value}\n{self}")
@@ -456,9 +461,11 @@ class Node:
 
 
 def main():
-    board = get_solved_board(9)
+    board = get_solved_board(16)
+    masked_board = mask_board(board)
+    print(masked_board)
     start_time = time.time()
-    sudoku_solver = SudokuSolverCsp(board)
+    sudoku_solver = SudokuSolverCsp(masked_board)
     result = sudoku_solver.solve()
     end_time = time.time()
     print("Solution")
