@@ -1,45 +1,9 @@
 import time
 from datetime import datetime
 from puzzle_loader import PuzzleLoader
-from sudoku_solver_csp import Assignments, Constraints, backtrack
-from sudoku_solver import SudokuSolver
-from iterative_refactored import SudokuSolverCsp as SudokuSolverIterative
-from enum import Enum, auto
+from algo import *
 import os
-import abc
 import uuid
-
-
-class PuzzleGenerator:
-    @staticmethod
-    def read_file(filename):
-        with open(filename, 'r') as file:
-            return file.read()
-
-
-class AlgorithmRunner(abc.ABC):
-    @abc.abstractmethod
-    def solve_sudoku(self, board):
-        pass
-
-
-class BruteForceAlgorithmRunner(AlgorithmRunner):
-    def solve_sudoku(self, board):
-        sudoku_solver = SudokuSolver(board)
-        return sudoku_solver.solve()
-
-
-class RecursiveCspAlgorithmRunner(AlgorithmRunner):
-    def solve_sudoku(self, board):
-        assignments = Assignments(board)
-        constraints = Constraints(assignments)
-        return backtrack(constraints, assignments, mute=True)
-
-
-class IterativeCspAlgorithmRunner(AlgorithmRunner):
-    def solve_sudoku(self, board):
-        sudoku_solver = SudokuSolverIterative(board)
-        return sudoku_solver.solve()
 
 
 class BenchmarkTestRunner:
@@ -54,20 +18,27 @@ class BenchmarkTestRunner:
     def set_algorithm_runners(self, algo_type):
         self._algo_type_name = algo_type.name.lower()
 
-        if algo_type == Algorithm.CSP_RECURSIVE:
+        if algo_type == AlgorithmType.CSP_RECURSIVE:
             self._algorithm_runners = RecursiveCspAlgorithmRunner()
-        elif algo_type == Algorithm.CSP_ITERATIVE:
+        elif algo_type == AlgorithmType.CSP_ITERATIVE:
             self._algorithm_runners = IterativeCspAlgorithmRunner()
-        elif algo_type == Algorithm.BRUTE_FORCE:
+        elif algo_type == AlgorithmType.BRUTE_FORCE:
             self._algorithm_runners = BruteForceAlgorithmRunner()
 
-    def run_benchmark(self, board):
+    def run_benchmark(self, board, algo_type):
+        self.set_algorithm_runners(algo_type)
+        return self.solve_board(board)
+
+    def solve_board(self, board):
         start_time = time.time()
         result = self._algorithm_runners.solve_sudoku(board)
         end_time = time.time()
         elapsed_time = end_time - start_time
 
-        return f"Solution found by {self._algo_type_name} in {elapsed_time}: \n{result}\n"
+        message = f"Solution found by {self._algo_type_name} in {elapsed_time}: \n{result}\n"
+        print(message)
+
+        return message
 
     def test_performance_by_iteration(self, board, description=None):
         if description is None:
@@ -108,36 +79,25 @@ class BenchmarkTestRunner:
             file.write(content)
 
 
-class Algorithm(Enum):
-    BRUTE_FORCE = auto()
-    CSP_RECURSIVE = auto()
-    CSP_ITERATIVE = auto()
-
-
 def main():
     benchmark_test_runner = BenchmarkTestRunner()
     puzzle_loader = PuzzleLoader()
 
-    file_path, raw_content, board = puzzle_loader.load_unsolved_9x9_puzzle_from_standard_samples(is_easy=True)
-
+    file_path, raw_content, board = puzzle_loader.load_unsolved_puzzle(25,
+                                                                       sample_index=4,
+                                                                       is_easy=True)
     report_content = f"Loaded puzzle from {file_path}:\n{raw_content}\n\n"
 
     print(report_content)
 
-    # benchmark_test_runner.set_algorithm_runners(Algorithm.BRUTE_FORCE)
-    # benchmark_test_result += benchmark_test_runner.run_benchmark(board)
-    # print(benchmark_test_result)
-    # report_content += benchmark_test_result
+    algo_types_to_test = [
+        # Algorithm.BRUTE_FORCE,
+        AlgorithmType.CSP_RECURSIVE,
+        AlgorithmType.CSP_ITERATIVE,
+    ]
 
-    benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_RECURSIVE)
-    benchmark_test_result = benchmark_test_runner.run_benchmark(board)
-    print(benchmark_test_result)
-    report_content += benchmark_test_result
-
-    benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE)
-    benchmark_test_result += benchmark_test_runner.run_benchmark(board)
-    print(benchmark_test_result)
-    report_content += benchmark_test_result
+    for type_to_test in algo_types_to_test:
+        report_content += benchmark_test_runner.run_benchmark(board, type_to_test)
 
     benchmark_test_runner.write_report(report_content, uuid_in_filename=True)
 

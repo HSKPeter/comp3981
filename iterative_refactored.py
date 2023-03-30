@@ -85,7 +85,10 @@ class SudokuSolverCsp:
 
             is_valid = current_node.do_forward_checking()
 
-            # print(current_node)
+            if i % 10 == 0:
+                print(i)
+                if i % 100 == 0:
+                    print(current_node)
 
             if not is_valid:
                 current_node.check()
