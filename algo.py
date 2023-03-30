@@ -1,8 +1,8 @@
 from enum import Enum, auto
 import abc
-from sudoku_solver_csp import Assignments, Constraints, backtrack
-from sudoku_solver import SudokuSolver
-from iterative_refactored import SudokuSolverCsp as SudokuSolverIterative
+from sudoku_solver_csp_recursive import Assignments, Constraints, backtrack
+from sudoku_solver_brute_force import SudokuSolver as SudokuSolverBruteForce
+from sudoku_solver_csp_iterative import SudokuSolverCsp as SudokuSolverIterative
 
 
 class AlgorithmType(Enum):
@@ -19,7 +19,7 @@ class AlgorithmRunner(abc.ABC):
 
 class BruteForceAlgorithmRunner(AlgorithmRunner):
     def solve_sudoku(self, board):
-        sudoku_solver = SudokuSolver(board)
+        sudoku_solver = SudokuSolverBruteForce(board)
         return sudoku_solver.solve()
 
 

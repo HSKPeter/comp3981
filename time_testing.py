@@ -1,10 +1,9 @@
 import time
 import numpy as np
 
-import sudoku_solver_brute_force
 from sudoku_solver_csp_recursive import Assignments, Constraints, backtrack
 from sudoku_solver_brute_force import mask_board, SudokuSolver
-from iterative_refactored import SudokuSolverCsp
+from sudoku_solver_csp_iterative import SudokuSolverCsp
 
 NINE_X_NINE_SOLVED = [[7, 6, 2, 4, 9, 8, 5, 1, 3],
                       [9, 3, 1, 2, 5, 6, 4, 8, 7],
