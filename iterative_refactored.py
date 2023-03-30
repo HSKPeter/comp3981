@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 
 class SolverExecutionExpiredException(Exception):
@@ -343,13 +343,16 @@ class Node:
                 self.children.append(new_node)
 
             self.is_expanded = True
+
+    def cell_is_empty(self, cell: Tuple[int, int]):
+        return len(self.domains[cell]) > 1
             
-    def select_unassigned_cell(self, constraints) -> (int, int):
-        unassigned_cells = [cell for cell in self.values.keys() if self.cell_is_empty(cell)]
+    def select_unassigned_cell(self) -> Tuple[int, int]:
+        unassigned_cells = [cell for cell in self.domains.keys() if self.cell_is_empty(cell)]
 
         # Find the cells with the smallest domain size
-        min_domain_size = min(len(constraints.domains[cell]) for cell in unassigned_cells)
-        min_domain_cells = [cell for cell in unassigned_cells if len(constraints.domains[cell]) == min_domain_size]
+        min_domain_size = min(len(self.domains[cell]) for cell in unassigned_cells)
+        min_domain_cells = [cell for cell in unassigned_cells if len(self.domains[cell]) == min_domain_size]
 
         if len(min_domain_cells) == 1:
             return min_domain_cells[0]
@@ -366,10 +369,38 @@ class Node:
 
         return max_degree_cell
     
-    def find_ordered_domain_values(self, cell_key, constraints) -> List[int]:
-        domain_values = list(constraints.domains.get(cell_key))
+    def find_ordered_domain_values(self, cell_key):
+        """
+        Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
+        which selects the value that imposes the fewest constraints on the remaining variables.
+        The Least Constraining Value (LCV) heuristic is used to order the values of a variable when attempting to assign a value during the search process in a Constraint Satisfaction Problem (CSP). The LCV heuristic aims to minimize the impact of the current assignment on the future assignments of other variables.
+
+        The main idea behind the LCV heuristic is to choose a value that imposes the fewest constraints on the remaining unassigned variables. By doing so, you keep more options open for the remaining variables, which can potentially result in fewer backtracks and a more efficient search process.
+
+        To implement the LCV heuristic, you need to perform the following steps:
+
+        1. For the current variable you are assigning a value to, evaluate each possible value in its domain.
+        2. For each value, count the number of constraints it imposes on the remaining unassigned variables. This typically involves counting how many legal values are eliminated from the domains of neighboring 3. unassigned variables if the current value is assigned to the current variable.
+        4. Order the values by the number of constraints they impose, from least constraining to most constraining.
+        3. Assign the values to the current variable in the order determined by the LCV heuristic.
+        By using the LCV heuristic, you can increase the likelihood of finding a solution without the need for excessive backtracking. This can result in a more efficient search process and, ultimately, a faster solution to the CSP.
+        """
+        domain_values = list(self.domains.get[cell_key])
         if len(domain_values) == 1:
             return domain_values
+
+        domain_values.sort(key=lambda x: self.count_constraints(cell_key, x))
+
+        return domain_values
+
+    def count_constraints(self, cell_key, value):
+        count = 0
+        for neighbor_key in self.every_cell_neighbour.get(cell_key):
+            # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
+            if value in self.domains.get(neighbor_key):
+                count += 1
+        return count
+
 
     def check(self):
         self.is_checked = True
@@ -421,4 +452,16 @@ class Node:
         return None
 
     def to_2d_array(self):
-        return self.assignments.to_2d_array()
+        two_d_array = []
+
+        for i in range(Node.n):
+            arr = list()
+            for j in range(Node.n):
+                arr.append(0)
+            two_d_array.append(arr)
+
+        for key, value in self.domains.items():
+            row_index, col_index, _ = key
+            two_d_array[row_index][col_index] = value
+
+        return two_d_array
