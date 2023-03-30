@@ -20,12 +20,7 @@ class PuzzleLoader:
         difficulty = "easy" if is_easy else "hard"
         file_path = os.path.join(self._package_directory, "assets", "standard_samples", "9x9", difficulty, f"{difficulty}_sample_{str(sample).zfill(2)}.txt")
         file_content = self.read_file(file_path)
-        rows = file_content.split("\n")
-        result = []
-        for row in rows:
-            nums = [int(num) for num in row.split(",")]
-            result.append(nums)
-        return file_path, file_content, result
+        return file_path, file_content
 
     def load_from_2d_array_txt_file(self, size):
         """
@@ -41,7 +36,13 @@ class PuzzleLoader:
         return masked_board
 
     def load_unsolved_9x9_puzzle_from_standard_samples(self, is_easy=False):
-        return self.load_txt_file_in_standard_format(is_easy)
+        file_path, file_content = self.load_txt_file_in_standard_format(is_easy)
+        rows = file_content.split("\n")
+        result = []
+        for row in rows:
+            nums = [int(num) for num in row.split(",")]
+            result.append(nums)
+        return file_path, file_content, result
 
     @staticmethod
     def mask_puzzle(board):

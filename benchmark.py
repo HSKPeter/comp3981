@@ -2,10 +2,12 @@ import time
 from datetime import datetime
 from puzzle_loader import PuzzleLoader
 from sudoku_solver_csp import Assignments, Constraints, backtrack
-from sudoku_solver import mask_board, SudokuSolver
+from sudoku_solver import SudokuSolver
 from iterative_refactored import SudokuSolverCsp as SudokuSolverIterative
 from enum import Enum, auto
+import os
 import abc
+import uuid
 
 
 class PuzzleGenerator:
@@ -41,6 +43,8 @@ class IterativeCspAlgorithmRunner(AlgorithmRunner):
 
 
 class BenchmarkTestRunner:
+    _package_directory = os.path.dirname(os.path.abspath(__file__))
+
     def __init__(self, board_size=9, num_runs=10):
         self._board_size = board_size
         self._num_runs = num_runs
@@ -63,7 +67,7 @@ class BenchmarkTestRunner:
         end_time = time.time()
         elapsed_time = end_time - start_time
 
-        print(f"Solution found in {elapsed_time}: \n{result}\n")
+        return f"Solution found by {self._algo_type_name} in {elapsed_time}: \n{result}\n"
 
     def test_performance_by_iteration(self, board, description=None):
         if description is None:
@@ -93,10 +97,15 @@ class BenchmarkTestRunner:
                  f"average runtime (seconds) over {successful_runs} successful runs: {average_elapsed_time:.6f}\n" \
                  f"failures: {failure_count} (average time for failures: {average_failure_time:.6f})\n\n"
 
+        self.write_report(result)
+
+    def write_report(self, content, uuid_in_filename=False):
         now = datetime.now()
+        filename_uuid = uuid.uuid4().hex if uuid_in_filename else ""
         formatted_date_time = now.strftime('%Y-%m-%d_%H%M')
-        with open(f"{formatted_date_time}_{self._algo_type_name}.txt", 'a') as file:
-            file.write(result)
+        file_path = os.path.join(self._package_directory, "benchmark_reports", f"{formatted_date_time}_{self._algo_type_name}_{filename_uuid}.txt")
+        with open(file_path, 'a') as file:
+            file.write(content)
 
 
 class Algorithm(Enum):
@@ -111,16 +120,18 @@ def main():
 
     file_path, raw_content, board = puzzle_loader.load_unsolved_9x9_puzzle_from_standard_samples(is_easy=True)
 
-    print(f"Loaded puzzle from {file_path}:\n{raw_content}\n")
+    report_content = f"Loaded puzzle from {file_path}:\n{raw_content}\n\n"
 
     benchmark_test_runner.set_algorithm_runners(Algorithm.BRUTE_FORCE)
-    benchmark_test_runner.run_benchmark(board)
+    report_content += benchmark_test_runner.run_benchmark(board)
 
     benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_RECURSIVE)
-    benchmark_test_runner.run_benchmark(board)
+    report_content += benchmark_test_runner.run_benchmark(board)
 
     benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE)
-    benchmark_test_runner.run_benchmark(board)
+    report_content += benchmark_test_runner.run_benchmark(board)
+
+    benchmark_test_runner.write_report(report_content, uuid_in_filename=True)
 
 
 if __name__ == '__main__':
