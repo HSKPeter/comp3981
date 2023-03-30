@@ -63,7 +63,6 @@ class Assignments:
             row, col)): board[row][col] for row in range(self.n) for col in range(self.n)}
         self.all_arcs = self.find_all_arcs()
         self.every_cell_neighbour = self.find_every_cell_neighbours()
-        print(self.values.keys())
 
     # key = a tuple of (row_index, col_index, sub_square_index)
     def remove(self, key) -> None:
