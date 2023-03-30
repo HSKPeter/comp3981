@@ -50,7 +50,7 @@ class SudokuSolverCsp:
                     domains[key] = {board[row][col]}
                 else:
                     domains[key] = set(range(1, Node.n + 1))
-        
+
         first_node = Node(domains)
         self.stack = [first_node]
         self.reserved_stack = []
@@ -133,35 +133,31 @@ class Node:
     def get_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
         return self.all_arcs[cell]
 
-    def compute_arcs(self, cell: (int, int, int)):
-        arcs = set()
-        row_index, col_index, sub_square_index = cell
-        for counter_cell in self.values.keys():
-            counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
-            is_same_row = row_index == counter_cell_row_index
-            is_same_col = col_index == counter_cell_col_index
-            is_same_sub_square = sub_square_index == counter_cell_sub_square_index
-            is_different_cell = cell != counter_cell
-
-            if is_different_cell and (is_same_row or is_same_col or is_same_sub_square):
-                arcs.add((cell, counter_cell))
-
-        return arcs
-
-    def find_all_arcs(self):
+    def find_all_arcs(self, cell):
         all_arcs = dict()
-        for cell in self.values.keys():
-            arcs = self.compute_arcs(cell)
-            all_arcs[cell] = arcs
+        for cell in self.domains.keys():
+            cell_arcs = set()
+            row_index, col_index, sub_square_index = cell
+            for counter_cell in self.domains.keys():
+                counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
+                is_same_row = row_index == counter_cell_row_index
+                is_same_col = col_index == counter_cell_col_index
+                is_same_sub_square = sub_square_index == counter_cell_sub_square_index
+                is_different_cell = cell != counter_cell
+
+                if is_different_cell and (is_same_row or is_same_col or is_same_sub_square):
+                    cell_arcs.add((cell, counter_cell))
+            all_arcs[cell] = cell_arcs
+
         return all_arcs
 
     def find_every_cell_neighbours(self):
-        return {cell: self.find_cell_neighbours(cell) for cell in self.values.keys()}
+        return {cell: self.find_cell_neighbours(cell) for cell in self.domains.keys()}
 
-    def find_cell_neighbours(self, cell: (int, int, int)):
+    def find_cell_neighbours(self, cell):
         cell_neighbours = set()
         row_index, col_index, sub_square_index = cell
-        for counter_cell in self.values.keys():
+        for counter_cell in self.domains.keys():
             counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
             is_same_row = row_index == counter_cell_row_index
             is_same_col = col_index == counter_cell_col_index
@@ -231,24 +227,6 @@ class Node:
                                 stack.append(arc_to_prioritize)
                                 set_for_duplication_check.add(arc_to_prioritize)
         return True
-
-    # def infer(self):
-    #     new_constraints_inferred = self.assignments.infer(self.cell_assigned_in_prev_move, self.constraints.domains)
-    #     if new_constraints_inferred is None:
-    #         return False
-    #
-    #     self.constraints.add_inferences(new_constraints_inferred)
-    #
-    #     for key, value in new_constraints_inferred.items():
-    #         if len(value) == 1:
-    #             cell_value = next(iter(value))
-    #             self.assignments.add(key, cell_value)
-    #             for neighbor_key in self.assignments.every_cell_neighbour.get(key):
-    #                 self.constraints.delete_domain_value(neighbor_key, cell_value)
-    #         elif self.to_apply_naked_pair_rule and len(value) == 2:
-    #             self.apply_naked_pair_rule(new_constraints_inferred, key, value)
-    #
-    #     return True
 
     def apply_naked_pair_rule(self):
         # Find if there is a pair of cells that have the same two values
@@ -339,7 +317,7 @@ class Node:
                 self.children.append(new_node)
 
             self.is_expanded = True
-            
+
     def select_unassigned_cell(self, constraints) -> (int, int):
         unassigned_cells = [cell for cell in self.values.keys() if self.cell_is_empty(cell)]
 
@@ -361,7 +339,7 @@ class Node:
                 max_degree_cell = cell
 
         return max_degree_cell
-    
+
     def find_ordered_domain_values(self, cell_key, constraints) -> List[int]:
         domain_values = list(constraints.domains.get(cell_key))
         if len(domain_values) == 1:
