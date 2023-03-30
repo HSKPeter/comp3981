@@ -32,7 +32,7 @@ def read_root():
 def load_board(size: int):
     global board
     
-    board =  puzzle_loader.load(size)
+    board =  puzzle_loader.load_from_2d_array_txt_file(size)
     maskedBoard = puzzle_loader.mask_puzzle(board)
     return {"board": maskedBoard}
 
