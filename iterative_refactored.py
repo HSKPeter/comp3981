@@ -1,3 +1,4 @@
+import multiprocessing
 import time
 from datetime import datetime, timedelta
 from enum import Enum
@@ -38,15 +39,26 @@ FLOOR_SQUARE_ROOTS = {
 def get_sub_square_index(n, row, col) -> int:
     sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
     sub_m = n // sub_n  # number of sub-squares in each row or column
-    sub_row = row // sub_m
-    sub_col = col // sub_n
+    sub_row = row // sub_n
+    sub_col = col // sub_m
     sub_square_index = sub_row * sub_m + sub_col
     # sub_square_index starting from 0, counting from top-left to bottom-right of the board
     return sub_square_index
 
 
+def solve_child(child, max_process_seconds=None):
+    solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
+    solver.stack = [child]  # Set the stack to contain the single child
+    return solver.solve(max_process_seconds)
+
+
 class SudokuSolverCsp:
-    def __init__(self, board: List[List[int]], apply_rules=False) -> None:
+    def __init__(self, board: List[List[int]] = None, root=None) -> None:
+        if board is None:
+            self.stack = [root]
+            self.reserved_stack = []
+            return
+
         Node.n = len(board)
         domains = dict()
         for row in range(Node.n):
@@ -72,11 +84,38 @@ class SudokuSolverCsp:
         self.stack = [Node.mark_node_as_unreserved(node) for node in self.reserved_stack]
         self.reserved_stack = []
 
+    def solve_parallel(self, max_process_seconds=None):
+        # Generate all possible child nodes from the root node
+        root_node = self.stack[0]
+        root_node.expand()
+        children = root_node.children
+
+        # Set up a shared variable to store the first solution found
+        first_solution = multiprocessing.Manager().Value("i", None)
+
+        # Define a callback function to handle results from child processes
+        def handle_result(result):
+            if result is not None and first_solution.value is None:
+                first_solution.value = result
+
+        # Initialize the process pool with the number of available processors
+        with multiprocessing.Pool() as pool:
+            # Run the solve_child function for each child node in parallel
+            for child in children:
+                pool.apply_async(solve_child, args=(child,), callback=handle_result)
+
+            while first_solution.value is None:
+                pass
+            return first_solution.value
+
     def solve(self, max_process_seconds=None):
         expiry_timestamp = (datetime.now() + timedelta(
             seconds=max_process_seconds)).timestamp() if max_process_seconds is not None else None
         i = 0
         timeout = 0
+
+        root = Node(self.stack[0].domains)
+        self.stack = [root]
 
         while self.stack:
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
@@ -85,8 +124,6 @@ class SudokuSolverCsp:
             current_node = self.stack[-1]
 
             is_valid = current_node.do_forward_checking()
-
-            # print(current_node)
 
             if not is_valid:
                 current_node.check()
@@ -118,6 +155,7 @@ class SudokuSolverCsp:
 class Node:
     all_arcs = None
     every_cell_neighbour = None
+    every_cell_neighbour_by_type = None
     n = None
 
     def __init__(self, domains,
@@ -137,9 +175,12 @@ class Node:
             Node.all_arcs = self.find_all_arcs()
         if Node.every_cell_neighbour is None:
             Node.every_cell_neighbour = self.find_every_cell_neighbours()
+        if Node.every_cell_neighbour_by_type is None:
+            Node.every_cell_neighbour_by_type = self.find_every_cell_neighbours_by_type()
 
-    def get_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
-        return self.all_arcs[cell]
+    @staticmethod
+    def get_arcs(cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
+        return Node.all_arcs[cell]
 
     def find_all_arcs(self):
         all_arcs = dict()
@@ -178,9 +219,11 @@ class Node:
         return cell_neighbours
 
     def do_forward_checking(self):
-        self.apply_hidden_single_rule()
-        self.apply_naked_pair_rule()
-        return self.infer()
+        result = self.infer()
+        # if result:
+        #     self.apply_hidden_single_rule()
+        # self.apply_naked_pair_rule()
+        return result
 
     @staticmethod
     def mark_node_as_unreserved(node):
@@ -239,14 +282,19 @@ class Node:
     def apply_naked_pair_rule(self):
         # Find if there is a pair of cells that have the same two values
         # If so, delete those values from the domain of the other cells in the same sub-square, row, and column
-        for key, value in self.domains.items():
+
+        if self.assigned_cell is None:
+            return
+
+        for key in Node.every_cell_neighbour[self.assigned_cell]:
+            value = self.domains[key]
             for neighbor_key in Node.every_cell_neighbour[key]:
                 neighbor_with_same_two_values = 0
-                if self.domains.get(neighbor_key) == value:
+                if self.domains[neighbor_key] == value:
                     neighbor_with_same_two_values += 1
                 pair_found = neighbor_with_same_two_values == 2
                 if pair_found:
-                    for other_key in Node.every_cell_neighbour.get(key):
+                    for other_key in Node.every_cell_neighbour[key]:
                         if other_key != neighbor_key:
                             self.domains[other_key].discard(value[0])
                             self.domains[other_key].discard(value[1])
@@ -273,44 +321,53 @@ class Node:
 
         return cell_neighbours
 
+    def find_every_cell_neighbours_by_type(self):
+        result = dict()
+        for cell in self.domains.keys():
+            row_neighbours = self.find_cell_neighbours_by_type(cell, NeighborType.ROW)
+            col_neighbours = self.find_cell_neighbours_by_type(cell, NeighborType.COL)
+            sub_square_neighbours = self.find_cell_neighbours_by_type(cell, NeighborType.SUB_SQUARE)
+            result[cell] = {
+                NeighborType.ROW: row_neighbours,
+                NeighborType.COL: col_neighbours,
+                NeighborType.SUB_SQUARE: sub_square_neighbours
+            }
+        return result
+
+    def get_cell_neighbours_by_type(self, cell: (int, int, int), neighbor_type: NeighborType):
+        return Node.every_cell_neighbour_by_type[cell][neighbor_type]
+
     def apply_hidden_single_rule(self):
         # Implement the "hidden single" inference rule
         # If a region contains only one square which can hold a specific number, then that number must go into that square
-        hidden_single_found = set()
-        # Iterate through every assigned cell in the grid
-        for cell_key, domain_values in self.domains.items():
-            if len(domain_values) != 1:
-                continue
-            # Iterate through the neighbour of cell
-            row_neighbours = self.find_cell_neighbours_by_type(cell_key, NeighborType.ROW)
-            col_neighbours = self.find_cell_neighbours_by_type(cell_key, NeighborType.COL)
-            sub_square_neighbours = self.find_cell_neighbours_by_type(cell_key, NeighborType.SUB_SQUARE)
-
-            union_domain_values_of_row_neighbours = set()
-            for neighbour in row_neighbours:
-                union_domain_values_of_row_neighbours = union_domain_values_of_row_neighbours.union(
-                    self.domains[neighbour])
-
-            union_domain_values_of_col_neighbours = set()
-            for neighbour in col_neighbours:
-                union_domain_values_of_col_neighbours = union_domain_values_of_col_neighbours.union(
-                    self.domains[neighbour])
-
-            union_domain_values_of_sub_square_neighbours = set()
-            for neighbour in sub_square_neighbours:
-                union_domain_values_of_sub_square_neighbours = union_domain_values_of_sub_square_neighbours.union(
-                    self.domains[neighbour])
-
-            if len(union_domain_values_of_row_neighbours) == Node.n and len(
-                    union_domain_values_of_col_neighbours) == Node.n and len(
-                union_domain_values_of_sub_square_neighbours) == Node.n:
+        if self.assigned_cell is None:
+            return
+        # Iterate through every unassigned cell in the grid
+        for cell_key in Node.every_cell_neighbour[self.assigned_cell]:
+            domain_values = self.domains[cell_key]
+            if len(domain_values) == 1:
                 continue
 
-            #  Iterate through domain values of the cell
-            for domain_value in self.domains[cell_key]:
-                if (domain_value not in union_domain_values_of_row_neighbours) or (
-                        domain_value not in union_domain_values_of_col_neighbours) or (
-                        domain_value not in union_domain_values_of_sub_square_neighbours):
+            row_neighbours = self.get_cell_neighbours_by_type(cell_key, NeighborType.ROW)
+            col_neighbours = self.get_cell_neighbours_by_type(cell_key, NeighborType.COL)
+            sub_square_neighbours = self.get_cell_neighbours_by_type(cell_key, NeighborType.SUB_SQUARE)
+
+            def union_domain_values_of_neighbours(neighbours):
+                union_domain_values = set()
+                for neighbour in neighbours:
+                    union_domain_values |= self.domains[neighbour]
+                return union_domain_values
+
+            union_domain_values_of_row_neighbours = union_domain_values_of_neighbours(row_neighbours)
+            union_domain_values_of_col_neighbours = union_domain_values_of_neighbours(col_neighbours)
+            union_domain_values_of_sub_square_neighbours = union_domain_values_of_neighbours(sub_square_neighbours)
+
+            for domain_value in domain_values:
+                if (
+                        domain_value not in union_domain_values_of_row_neighbours
+                        and domain_value not in union_domain_values_of_col_neighbours
+                        and domain_value not in union_domain_values_of_sub_square_neighbours
+                ):
                     self.domains[cell_key] = {domain_value}
                     break
 
@@ -386,7 +443,7 @@ class Node:
 
     def count_constraints(self, cell_key, value):
         count = 0
-        for neighbor_key in self.every_cell_neighbour.get(cell_key):
+        for neighbor_key in self.every_cell_neighbour[cell_key]:
             # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
             if value in self.domains[neighbor_key]:
                 count += 1
@@ -396,24 +453,29 @@ class Node:
         self.is_checked = True
 
     def __str__(self):
-        sub_square_size = int(self.n ** 0.5)
-        full_row = "+".join(["-" * (sub_square_size * 5 - 1)] * sub_square_size)
+        sub_square_size = (int(self.n ** 0.5), int(self.n ** 0.5))
+
+        if self.n == 12:
+            sub_square_size = (3, 4)
+
+        full_row = "+".join(["-" * (sub_square_size[1] * 5 - 1)] * sub_square_size[0])
 
         board_str = ''
         for row in range(self.n):
-            if row % sub_square_size == 0:
+            if row % sub_square_size[0] == 0:
                 board_str += full_row + '\n'
             row_str = ' |'
             for col in range(self.n):
-                domain_values = self.domains[(row, col, get_sub_square_index(Node.n, row, col))]
-                value = 0
-                if (len(domain_values) == 1):
-                    value = next(iter(domain_values))
+                domain = self.domains[(row, col, get_sub_square_index(Node.n, row, col))]
+                if len(domain) == 1:
+                    value = next(iter(domain))
+                else:
+                    value = 0
                 if value == 0:
                     row_str += '__'
                 else:
                     row_str += f'{value} ' if value < 10 else f'{value}'
-                if (col + 1) % sub_square_size == 0:
+                if (col + 1) % sub_square_size[1] == 0:
                     row_str += '  |'
                 row_str += "  "
             board_str += row_str + '\n'
@@ -461,12 +523,12 @@ class Node:
 
 
 def main():
-    board = get_solved_board(9)
+    board = get_solved_board(12)
     masked_board = mask_board(board)
     print(masked_board)
     start_time = time.time()
     sudoku_solver = SudokuSolverCsp(masked_board)
-    result = sudoku_solver.solve()
+    result = sudoku_solver.solve_parallel()
     end_time = time.time()
     print("Solution")
     print(result)
