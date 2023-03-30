@@ -141,7 +141,7 @@ class Node:
     def compute_arcs(self, cell: (int, int, int)):
         arcs = set()
         row_index, col_index, sub_square_index = cell
-        for counter_cell in self.values.keys():
+        for counter_cell in self.domains.keys():
             counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
             is_same_row = row_index == counter_cell_row_index
             is_same_col = col_index == counter_cell_col_index
@@ -155,18 +155,18 @@ class Node:
 
     def find_all_arcs(self):
         all_arcs = dict()
-        for cell in self.values.keys():
+        for cell in self.domains.keys():
             arcs = self.compute_arcs(cell)
             all_arcs[cell] = arcs
         return all_arcs
 
     def find_every_cell_neighbours(self):
-        return {cell: self.find_cell_neighbours(cell) for cell in self.values.keys()}
+        return {cell: self.find_cell_neighbours(cell) for cell in self.domains.keys()}
 
     def find_cell_neighbours(self, cell: (int, int, int)):
         cell_neighbours = set()
         row_index, col_index, sub_square_index = cell
-        for counter_cell in self.values.keys():
+        for counter_cell in self.domains.keys():
             counter_cell_row_index, counter_cell_col_index, counter_cell_sub_square_index = counter_cell
             is_same_row = row_index == counter_cell_row_index
             is_same_col = col_index == counter_cell_col_index
@@ -416,7 +416,8 @@ class Node:
                 board_str += full_row + '\n'
             row_str = ' |'
             for col in range(self.n):
-                value = self.domains[(row, col, get_sub_square_index(row, col))]
+                domain_value = self.domains[(row, col, get_sub_square_index(Node.n, row, col))]
+                value = next(iter(domain_value))
                 if value == 0:
                     row_str += '__'
                 else:
