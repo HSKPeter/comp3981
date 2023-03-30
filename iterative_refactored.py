@@ -14,6 +14,10 @@ class PuzzleUnsolvedException(Exception):
         super().__init__(*args)
 
 
+class InvalidAssignmentException(Exception):
+    pass
+
+
 class NeighborType(Enum):
     ROW = 1
     COL = 2
@@ -374,7 +378,21 @@ class Node:
         return str(self.assignments)
 
     def is_solution(self):
-        return self.assignments.is_complete()
+        """
+        Check if this set of assignments is a solution to the problem (the whole board is filled and satisfies the constraints)
+        """
+        for domain_values in self.domains.values():
+            if len(domain_values) == 0:
+                return False
+        all_arcs = set.union(*self.all_arcs.values())
+        for arc in all_arcs:
+            cell_one, cell_two = arc
+            cell_one_value = next(iter(self.domains[cell_one]))
+            cell_two_value = next(iter(self.domains[cell_one]))
+            if cell_one_value == cell_two_value:
+                raise InvalidAssignmentException(
+                    f"{cell_one} and {cell_two} were both assigned the same value of {cell_one_value}\n{self}")
+        return True
 
     def get_first_traversable_child(self):
         for node in self.children:
