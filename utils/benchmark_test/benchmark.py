@@ -56,7 +56,7 @@ class BenchmarkTestRunner:
         elif algo_type == Algorithm.BRUTE_FORCE:
             self._algorithm_runners = BruteForceAlgorithmRunner()
 
-    def run_benchmark(self, description=None):
+    def run_benchmark(self, description=None, use_seed=False):
         if description is None:
             description = f"{self._board_size}x{self._board_size} benchmark"
         total_elapsed_time = 0
@@ -65,7 +65,9 @@ class BenchmarkTestRunner:
 
         for i in range(self._num_runs):
             start_time = time.time()
-            result = self._algorithm_runners.solve_sudoku(mask_board(self._board))
+            masked_board = mask_board(original_board=self._board, seed=i) \
+                if use_seed else mask_board(original_board=self._board)
+            result = self._algorithm_runners.solve_sudoku(masked_board)
             end_time = time.time()
             elapsed_time = end_time - start_time
 
@@ -99,16 +101,16 @@ class Algorithm(Enum):
 
 def main():
     board_size = 9
-    benchmark_test_runner = BenchmarkTestRunner(board_size)
+    benchmark_test_runner = BenchmarkTestRunner(board_size, num_runs=20)
 
     # benchmark_test_runner.set_algorithm_runners(Algorithm.BRUTE_FORCE)
     # benchmark_test_runner.run_benchmark()
 
     benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE_SEQUENTIAL)
-    benchmark_test_runner.run_benchmark()
+    benchmark_test_runner.run_benchmark(use_seed=True)
 
     benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_ITERATIVE_PARALLEL)
-    benchmark_test_runner.run_benchmark()
+    benchmark_test_runner.run_benchmark(use_seed=True)
 
     # benchmark_test_runner.set_algorithm_runners(Algorithm.CSP_RECURSIVE)
     # benchmark_test_runner.run_benchmark()
