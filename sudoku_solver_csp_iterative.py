@@ -86,10 +86,8 @@ class SudokuSolverCsp:
 
     def solve(self, max_process_seconds=None, parallel=False):
         if parallel:
-            print("solving parallel")
             return self.solve_parallel(max_process_seconds)
         else:
-            print("solving sequential")
             return self.solve_sequential(max_process_seconds)
 
     def solve_parallel(self, max_process_seconds):
