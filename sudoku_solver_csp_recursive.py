@@ -2,7 +2,7 @@ import copy
 import sys
 import time
 
-import sudoku_solver
+import sudoku_solver_brute_force
 
 ROW = 0
 COL = 1
@@ -417,7 +417,7 @@ def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0,
     return None
 
 
-def solve_with_csp(board, recursion_limit=None):
+def solve_with_csp_recursive(board, recursion_limit=None):
     assignments = Assignments(board)
     constraints = Constraints(assignments)
 

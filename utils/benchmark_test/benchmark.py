@@ -1,8 +1,8 @@
 import time
 from solved_board import get_solved_board
 from datetime import datetime
-from sudoku_solver_csp import Assignments, Constraints, backtrack
-from sudoku_solver import mask_board, SudokuSolver
+from sudoku_solver_csp_recursive import Assignments, Constraints, backtrack
+from sudoku_solver_brute_force import mask_board, SudokuSolver
 from sudoku_solver_csp_iterative import SudokuSolverCsp as SudokuSolverIterative
 from enum import Enum, auto
 import abc

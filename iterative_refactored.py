@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Tuple
 from utils.benchmark_test.solved_board import get_solved_board
-from sudoku_solver import mask_board
+from sudoku_solver_brute_force import mask_board
 
 
 class SolverExecutionExpiredException(Exception):
@@ -461,7 +461,7 @@ class Node:
 
 
 def main():
-    board = get_solved_board(16)
+    board = get_solved_board(9)
     masked_board = mask_board(board)
     print(masked_board)
     start_time = time.time()

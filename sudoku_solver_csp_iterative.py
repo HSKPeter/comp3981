@@ -1,8 +1,8 @@
 from typing import List
 import time
-from sudoku_solver_csp import InvalidAssignmentException, EmptyDomainException, Constraints, get_sub_square_index
+from sudoku_solver_csp_recursive import InvalidAssignmentException, EmptyDomainException, Constraints, get_sub_square_index
 from datetime import datetime, timedelta
-from sudoku_solver import mask_board
+from sudoku_solver_brute_force import mask_board
 from puzzle_loader import PuzzleLoader
 
 NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
