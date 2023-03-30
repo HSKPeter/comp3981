@@ -348,6 +348,15 @@ class Node:
 
         return max_degree_cell
 
+    def find_degree(self, cell) -> int:
+        degree = 0
+        arcs = self.get_arcs(cell)
+        for arc in arcs:
+            other_cell = arc[1]
+            if self.cell_is_empty(other_cell) == 0:
+                degree += 1
+        return degree
+
     def find_ordered_domain_values(self, cell_key):
         """
         Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
@@ -394,7 +403,8 @@ class Node:
                 board_str += full_row + '\n'
             row_str = ' |'
             for col in range(self.n):
-                value = self.domains[(row, col, get_sub_square_index(row, col))]
+                domain_value = self.domains[(row, col, get_sub_square_index(Node.n, row, col))]
+                value = next(iter(domain_value))
                 if value == 0:
                     row_str += '__'
                 else:
