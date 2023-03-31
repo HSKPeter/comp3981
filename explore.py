@@ -87,7 +87,7 @@ def main():
     logger.info(board_solved)
 
     if board_solved is not None:
-        explorer.write_report(board_puzzle, is_dev=False)
+        explorer.write_report(board_puzzle, is_dev=True)
 
 
 if __name__ == '__main__':
