@@ -5,6 +5,7 @@ from enum import Enum
 from typing import List, Tuple
 from utils.benchmark_test.solved_board import get_solved_board
 from sudoku_solver_brute_force import mask_board
+from log_util import logger
 
 
 class SolverExecutionExpiredException(Exception):
@@ -124,11 +125,14 @@ class SudokuSolverCsp:
         self.stack = [root]
 
         while self.stack:
-            print(f"Iteration: #{i}")
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
                 raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
 
             current_node = self.stack[-1]
+
+            if i % 100 == 0:
+                logger.info(f"Iteration: #{i}; Stack size: {len(self.stack)}")
+                logger.info(current_node)
 
             is_valid = current_node.do_forward_checking()
 
