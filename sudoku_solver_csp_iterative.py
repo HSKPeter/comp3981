@@ -124,6 +124,7 @@ class SudokuSolverCsp:
         self.stack = [root]
 
         while self.stack:
+            print(f"Iteration: #{i}")
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
                 raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
 

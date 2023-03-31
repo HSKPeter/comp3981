@@ -3,6 +3,29 @@ import os
 import copy
 from puzzle_loader import PuzzleLoader
 from multiprocessing import Process
+import logging
+from datetime import datetime
+import uuid
+
+
+def config_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    now = datetime.now()
+    formatted_date_time = now.strftime('%Y-%m-%d_%H%M')
+
+    package_directory = os.path.dirname(os.path.abspath(__file__))
+    log_file_path = os.path.join(package_directory, "log", f"{formatted_date_time}_exploration_{uuid.uuid4().hex}.log")
+
+    file_handler = logging.FileHandler(log_file_path, mode='a')
+    file_handler.setLevel(logging.INFO)
+    file_handler.flush = file_handler.stream.flush
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s\n %(message)s\n')
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    return logger
 
 
 class SolvableSamplesExplorer:
@@ -51,16 +74,20 @@ class SolvableSamplesExplorer:
         return "\n".join(num_strings_having_int_with_comma_separated)
 
 
-def main():
-    board_size = 9
+def explore_solvable_board():
+    board_size = 100
+
+    logger = config_logger()
+    logger.info('Start exploring solvable puzzle')
+    logger.handlers[0].flush()
 
     board_puzzle_loader = PuzzleLoader()
     board_puzzle = board_puzzle_loader.load_unsolved_puzzle(size=board_size)
     explorer = SolvableSamplesExplorer(board_puzzle)
     board_solved = explorer.explore(AlgorithmType.CSP_ITERATIVE)
 
-    print(board_puzzle)
-    print(board_solved)
+    logger.info(board_puzzle)
+    logger.info(board_solved)
 
     if board_solved is not None:
         explorer.write_report(board_puzzle, is_dev=False)
@@ -69,20 +96,11 @@ def main():
 if __name__ == '__main__':
     timeout_seconds = 60 * 10
 
-    p1 = Process(target=main, name='explore solvable puzzle (1)')
-    # p2 = Process(target=main, name='explore solvable puzzle (2)')
+    p = Process(target=explore_solvable_board, name='explore solvable puzzle (1)')
+    p.start()
+    p.join(timeout=timeout_seconds)
 
-    p1.start()
-    # p2.start()
+    p.terminate()
 
-    p1.join(timeout=timeout_seconds)
-    # p2.join(timeout=timeout_seconds)
-
-    p1.terminate()
-    # p2.terminate()
-
-    if p1.exitcode is None:
-        print(f'{p1} timeouts after {timeout_seconds}s!')
-
-    # if p2.exitcode is None:
-    #     print(f'{p2} timeouts after {timeout_seconds}s!')
+    if p.exitcode is None:
+        print(f'{p} timeouts after {timeout_seconds}s!')
