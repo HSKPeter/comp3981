@@ -5,7 +5,7 @@ import os
 
 class AlertSender:
     def __init__(self):
-        self.webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+        self.webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
 
     def send(self, message):
         if self.webhook_url is not None:
