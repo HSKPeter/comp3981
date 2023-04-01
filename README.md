@@ -36,6 +36,16 @@ git clone https://github.com/HSKPeter/comp3981.git
 ### MAC heuristics based on AC-3
 - TBC
 
+## Configuring AWS EC2
+1. `chmod 400 <your pem filename>`
+2. `ssh -i <your pem filename> ec2-user@<public IP address of EC2 instance>`
+3. `sudo yum update`
+4. `sudo yum install git`
+5. `python3 --version`
+6. `git clone https://github.com/HSKPeter/comp3981.git`
+7. `cd comp3981`
+8. 
+
 ## References
 - [A study of Sudoku solving algorithms](https://www.csc.kth.se/utbildning/kth/kurser/DD143X/dkand12/Group6Alexander/report/PATRIK_BERGGREN_DAVID_NILSSON.rapport.pdf) 
 - [Solving Sudoku by Heuristic Search](https://medium.com/@davidcarmel/solving-sudoku-by-heuristic-search-b0c2b2c5346e)

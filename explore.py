@@ -3,8 +3,9 @@ import os
 import copy
 from puzzle_loader import PuzzleLoader
 from multiprocessing import Process
+# from log_util import logger
 from log_util import logger
-
+import sys
 
 
 # def config_logger():
@@ -74,16 +75,16 @@ class SolvableSamplesExplorer:
 
 
 def main():
-    board_size = 100
+    board_size = 16
 
     logger.info('Start exploring solvable puzzle')
 
     board_puzzle_loader = PuzzleLoader()
-    board_puzzle = board_puzzle_loader.load_unsolved_puzzle(size=board_size)
+    _, _, board_puzzle = board_puzzle_loader.load_unsolved_puzzle(size=board_size, sample_index=1)
     explorer = SolvableSamplesExplorer(board_puzzle)
     board_solved = explorer.explore(AlgorithmType.CSP_ITERATIVE)
 
-    logger.info(board_puzzle)
+    # logger.info(board_puzzle)
     logger.info(board_solved)
 
     if board_solved is not None:
