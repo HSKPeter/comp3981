@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 import time
 from datetime import datetime, timedelta
 from enum import Enum
@@ -116,7 +117,7 @@ class SudokuSolverCsp:
             current_node = self.stack[-1]
 
             if i % 100 == 0:
-                msg = f"Iteration: #{i}; Stack size: {len(self.stack)}"
+                msg = f"Iteration: #{i}; pid: {os.getpid()}; Stack size: {len(self.stack)}"
                 logger.info(msg)
                 self.alert_sender.send(msg)
                 logger.info(current_node)
