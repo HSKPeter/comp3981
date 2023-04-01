@@ -116,10 +116,11 @@ class SudokuSolverCsp:
 
             current_node = self.stack[-1]
 
-            if i % 100 == 0:
-                msg = f"Iteration: #{i}; pid: {os.getpid()}; Stack size: {len(self.stack)}"
-                logger.info(msg)
-                self.alert_sender.send(msg)
+            if i % 5 == 0:
+                self.alert_sender.send(f"Iteration: #{i}; pid: {os.getpid()}; Stack size: {len(self.stack)}")
+
+            if i % 20 == 0:
+                logger.info(f"Iteration: #{i}; pid: {os.getpid()}; Stack size: {len(self.stack)}")
                 logger.info(current_node)
 
             is_valid = current_node.do_forward_checking()
