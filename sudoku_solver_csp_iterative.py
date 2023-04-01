@@ -117,11 +117,11 @@ class SudokuSolverCsp:
             current_node = self.stack[-1]
 
             if i % 5 == 0:
-                self.alert_sender.send(f"Iteration: #{i}; pid: {os.getpid()}; Stack size: {len(self.stack)}")
-
-            if i % 20 == 0:
-                logger.info(f"Iteration: #{i}; pid: {os.getpid()}; Stack size: {len(self.stack)}")
-                logger.info(current_node)
+                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.stack)}"
+                self.alert_sender.send(msg + "\n\n")
+                if i % 20 == 0:
+                    logger.info(msg)
+                    logger.info(current_node)
 
             is_valid = current_node.do_forward_checking()
 
@@ -161,6 +161,7 @@ class Node:
     def __init__(self, domains,
                  assigned_cell=None,
                  new_value=None,
+                 cell_filled=0
                  ) -> None:
         self.domains = {key: value.copy() for key, value in domains.items()}
         self.assigned_cell = assigned_cell
@@ -170,6 +171,7 @@ class Node:
         self.is_checked = False
         self.is_expanded = False
         self.is_reserved = False
+        self.cell_filled = cell_filled
 
         if Node.all_arcs is None:
             Node.all_arcs = self.find_all_arcs()
@@ -385,7 +387,7 @@ class Node:
             cell_selected = self.select_unassigned_cell()
 
             for value in self.find_ordered_domain_values(cell_selected):
-                new_node = Node(self.domains, cell_selected, value)
+                new_node = Node(self.domains, cell_selected, value, cell_filled=self.cell_filled + 1)
                 self.children.append(new_node)
 
             self.is_expanded = True
