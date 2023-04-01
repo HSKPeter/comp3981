@@ -3,6 +3,7 @@ from typing import List
 import random
 from datetime import datetime, timedelta
 import time
+from algo_util import get_sub_square_index, FLOOR_SQUARE_ROOTS
 
 NINE_X_NINE = [[0, 0, 3, 0, 2, 0, 6, 0, 0], [9, 0, 0, 3, 0, 5, 0, 0, 1], [0, 0, 1, 8, 0, 6, 4, 0, 0],
                [0, 0, 8, 1, 0, 2, 9, 0, 0], [
@@ -51,14 +52,6 @@ TWENTY_FIVE_X_TWENTY_FIVE = [[0, 0, 0, 0, 0, 20, 0, 0, 9, 0, 25, 14, 0, 0, 0, 0,
                              [2, 0, 19, 13, 5, 0, 0, 0, 0, 20, 0, 0, 21, 16, 0, 7, 0, 0, 0, 12, 0, 6, 0, 0, 0],
                              [0, 20, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 9, 16, 0, 12, 22, 25, 14],
                              [12, 0, 0, 0, 0, 0, 21, 3, 0, 0, 9, 0, 0, 13, 22, 0, 17, 15, 14, 18, 0, 0, 0, 0, 0]]
-
-FLOOR_SQUARE_ROOTS = {
-    9: 3,
-    12: 3,
-    16: 4,
-    25: 5,
-    100: 10
-}
 
 class SolverExecutionExpiredException(Exception):
     def __init__(self, *args: object) -> None:
@@ -216,14 +209,8 @@ class Node:
         return cell1
 
     def get_sub_square_index(self, row, col):
-        board = self.board
-        n = len(board)
-        sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
-        sub_m = n // sub_n  # number of sub-squares in each row or column
-        sub_row = row // sub_m
-        sub_col = col // sub_n
-        sub_index = sub_row * sub_m + sub_col
-        return sub_index
+        n = len(self.board)
+        return get_sub_square_index(row, col, n)
 
     def find_domains(self):
         board = self.board

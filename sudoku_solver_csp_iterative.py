@@ -5,7 +5,9 @@ from enum import Enum
 from typing import List, Tuple
 from utils.benchmark_test.solved_board import get_solved_board
 from sudoku_solver_brute_force import mask_board
+from algo_util import get_sub_square_index
 from log_util import logger
+from slack_alert import AlertSender
 
 
 class SolverExecutionExpiredException(Exception):
@@ -28,25 +30,6 @@ class NeighborType(Enum):
     SUB_SQUARE = 3
 
 
-FLOOR_SQUARE_ROOTS = {
-    9: 3,
-    12: 3,
-    16: 4,
-    25: 5,
-    100: 10
-}
-
-
-def get_sub_square_index(n, row, col) -> int:
-    sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
-    sub_m = n // sub_n  # number of sub-squares in each row or column
-    sub_row = row // sub_n
-    sub_col = col // sub_m
-    sub_square_index = sub_row * sub_m + sub_col
-    # sub_square_index starting from 0, counting from top-left to bottom-right of the board
-    return sub_square_index
-
-
 def solve_child(child, max_process_seconds=None):
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.stack = [child]  # Set the stack to contain the single child
@@ -55,6 +38,8 @@ def solve_child(child, max_process_seconds=None):
 
 class SudokuSolverCsp:
     def __init__(self, board: List[List[int]] = None, root=None) -> None:
+        self.alert_sender = AlertSender()
+
         if board is None:
             self.stack = [root]
             self.reserved_stack = []
@@ -131,7 +116,9 @@ class SudokuSolverCsp:
             current_node = self.stack[-1]
 
             if i % 100 == 0:
-                logger.info(f"Iteration: #{i}; Stack size: {len(self.stack)}")
+                msg = f"Iteration: #{i}; Stack size: {len(self.stack)}"
+                logger.info(msg)
+                self.alert_sender.send(msg)
                 logger.info(current_node)
 
             is_valid = current_node.do_forward_checking()
