@@ -9,6 +9,7 @@ class AlgorithmType(Enum):
     BRUTE_FORCE = auto()
     CSP_RECURSIVE = auto()
     CSP_ITERATIVE = auto()
+    CSP_ITERATIVE_MULTIPROCESS = auto()
 
 
 class AlgorithmRunner(abc.ABC):
@@ -31,6 +32,10 @@ class RecursiveCspAlgorithmRunner(AlgorithmRunner):
 
 
 class IterativeCspAlgorithmRunner(AlgorithmRunner):
+
+    def __init__(self, is_parallel=False):
+        self.is_parallel = is_parallel
+
     def solve_sudoku(self, board):
         sudoku_solver = SudokuSolverIterative(board)
-        return sudoku_solver.solve()
+        return sudoku_solver.solve(parallel=self.is_parallel)

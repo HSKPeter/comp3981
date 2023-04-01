@@ -7,6 +7,7 @@ from utils.benchmark_test.solved_board import get_solved_board
 from sudoku_solver_brute_force import mask_board
 from algo_util import get_sub_square_index
 from log_util import logger
+from slack_alert import AlertSender
 
 
 class SolverExecutionExpiredException(Exception):
@@ -37,6 +38,8 @@ def solve_child(child, max_process_seconds=None):
 
 class SudokuSolverCsp:
     def __init__(self, board: List[List[int]] = None, root=None) -> None:
+        self.alert_sender = AlertSender()
+
         if board is None:
             self.stack = [root]
             self.reserved_stack = []
@@ -113,7 +116,9 @@ class SudokuSolverCsp:
             current_node = self.stack[-1]
 
             if i % 100 == 0:
-                logger.info(f"Iteration: #{i}; Stack size: {len(self.stack)}")
+                msg = f"Iteration: #{i}; Stack size: {len(self.stack)}"
+                logger.info(msg)
+                self.alert_sender.send(msg)
                 logger.info(current_node)
 
             is_valid = current_node.do_forward_checking()
