@@ -74,11 +74,12 @@ class NodeEncoder(json.JSONEncoder):
 class SudokuSolverCsp:
     def __init__(self, board: List[List[int]] = None) -> None:
         self.alert_sender = AlertSender()
+        self.reserved_node_id_stack = []
 
-        # if board is None:
-        #     self.node_id_stack = [root]
-        #     self.reserved_node_id_stack = []
-        #     return
+        if board is None:
+            # self.node_id_stack = [root]
+            # self.reserved_node_id_stack = []
+            return
 
         Node.n = len(board)
         domains = dict()
@@ -92,7 +93,6 @@ class SudokuSolverCsp:
 
         first_node = Node(domains)
         self.node_id_stack = [first_node.id]
-        self.reserved_node_id_stack = []
 
 
     def migrate_nodes_to_reserved_stack(self):
