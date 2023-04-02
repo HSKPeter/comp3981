@@ -55,7 +55,7 @@ class AzureStorageClient:
         """
         self.blob_service_client.create_container(self.container_name)
         logger.info(f"Created Azure Storage container {self.container_name}")
-        self._alert_sender.send_alert(f"Created Azure Storage container {self.container_name}")
+        self._alert_sender.send(f"Created Azure Storage container {self.container_name}")
 
     def upload_file(self, file_name, json_string):
         """
