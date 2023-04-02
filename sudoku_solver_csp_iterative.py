@@ -70,14 +70,15 @@ class NodesMultiProcessor:
         nodes_list_4 = list()
 
         for i in range(n):
+            node_to_process = nodes_to_process[i]
             if i % 4 == 0:
-                nodes_list_1.append(i)
+                nodes_list_1.append(node_to_process)
             elif i % 4 == 1:
-                nodes_list_2.append(i)
+                nodes_list_2.append(node_to_process)
             elif i % 4 == 2:
-                nodes_list_3.append(i)
+                nodes_list_3.append(node_to_process)
             elif i % 4 == 3:
-                nodes_list_4.append(i)
+                nodes_list_4.append(node_to_process)
 
         nodes_lists = [nodes_list_1, nodes_list_2, nodes_list_3, nodes_list_4]
 
