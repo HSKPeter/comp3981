@@ -49,7 +49,7 @@ class NeighborType(Enum):
 
 
 def solve_child(index, child_node_id, azure_container_name=None, max_process_seconds=None):
-    print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
+    print(f"[DEBUG] Index = {index}; Container name: {azure_container_name}; Solving child node: ", child_node_id)
     solver = SudokuSolverCsp(azure_container_name=azure_container_name)  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     return solver.solve_sequential(max_process_seconds)
