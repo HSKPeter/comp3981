@@ -104,6 +104,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--algorithm", help="algorithm", type=str, default="i")
     parser.add_argument("-s", "--size", help="Board size", type=int, default=9)
+    parser.add_argument("-i", "--index", help="Puzzle index", type=int, default=1)
     args = parser.parse_args()
 
     algo_type = None
@@ -119,7 +120,7 @@ def main():
     board_puzzle = []
     if args.size in [9, 12, 16, 25, 100]:
         board_puzzle_loader = PuzzleLoader()
-        _, _, board_puzzle = board_puzzle_loader.load_unsolved_puzzle(size=args.size, sample_index=1)
+        _, _, board_puzzle = board_puzzle_loader.load_unsolved_puzzle(size=args.size, sample_index=args.index)
     else:
         raise ValueError("Invalid board size")
     # elif args.size == 100:
