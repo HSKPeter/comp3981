@@ -16,7 +16,6 @@ class AzureStorageClient:
         # self.container_name = azure_container_name if azure_container_name is not None else uuid4().hex
         # AzureStorageClient._default_container_name = self.container_name
         #
-        # self.connection_string = "DefaultEndpointsProtocol=https;AccountName=sudokunodestorage;AccountKey=x4UR5YkZqM81unWR/F+CnJdrGVfBNqfSTPx7MLT1Ju2UDgpz7l/69xkl9oz7DXCXG+vVpZ182f/O+ASt1UCj3Q==;EndpointSuffix=core.windows.net"
         #     # os.environ.get("AZURE_STORAGE_CONNECTION_STRING") if connection_string is None else connection_string
         #
         # if self.connection_string is None:
@@ -66,7 +65,6 @@ class AzureStorageClient:
 
 
 if __name__ == "__main__":
-    # x = "DefaultEndpointsProtocol=https;AccountName=sudokunodestorage;AccountKey=x4UR5YkZqM81unWR/F+CnJdrGVfBNqfSTPx7MLT1Ju2UDgpz7l/69xkl9oz7DXCXG+vVpZ182f/O+ASt1UCj3Q==;EndpointSuffix=core.windows.net"
     # container_name = uuid4().hex
     # print(container_name)
     azure_storage_client = AzureStorageClient()
