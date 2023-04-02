@@ -49,7 +49,8 @@ class NeighborType(Enum):
 
 
 def solve_child(index, child_node_id, azure_container_name=None, max_process_seconds=None):
-    print(f"[DEBUG] Index = {index}; Container name: {azure_container_name}; Solving child node: ", child_node_id)
+    alert_sender = AlertSender()
+    alert_sender.send(f"Process #{index} has started to treat node {child_node_id} as root node")
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     return solver.solve_sequential(max_process_seconds)
@@ -135,7 +136,7 @@ class SudokuSolverCsp:
                 first_solution.value = result
 
         # Initialize the process pool with the number of available processors
-        with multiprocessing.Pool(processes=2) as pool:
+        with multiprocessing.Pool() as pool:
             # Run the solve_child function for each child node in parallel
             for i in range(len(children_node_id)):
                 child_node_id = children_node_id[i]
