@@ -40,26 +40,41 @@ class NodesMultiProcessor:
         result = self.business_logic(node)
         if result is not None and result_queue.empty():
             result_queue.put(node)
-            event.set()
+        event.set()
 
     def process_nodes(self, nodes_input):
         """
         Process nodes using multi threads
         """
         # Create a pool of worker threads
-        num_threads = len(nodes_input)
+        # num_threads = len(nodes_input)
         threads = []
-        event = threading.Event()
+
         result_queue = queue.Queue()
 
-        for j in range(num_threads):
-            thread = threading.Thread(target=self.process_node, args=(nodes_input[j], event, result_queue))
-            thread.start()
-            threads.append(thread)
+        base_index = 0
+        solution_found = False
+        num_threads = 2
 
-        event.wait()
+        while not solution_found:
+            event = threading.Event()
 
-        return result_queue.get()
+            for j in range(num_threads):
+                if base_index + j >= len(nodes_input):
+                    break
+                thread = threading.Thread(target=self.process_node, args=(nodes_input[base_index + j], event, result_queue))
+                thread.start()
+                threads.append(thread)
+
+            event.wait()
+
+            if not result_queue.empty():
+                return result_queue.get()
+
+            if base_index + num_threads >= len(nodes_input):
+                return None
+
+            base_index += num_threads
 
     def start(self, nodes_to_process):
         n = len(nodes_to_process)
@@ -88,9 +103,11 @@ class NodesMultiProcessor:
 
         # Set up a shared variable to store the first solution found
         first_solution = multiprocessing.Manager().Value("i", None)
+        counter = multiprocessing.Manager().Value("count", 0)
 
         # Define a callback function to handle results from child processes
         def handle_result(result):
+            counter.value = counter.value + 1
             if result is not None and first_solution.value is None:
                 first_solution.value = result
 
@@ -99,7 +116,8 @@ class NodesMultiProcessor:
             pool.apply_async(self.process_nodes, args=(nodes_lists[i],), callback=handle_result)
 
         while first_solution.value is None:
-            pass
+            if counter.value == num_processes:
+                break
 
         return first_solution.value
 
