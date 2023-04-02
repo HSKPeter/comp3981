@@ -50,7 +50,7 @@ class NeighborType(Enum):
 
 def solve_child(index, child_node_id, azure_container_name=None, max_process_seconds=None):
     print(f"[DEBUG] Index = {index}; Container name: {azure_container_name}; Solving child node: ", child_node_id)
-    solver = SudokuSolverCsp(azure_container_name=azure_container_name)  # Initialize an empty SudokuSolverCsp
+    solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     return solver.solve_sequential(max_process_seconds)
 
@@ -72,10 +72,10 @@ class NodeEncoder(json.JSONEncoder):
 
 
 class SudokuSolverCsp:
-    def __init__(self, board: List[List[int]] = None, azure_container_name=None) -> None:
+    def __init__(self, board: List[List[int]] = None) -> None:
         self.alert_sender = AlertSender()
         self.reserved_node_id_stack = []
-        self.azure_storage_client = AzureStorageClient(azure_container_name)
+        self.azure_storage_client = AzureStorageClient.get_instance()
 
         if board is None:
             # self.node_id_stack = [root]
