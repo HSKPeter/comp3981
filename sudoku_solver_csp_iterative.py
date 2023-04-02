@@ -48,9 +48,9 @@ class NeighborType(Enum):
     SUB_SQUARE = 3
 
 
-def solve_child(child, max_process_seconds=None):
+def solve_child(child_node_id, max_process_seconds=None):
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
-    solver.stack = [child]  # Set the stack to contain the single child
+    solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     return solver.solve_sequential(max_process_seconds)
 
 
@@ -71,13 +71,13 @@ class NodeEncoder(json.JSONEncoder):
 
 
 class SudokuSolverCsp:
-    def __init__(self, board: List[List[int]] = None, root=None) -> None:
+    def __init__(self, board: List[List[int]] = None) -> None:
         self.alert_sender = AlertSender()
 
-        if board is None:
-            self.stack = [root]
-            self.reserved_stack = []
-            return
+        # if board is None:
+        #     self.node_id_stack = [root]
+        #     self.reserved_node_id_stack = []
+        #     return
 
         Node.n = len(board)
         domains = dict()
@@ -90,20 +90,21 @@ class SudokuSolverCsp:
                     domains[key] = set(range(1, Node.n + 1))
 
         first_node = Node(domains)
-        self.stack = [first_node]
-        self.reserved_stack = []
+        self.node_id_stack = [first_node.id]
+        self.reserved_node_id_stack = []
 
 
     def migrate_nodes_to_reserved_stack(self):
-        for node in self.stack[1:]:
+        for node_id in self.node_id_stack[1:]:
+            node = load_node_from_json(node_id)
             node.reserve()
-            self.reserved_stack.append(node)
+            self.reserved_node_id_stack.append(node.id)
 
-        self.stack = self.stack[:1]
+        self.node_id_stack = self.node_id_stack[:1]
 
     def migrate_nodes_in_reserved_stack(self):
-        self.stack = [Node.mark_node_as_unreserved(node) for node in self.reserved_stack]
-        self.reserved_stack = []
+        self.node_id_stack = [Node.mark_node_as_unreserved(node_id) for node_id in self.reserved_node_id_stack]
+        self.reserved_node_id_stack = []
 
     def solve(self, max_process_seconds=None, parallel=False):
         if parallel:
@@ -113,9 +114,10 @@ class SudokuSolverCsp:
 
     def solve_parallel(self, max_process_seconds):
         # Generate all possible child nodes from the root node
-        root_node = self.stack[0]
+        root_node_id = self.node_id_stack[0]
+        root_node = load_node_from_json(root_node_id)
         root_node.expand()
-        children = root_node.children
+        children_node_id = root_node.children
 
         # Set up a shared variable to store the first solution found
         first_solution = multiprocessing.Manager().Value("i", None)
@@ -128,8 +130,8 @@ class SudokuSolverCsp:
         # Initialize the process pool with the number of available processors
         with multiprocessing.Pool() as pool:
             # Run the solve_child function for each child node in parallel
-            for child in children:
-                pool.apply_async(solve_child, args=(child,), callback=handle_result)
+            for child_node_id in children_node_id:
+                pool.apply_async(solve_child, args=(child_node_id,), callback=handle_result)
 
             while first_solution.value is None:
                 pass
@@ -141,18 +143,18 @@ class SudokuSolverCsp:
         i = 0
         timeout = 0
 
-        root = Node(self.stack[0].domains)
-        self.stack = [root.id]
+        root = Node(self.node_id_stack[0].domains)
+        self.node_id_stack = [root.id]
 
-        while self.stack:
+        while self.node_id_stack:
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
                 raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
 
-            current_node_id = self.stack[-1]
+            current_node_id = self.node_id_stack[-1]
             current_node = load_node_from_json(current_node_id)
 
             if i % 5 == 0:
-                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.stack)}"
+                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.node_id_stack)}"
                 self.alert_sender.send(msg + "\n\n")
                 if i % 20 == 0:
                     logger.info(msg)
@@ -162,7 +164,7 @@ class SudokuSolverCsp:
 
             if not is_valid:
                 current_node.check()
-                self.stack.pop()
+                self.node_id_stack.pop()
                 continue
 
             if current_node.is_solution():
@@ -173,9 +175,9 @@ class SudokuSolverCsp:
 
             if next_node_id is None:
                 current_node.check()
-                self.stack.pop()
+                self.node_id_stack.pop()
             else:
-                self.stack.append(next_node_id)
+                self.node_id_stack.append(next_node_id)
 
             i += 1
             timeout += 1
@@ -183,7 +185,7 @@ class SudokuSolverCsp:
                 timeout = 0
                 self.migrate_nodes_to_reserved_stack()
 
-            if len(self.stack) == 0:
+            if len(self.node_id_stack) == 0:
                 self.migrate_nodes_in_reserved_stack()
 
 
@@ -280,15 +282,18 @@ class Node:
         return result
 
     @staticmethod
-    def mark_node_as_unreserved(node):
+    def mark_node_as_unreserved(node_id):
+        node = load_node_from_json(node_id)
         node.unreserve()
-        return node
+        return node_id
 
     def reserve(self):
         self.is_reserved = True
+        self.save()
 
     def unreserve(self):
         self.is_reserved = False
+        self.save()
 
     def revise(self, cell_to_revise, cell_to_check):
         has_revised = False
