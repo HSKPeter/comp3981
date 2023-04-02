@@ -148,6 +148,7 @@ class SudokuSolverCsp:
         # node = load_node_from_json(self.node_id_stack[0])
         # root = Node(node.domains)
         # self.node_id_stack = [root.id]
+        print(self.node_id_stack)
 
         while self.node_id_stack:
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
