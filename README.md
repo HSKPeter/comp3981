@@ -39,11 +39,22 @@ git clone https://github.com/HSKPeter/comp3981.git
 ## Configuring AWS EC2
 1. `chmod 400 <your pem filename>`
 2. `ssh -i <your pem filename> ec2-user@<public IP address of EC2 instance>`
-3. `sudo yum update`
-4. `sudo yum install git`
-5. `python3 --version`
-6. `git clone https://github.com/HSKPeter/comp3981.git`
-7. `cd comp3981`
+3. `sudo apt-get update`
+4. `cd comp3981`
+`git clone https://github.com/HSKPeter/comp3981.git`
+5. python3 --version
+4. `sudp apt install python3.8-venv`
+6. python3 -m venv ./venv
+7. source venv/bin/activate
+pip install -r requirements.txt
+8. export SLACK_WEBHOOK_URL="<your slack webhook url here>"
+sudo apt  install pypy3
+sudo apt-get install python3-pip
+
+sudo apt install python3-pip
+pypy3 -m pip install -r requirements.txt
+9. sudo /usr/bin/pypy3 -m pip install --upgrade pip
+update requirements.txt
 8. 
 
 ## References
