@@ -15,6 +15,93 @@ from node_storage import AzureStorageClient
 from uuid import uuid4
 import threading
 
+import multiprocessing
+import os
+import threading
+import time
+import queue
+import random
+from slack_alert import AlertSender
+# from sudoku_solver_csp_iterative import SudokuSolverCsp
+
+
+class NodesMultiProcessor:
+    def business_logic(self, node):
+        alert_sender = AlertSender()
+        alert_sender.send(f"Thread {threading.get_ident()} has started at {os.getpid()} to treat node {node.id} as root node")
+        solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
+        solver.node_id_stack = [node.id]  # Set the stack to contain the single child
+        return solver.solve_sequential(max_process_seconds=None)
+
+    def process_node(self, node, event, result_queue):
+        """
+        Process a single node.
+        """
+        result = self.business_logic(node)
+        if result is not None and result_queue.empty():
+            result_queue.put(node)
+            event.set()
+
+    def process_nodes(self, nodes_input):
+        """
+        Process nodes using multi threads
+        """
+        # Create a pool of worker threads
+        num_threads = len(nodes_input)
+        threads = []
+        event = threading.Event()
+        result_queue = queue.Queue()
+
+        for j in range(num_threads):
+            thread = threading.Thread(target=self.process_node, args=(nodes_input[j], event, result_queue))
+            thread.start()
+            threads.append(thread)
+
+        event.wait()
+
+        return result_queue.get()
+
+    def start(self, nodes_to_process):
+        n = len(nodes_to_process)
+
+        nodes_list_1 = list()
+        nodes_list_2 = list()
+        nodes_list_3 = list()
+        nodes_list_4 = list()
+
+        for i in range(n):
+            if i % 4 == 0:
+                nodes_list_1.append(i)
+            elif i % 4 == 1:
+                nodes_list_2.append(i)
+            elif i % 4 == 2:
+                nodes_list_3.append(i)
+            elif i % 4 == 3:
+                nodes_list_4.append(i)
+
+        nodes_lists = [nodes_list_1, nodes_list_2, nodes_list_3, nodes_list_4]
+
+        num_processes = 4
+
+        pool = multiprocessing.Pool(num_processes)
+
+        # Set up a shared variable to store the first solution found
+        first_solution = multiprocessing.Manager().Value("i", None)
+
+        # Define a callback function to handle results from child processes
+        def handle_result(result):
+            if result is not None and first_solution.value is None:
+                first_solution.value = result
+
+        # Submit tasks to the pool
+        for i in range(num_processes):
+            pool.apply_async(self.process_nodes, args=(nodes_lists[i],), callback=handle_result)
+
+        while first_solution.value is None:
+            pass
+
+        return first_solution.value
+
 
 def load_node_from_json(azure_storage_client, node_id):
     node_json = azure_storage_client.download_data(f"{node_id}.json")
@@ -120,42 +207,43 @@ class SudokuSolverCsp:
             return self.solve_sequential(max_process_seconds)
 
     def solve_parallel(self, max_process_seconds):
-        # azure_storage_client = AzureStorageClient()
-        azure_container_name = uuid4().hex
-
         # Generate all possible child nodes from the root node
         root_node_id = self.node_id_stack[0]
         root_node = self.load_node_from_json(root_node_id)
         root_node.expand()
-        children_node_id = root_node.children
+        children_node_ids = root_node.children
 
-        # Set up a shared variable to store the first solution found
-        first_solution = None
+        node_processor = NodesMultiProcessor()
 
-        # Define a callback function to handle results from child processes
-        def handle_result(result):
-            global first_solution
-            if result is not None and first_solution is None:
-                first_solution = result
-
-        threads = []
-        for i in range(len(children_node_id)):
-            child_node_id = children_node_id[i]
-            t = threading.Thread(target=solve_child, args=(i, child_node_id, handle_result))
-            threads.append(t)
-            t.start()
-
-        # Initialize the process pool with the number of available processors
-        # with multiprocessing.Pool() as pool:
-        #     # Run the solve_child function for each child node in parallel
-        #     for i in range(len(children_node_id)):
-        #         child_node_id = children_node_id[i]
-        #         pool.apply_async(solve_child, args=(i, child_node_id, azure_container_name), callback=handle_result)
-
-        while first_solution is None:
-            pass
-
-        return first_solution
+        return node_processor.start(children_node_ids)
+        #
+        # # Set up a shared variable to store the first solution found
+        # first_solution = None
+        #
+        # # Define a callback function to handle results from child processes
+        # def handle_result(result):
+        #     global first_solution
+        #     if result is not None and first_solution is None:
+        #         first_solution = result
+        #
+        # threads = []
+        # for i in range(len(children_node_id)):
+        #     child_node_id = children_node_id[i]
+        #     t = threading.Thread(target=solve_child, args=(i, child_node_id, handle_result))
+        #     threads.append(t)
+        #     t.start()
+        #
+        # # Initialize the process pool with the number of available processors
+        # # with multiprocessing.Pool() as pool:
+        # #     # Run the solve_child function for each child node in parallel
+        # #     for i in range(len(children_node_id)):
+        # #         child_node_id = children_node_id[i]
+        # #         pool.apply_async(solve_child, args=(i, child_node_id, azure_container_name), callback=handle_result)
+        #
+        # while first_solution is None:
+        #     pass
+        #
+        # return first_solution
 
     def solve_sequential(self, max_process_seconds):
         expiry_timestamp = (datetime.now() + timedelta(
