@@ -20,7 +20,7 @@ def load_node_from_json(azure_storage_client, node_id):
     domains = {ast.literal_eval(key): set(value) for key, value in node_json["domains"].items()}
     node = Node(domains)
     node.assigned_cell = None if node_json["assigned_cell"] is None else tuple(node_json["assigned_cell"])
-    node.cell_filled = node_json["cell_filled"]
+    # node.cell_filled = node_json["cell_filled"]
     node.children = node_json["children"]
     node.id = node_json["id"]
     node.is_checked = node_json["is_checked"]
@@ -60,7 +60,7 @@ class NodeEncoder(json.JSONEncoder):
         if isinstance(node, Node):
             return {
                 "assigned_cell": node.assigned_cell,
-                "cell_filled": node.cell_filled,
+                # "cell_filled": node.cell_filled,
                 "children": list([child_node for child_node in node.children]),
                 "domains": {str(key): list(value) for key, value in node.domains.items()},
                 "id": node.id,
@@ -165,7 +165,7 @@ class SudokuSolverCsp:
             current_node = self.load_node_from_json(current_node_id)
 
             if i % 5 == 0:
-                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nNode ID: {current_node.id}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.node_id_stack)}"
+                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nNode ID: {current_node.id}\nStack size: {len(self.node_id_stack)}"
                 self.alert_sender.send(msg + "\n\n")
                 if i % 20 == 0:
                     logger.info(msg)
@@ -219,7 +219,7 @@ class Node:
         self.is_checked = False
         self.is_expanded = False
         self.is_reserved = False
-        self.cell_filled = cell_filled
+        # self.cell_filled = cell_filled
         # get unix epoch
         self.id = f"{int(time.time())}_{uuid4()}"
 
@@ -450,7 +450,7 @@ class Node:
             cell_selected = self.select_unassigned_cell()
 
             for value in self.find_ordered_domain_values(cell_selected):
-                new_node = Node(self.domains, cell_selected, value, cell_filled=self.cell_filled + 1)
+                new_node = Node(self.domains, cell_selected, value) #, cell_filled=self.cell_filled + 1
                 self.children.append(new_node.id)
 
             self.is_expanded = True
