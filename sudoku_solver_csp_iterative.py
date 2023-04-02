@@ -28,7 +28,7 @@ from slack_alert import AlertSender
 class NodesMultiProcessor:
     def business_logic(self, node_id):
         alert_sender = AlertSender()
-        alert_sender.send(f"Thread {threading.get_ident()} has started at {os.getpid()} to treat node {node.id} as root node")
+        alert_sender.send(f"Thread {threading.get_ident()} has started at {os.getpid()} to treat node {node_id} as root node")
         solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
         solver.node_id_stack = [node_id]  # Set the stack to contain the single child
         return solver.solve_sequential(max_process_seconds=None)
