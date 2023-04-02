@@ -51,7 +51,7 @@ class NeighborType(Enum):
 
 def solve_child(index, child_node_id, handle_result):
     alert_sender = AlertSender()
-    alert_sender.send(f"Thread #{index} has started to treat node {child_node_id} as root node")
+    alert_sender.send(f"#{index + 1}: Thread {threading.get_ident()} has started to treat node {child_node_id} as root node")
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     result = solver.solve_sequential(max_process_seconds=None)
@@ -176,7 +176,7 @@ class SudokuSolverCsp:
             current_node = self.load_node_from_json(current_node_id)
 
             if i % 5 == 0:
-                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nNode ID: {current_node.id}\nStack size: {len(self.node_id_stack)}"
+                msg = f"Iteration: #{i + 1}\nThread ID: {threading.get_ident()}\nNode ID: {current_node.id}\nStack size: {len(self.node_id_stack)}"
                 self.alert_sender.send(msg + "\n\n")
                 if i % 20 == 0:
                     logger.info(msg)
