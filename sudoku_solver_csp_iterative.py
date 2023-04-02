@@ -48,7 +48,7 @@ class NeighborType(Enum):
     SUB_SQUARE = 3
 
 
-def solve_child(index, child_node_id, max_process_seconds=None):
+def solve_child(index, child_node_id, azure_container_name=None, max_process_seconds=None):
     # print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
@@ -139,7 +139,7 @@ class SudokuSolverCsp:
             # Run the solve_child function for each child node in parallel
             for i in range(len(children_node_id)):
                 child_node_id = children_node_id[i]
-                pool.apply_async(solve_child, args=(i, child_node_id), callback=handle_result)
+                pool.apply_async(solve_child, args=(i, child_node_id, azure_container_name), callback=handle_result)
 
             while first_solution.value is None:
                 # print("foo")
