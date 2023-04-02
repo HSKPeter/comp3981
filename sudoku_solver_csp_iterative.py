@@ -13,6 +13,7 @@ import json
 import ast
 from node_storage import AzureStorageClient
 from uuid import uuid4
+import threading
 
 
 def load_node_from_json(azure_storage_client, node_id):
@@ -48,12 +49,13 @@ class NeighborType(Enum):
     SUB_SQUARE = 3
 
 
-def solve_child(index, child_node_id, azure_container_name=None, max_process_seconds=None):
+def solve_child(index, child_node_id, handle_result):
     alert_sender = AlertSender()
-    alert_sender.send(f"Process #{index} has started to treat node {child_node_id} as root node")
+    alert_sender.send(f"Thread #{index} has started to treat node {child_node_id} as root node")
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
-    return solver.solve_sequential(max_process_seconds)
+    result = solver.solve_sequential(max_process_seconds=None)
+    handle_result(result)
 
 
 class NodeEncoder(json.JSONEncoder):
@@ -128,24 +130,32 @@ class SudokuSolverCsp:
         children_node_id = root_node.children
 
         # Set up a shared variable to store the first solution found
-        first_solution = multiprocessing.Manager().Value("i", None)
+        first_solution = None
 
         # Define a callback function to handle results from child processes
         def handle_result(result):
-            if result is not None and first_solution.value is None:
-                first_solution.value = result
+            global first_solution
+            if result is not None and first_solution is None:
+                first_solution = result
+
+        threads = []
+        for i in range(len(children_node_id)):
+            child_node_id = children_node_id[i]
+            t = threading.Thread(target=solve_child, args=(i, child_node_id, handle_result))
+            threads.append(t)
+            t.start()
 
         # Initialize the process pool with the number of available processors
-        with multiprocessing.Pool() as pool:
-            # Run the solve_child function for each child node in parallel
-            for i in range(len(children_node_id)):
-                child_node_id = children_node_id[i]
-                pool.apply_async(solve_child, args=(i, child_node_id, azure_container_name), callback=handle_result)
+        # with multiprocessing.Pool() as pool:
+        #     # Run the solve_child function for each child node in parallel
+        #     for i in range(len(children_node_id)):
+        #         child_node_id = children_node_id[i]
+        #         pool.apply_async(solve_child, args=(i, child_node_id, azure_container_name), callback=handle_result)
 
-            while first_solution.value is None:
-                # print("foo")
-                pass
-            return first_solution.value
+        while first_solution is None:
+            pass
+
+        return first_solution
 
     def solve_sequential(self, max_process_seconds):
         expiry_timestamp = (datetime.now() + timedelta(
