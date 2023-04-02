@@ -10,23 +10,23 @@ from algo_util import get_sub_square_index
 from log_util import logger
 from slack_alert import AlertSender
 import json
-from uuid import uuid4
 import ast
+from node_storage import AzureStorageClient
+from uuid import uuid4
 
 
-def load_node_from_json(node_id):
-    with open(f"nodes/{node_id}.json", "r") as f:
-        node_json = json.load(f)
-        domains = {ast.literal_eval(key): set(value) for key, value in node_json["domains"].items()}
-        node = Node(domains)
-        node.assigned_cell = None if node_json["assigned_cell"] is None else tuple(node_json["assigned_cell"])
-        node.cell_filled = node_json["cell_filled"]
-        node.children = node_json["children"]
-        node.id = node_json["id"]
-        node.is_checked = node_json["is_checked"]
-        node.is_expanded = node_json["is_expanded"]
-        node.is_reserved = node_json["is_reserved"]
-        return node
+def load_node_from_json(azure_storage_client, node_id):
+    node_json = azure_storage_client.download_data(f"{node_id}.json")
+    domains = {ast.literal_eval(key): set(value) for key, value in node_json["domains"].items()}
+    node = Node(domains)
+    node.assigned_cell = None if node_json["assigned_cell"] is None else tuple(node_json["assigned_cell"])
+    node.cell_filled = node_json["cell_filled"]
+    node.children = node_json["children"]
+    node.id = node_json["id"]
+    node.is_checked = node_json["is_checked"]
+    node.is_expanded = node_json["is_expanded"]
+    node.is_reserved = node_json["is_reserved"]
+    return node
 
 class SolverExecutionExpiredException(Exception):
     def __init__(self, *args: object) -> None:
@@ -48,9 +48,9 @@ class NeighborType(Enum):
     SUB_SQUARE = 3
 
 
-def solve_child(index, child_node_id, max_process_seconds=None):
-    print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
-    solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
+def solve_child(child_node_id, azure_container_name, max_process_seconds=None):
+    # print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
+    solver = SudokuSolverCsp(azure_container_name)  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     return solver.solve_sequential(max_process_seconds)
 
@@ -72,9 +72,10 @@ class NodeEncoder(json.JSONEncoder):
 
 
 class SudokuSolverCsp:
-    def __init__(self, board: List[List[int]] = None) -> None:
+    def __init__(self, board: List[List[int]] = None, azure_container_name=None) -> None:
         self.alert_sender = AlertSender()
         self.reserved_node_id_stack = []
+        self.azure_storage_client = AzureStorageClient(azure_container_name)
 
         if board is None:
             # self.node_id_stack = [root]
@@ -94,10 +95,12 @@ class SudokuSolverCsp:
         first_node = Node(domains)
         self.node_id_stack = [first_node.id]
 
+    def load_node_from_json(self, node_id):
+        return load_node_from_json(self.azure_storage_client, node_id)
 
     def migrate_nodes_to_reserved_stack(self):
         for node_id in self.node_id_stack[1:]:
-            node = load_node_from_json(node_id)
+            node = self.load_node_from_json(node_id)
             node.reserve()
             self.reserved_node_id_stack.append(node.id)
 
@@ -114,9 +117,12 @@ class SudokuSolverCsp:
             return self.solve_sequential(max_process_seconds)
 
     def solve_parallel(self, max_process_seconds):
+        # azure_storage_client = AzureStorageClient()
+        azure_container_name = uuid4().hex
+
         # Generate all possible child nodes from the root node
         root_node_id = self.node_id_stack[0]
-        root_node = load_node_from_json(root_node_id)
+        root_node = self.load_node_from_json(root_node_id)
         root_node.expand()
         children_node_id = root_node.children
 
@@ -133,7 +139,7 @@ class SudokuSolverCsp:
             # Run the solve_child function for each child node in parallel
             for i in range(len(children_node_id)):
                 child_node_id = children_node_id[i]
-                pool.apply_async(solve_child, args=(i, child_node_id), callback=handle_result)
+                pool.apply_async(solve_child, args=(child_node_id, azure_container_name), callback=handle_result)
 
             while first_solution.value is None:
                 pass
@@ -155,7 +161,7 @@ class SudokuSolverCsp:
                 raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
 
             current_node_id = self.node_id_stack[-1]
-            current_node = load_node_from_json(current_node_id)
+            current_node = self.load_node_from_json(current_node_id)
 
             if i % 5 == 0:
                 msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.node_id_stack)}"
@@ -226,9 +232,8 @@ class Node:
         self.save()
 
     def save(self):
-        json_format = json.dumps(self, cls=NodeEncoder, indent=4)
-        with open(f"nodes/{self.id}.json", "w") as f:
-            f.write(json_format)
+        azure_storage_client = AzureStorageClient.get_instance()
+        azure_storage_client.upload_file(f"{self.id}.json", json.dumps(self, cls=NodeEncoder, indent=4))
 
     @classmethod
     def reset(cls):
@@ -285,9 +290,12 @@ class Node:
         self.save()
         return result
 
-    @staticmethod
-    def mark_node_as_unreserved(node_id):
-        node = load_node_from_json(node_id)
+    def load_node_from_json(self, node_id):
+        azure_storage_client = AzureStorageClient.get_instance()
+        return load_node_from_json(azure_storage_client, node_id)
+
+    def mark_node_as_unreserved(self, node_id):
+        node = self.load_node_from_json(node_id)
         node.unreserve()
         return node_id
 
@@ -566,7 +574,7 @@ class Node:
         return True
 
     def get_first_traversable_child(self):
-        nodes = [load_node_from_json(child_node) for child_node in self.children]
+        nodes = [self.load_node_from_json(child_node) for child_node in self.children]
         for node in nodes:
             if not node.is_checked and (node.is_reserved is False):
                 return node.id
