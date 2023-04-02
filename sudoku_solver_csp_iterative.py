@@ -135,7 +135,7 @@ class SudokuSolverCsp:
                 first_solution.value = result
 
         # Initialize the process pool with the number of available processors
-        with multiprocessing.Pool() as pool:
+        with multiprocessing.Pool(processes=2) as pool:
             # Run the solve_child function for each child node in parallel
             for i in range(len(children_node_id)):
                 child_node_id = children_node_id[i]
