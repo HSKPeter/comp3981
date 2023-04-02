@@ -87,6 +87,17 @@ class SolvableSamplesExplorer:
         return "\n".join(num_strings_having_int_with_comma_separated)
 
 
+def clear_all_node_json_files():
+    path_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nodes")
+    file_names = [file_name for file_name in os.listdir(path_directory) if file_name != ".gitignore"]
+    for file_name in file_names:
+        file_path = os.path.join(path_directory, file_name)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+    return len(file_names)
+
+
 def main():
     # board_size = 100
 
@@ -133,8 +144,11 @@ def main():
     logger.info(f"Solution found in {elapsed_time} seconds\n{board_solved}\n")
     alert_sender.send(f"Solution found in {elapsed_time} seconds")
 
-    if board_solved is not None:
-        explorer.write_report(board_puzzle, is_dev=True)
+    # if board_solved is not None:
+    #     explorer.write_report(board_puzzle, is_dev=True)
+
+    json_files_count = clear_all_node_json_files()
+    logger.info(f"Deleted {json_files_count} node json files in nodes directory")
 
 
 if __name__ == '__main__':

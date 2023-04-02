@@ -9,7 +9,24 @@ from sudoku_solver_brute_force import mask_board
 from algo_util import get_sub_square_index
 from log_util import logger
 from slack_alert import AlertSender
+import json
+from uuid import uuid4
+import ast
 
+
+def load_node_from_json(node_id):
+    with open(f"nodes/{node_id}.json", "r") as f:
+        node_json = json.load(f)
+        domains = {ast.literal_eval(key): set(value) for key, value in node_json["domains"].items()}
+        node = Node(domains)
+        node.assigned_cell = None if node_json["assigned_cell"] is None else tuple(node_json["assigned_cell"])
+        node.cell_filled = node_json["cell_filled"]
+        node.children = node_json["children"]
+        node.id = node_json["id"]
+        node.is_checked = node_json["is_checked"]
+        node.is_expanded = node_json["is_expanded"]
+        node.is_reserved = node_json["is_reserved"]
+        return node
 
 class SolverExecutionExpiredException(Exception):
     def __init__(self, *args: object) -> None:
@@ -37,6 +54,22 @@ def solve_child(child, max_process_seconds=None):
     return solver.solve_sequential(max_process_seconds)
 
 
+class NodeEncoder(json.JSONEncoder):
+    def default(self, node):
+        if isinstance(node, Node):
+            return {
+                "assigned_cell": node.assigned_cell,
+                "cell_filled": node.cell_filled,
+                "children": list([child_node for child_node in node.children]),
+                "domains": {str(key): list(value) for key, value in node.domains.items()},
+                "id": node.id,
+                "is_checked": node.is_checked,
+                "is_expanded": node.is_expanded,
+                "is_reserved": node.is_reserved,
+            }
+        return super().default(node)
+
+
 class SudokuSolverCsp:
     def __init__(self, board: List[List[int]] = None, root=None) -> None:
         self.alert_sender = AlertSender()
@@ -59,6 +92,7 @@ class SudokuSolverCsp:
         first_node = Node(domains)
         self.stack = [first_node]
         self.reserved_stack = []
+
 
     def migrate_nodes_to_reserved_stack(self):
         for node in self.stack[1:]:
@@ -108,13 +142,14 @@ class SudokuSolverCsp:
         timeout = 0
 
         root = Node(self.stack[0].domains)
-        self.stack = [root]
+        self.stack = [root.id]
 
         while self.stack:
             if (expiry_timestamp is not None) and (time.time() >= expiry_timestamp):
                 raise SolverExecutionExpiredException(f"No solution is found within {max_process_seconds} seconds")
 
-            current_node = self.stack[-1]
+            current_node_id = self.stack[-1]
+            current_node = load_node_from_json(current_node_id)
 
             if i % 5 == 0:
                 msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.stack)}"
@@ -134,13 +169,13 @@ class SudokuSolverCsp:
                 return current_node
 
             current_node.expand()
-            next_node = current_node.get_first_traversable_child()
+            next_node_id = current_node.get_first_traversable_child()
 
-            if next_node is None:
+            if next_node_id is None:
                 current_node.check()
                 self.stack.pop()
             else:
-                self.stack.append(next_node)
+                self.stack.append(next_node_id)
 
             i += 1
             timeout += 1
@@ -172,6 +207,8 @@ class Node:
         self.is_expanded = False
         self.is_reserved = False
         self.cell_filled = cell_filled
+        # get unix epoch
+        self.id = f"{int(time.time())}_{uuid4()}"
 
         if Node.all_arcs is None:
             Node.all_arcs = self.find_all_arcs()
@@ -179,6 +216,13 @@ class Node:
             Node.every_cell_neighbour = self.find_every_cell_neighbours()
         if Node.every_cell_neighbour_by_type is None:
             Node.every_cell_neighbour_by_type = self.find_every_cell_neighbours_by_type()
+
+        self.save()
+
+    def save(self):
+        json_format = json.dumps(self, cls=NodeEncoder, indent=4)
+        with open(f"nodes/{self.id}.json", "w") as f:
+            f.write(json_format)
 
     @classmethod
     def reset(cls):
@@ -232,6 +276,7 @@ class Node:
         # if result:
         #     self.apply_hidden_single_rule()
         # self.apply_naked_pair_rule()
+        self.save()
         return result
 
     @staticmethod
@@ -388,9 +433,10 @@ class Node:
 
             for value in self.find_ordered_domain_values(cell_selected):
                 new_node = Node(self.domains, cell_selected, value, cell_filled=self.cell_filled + 1)
-                self.children.append(new_node)
+                self.children.append(new_node.id)
 
             self.is_expanded = True
+            self.save()
 
     def cell_is_empty(self, cell: Tuple[int, int]):
         return len(self.domains[cell]) > 1
@@ -460,6 +506,7 @@ class Node:
 
     def check(self):
         self.is_checked = True
+        self.save()
 
     def __str__(self):
         sub_square_size = (int(self.n ** 0.5), int(self.n ** 0.5))
@@ -510,9 +557,10 @@ class Node:
         return True
 
     def get_first_traversable_child(self):
-        for node in self.children:
+        nodes = [load_node_from_json(child_node) for child_node in self.children]
+        for node in nodes:
             if not node.is_checked and (node.is_reserved is False):
-                return node
+                return node.id
         return None
 
     def to_2d_array(self):
