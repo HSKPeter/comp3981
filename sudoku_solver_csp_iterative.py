@@ -49,8 +49,8 @@ class NeighborType(Enum):
 
 
 def solve_child(index, child_node_id, azure_container_name=None, max_process_seconds=None):
-    # print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
-    solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
+    print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
+    solver = SudokuSolverCsp(azure_container_name=azure_container_name)  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     return solver.solve_sequential(max_process_seconds)
 
@@ -165,7 +165,7 @@ class SudokuSolverCsp:
             current_node = self.load_node_from_json(current_node_id)
 
             if i % 5 == 0:
-                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.node_id_stack)}"
+                msg = f"Iteration: #{i + 1}\npid: {os.getpid()}\nNode ID: {current_node.id}\nCell filled: {current_node.cell_filled}\nStack size: {len(self.node_id_stack)}"
                 self.alert_sender.send(msg + "\n\n")
                 if i % 20 == 0:
                     logger.info(msg)
