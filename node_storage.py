@@ -10,6 +10,7 @@ class AzureStorageClient:
 
     @classmethod
     def get_instance(cls):
+        print(f"get instance {cls._default_container_name}")
         return cls(cls._default_container_name)
 
     def __init__(self, azure_container_name=None, connection_string=None):
