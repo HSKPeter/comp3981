@@ -49,7 +49,7 @@ class NeighborType(Enum):
 
 
 def solve_child(index, child_node_id, max_process_seconds=None):
-    print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
+    # print(f"[DEBUG] Index = {index}; Solving child node: ", child_node_id)
     solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
     solver.node_id_stack = [child_node_id]  # Set the stack to contain the single child
     return solver.solve_sequential(max_process_seconds)
@@ -142,7 +142,7 @@ class SudokuSolverCsp:
                 pool.apply_async(solve_child, args=(i, child_node_id), callback=handle_result)
 
             while first_solution.value is None:
-                print("foo")
+                # print("foo")
                 pass
             return first_solution.value
 
