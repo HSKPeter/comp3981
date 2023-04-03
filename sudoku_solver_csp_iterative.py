@@ -282,7 +282,7 @@ class SudokuSolverCsp:
             current_node_id = self.node_id_stack[-1]
             current_node = self.load_node_from_json(current_node_id)
 
-            if i % 5 == 0:
+            if i % 2 == 0:
                 msg = f"Iteration: #{i + 1}\nThread ID: {threading.get_ident()}\npid: {os.getpid()}\nNode ID: {current_node.id}\nStack size: {len(self.node_id_stack)}"
                 self.alert_sender.send(msg + "\n\n")
                 if i % 20 == 0:

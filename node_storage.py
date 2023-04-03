@@ -9,19 +9,20 @@ from slack_alert import AlertSender
 
 class AzureStorageClient:
     _default_container_name = uuid4().hex
-    _instance = None
+    # _instance = None
     _alert_sender = AlertSender()
 
     @classmethod
     def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        # print(f"get instance {cls._default_container_name}")
-        return cls._instance
+        return cls()
+        # if cls._instance is None:
+        #     cls._instance = cls()
+        # # print(f"get instance {cls._default_container_name}")
+        # return cls._instance
 
     def __init__(self):
-        if self._instance is not None:
-            raise Exception("This class is a singleton!")
+        # if self._instance is not None:
+        #     raise Exception("This class is a singleton!")
 
         self.container_name = self._default_container_name
         self.lock = Lock()
@@ -41,7 +42,7 @@ class AzureStorageClient:
             self.create_container()
             self.container_client = self.blob_service_client.get_container_client(self.container_name)
 
-        self._instance = self
+        # self._instance = self
 
     def check_container_exists(self):
         """
@@ -61,10 +62,9 @@ class AzureStorageClient:
         """
         Upload a json string to Azure Blob Storage as json file
         """
-        with self.lock:
-            blob_client = self.container_client.get_blob_client(file_name)
-            blob_client.upload_blob(json_string, overwrite=True)
-            return True
+        # with self.lock:
+        blob_client = self.container_client.get_blob_client(file_name)
+        blob_client.upload_blob(json_string, overwrite=True)
         # with open(f"nodes/{file_name}", "w") as f:
         #     f.write(json_string)
 
@@ -72,11 +72,11 @@ class AzureStorageClient:
         """
         Download a json file from Azure Blob Storage
         """
-        while self.lock:
-            blob_client = self.container_client.get_blob_client(file_name)
-            data = blob_client.download_blob().readall()
-            json_str = data.decode('utf-8')
-            return json.loads(json_str)
+        # while self.lock:
+        blob_client = self.container_client.get_blob_client(file_name)
+        data = blob_client.download_blob().readall()
+        json_str = data.decode('utf-8')
+        return json.loads(json_str)
         # with open(f"nodes/{file_name}", "r") as f:
         #     return json.load(f)
 
