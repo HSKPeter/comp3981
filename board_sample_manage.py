@@ -94,8 +94,8 @@ def main():
     benchmark_test_runner = BenchmarkTestRunner()
     puzzle_loader = PuzzleLoader()
 
-    board_sizes = [100]
-    puzzles_count_for_each_size = 1
+    board_sizes = [9, 12, 16, 25, 100]
+    puzzles_count_for_each_size = 3
 
     for board_size in board_sizes:
         for i in range(puzzles_count_for_each_size):
