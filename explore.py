@@ -7,6 +7,7 @@ import uuid
 import os
 import time
 from slack_alert import AlertSender
+from board_sample_manager import BoardSampleManager
 
 # logger.remove()
 
@@ -75,15 +76,7 @@ class SolvableSamplesExplorer:
                                  f"{self._size}x{self._size}_sample_{index_of_new_sample}{dev_flag}.txt")
 
         with open(file_path, 'a') as file:
-            file.write(self.board_to_standard_text_format(solvable_board))
-
-    @staticmethod
-    def board_to_standard_text_format(board):
-        num_strings_having_int_with_comma_separated = []
-        for row in board:
-            num_strings_having_int_with_comma_separated.append(",".join([str(i) for i in row]))
-
-        return "\n".join(num_strings_having_int_with_comma_separated)
+            file.write(BoardSampleManager.board_to_standard_text_format(solvable_board))
 
 
 def main():

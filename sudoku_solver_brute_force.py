@@ -210,7 +210,7 @@ class Node:
 
     def get_sub_square_index(self, row, col):
         n = len(self.board)
-        return get_sub_square_index(row, col, n)
+        return get_sub_square_index(n, row, col)
 
     def find_domains(self):
         board = self.board
@@ -297,7 +297,8 @@ def main():
 
 def solve_with_brute_force(board):
     solver = SudokuSolver(board)
-    solution_node = solver.solve(max_process_seconds=20)
+    max_process_seconds = 60 * 5
+    solution_node = solver.solve(max_process_seconds=max_process_seconds)
     
     if solution_node is None:
         raise PuzzleUnsolvedException()
