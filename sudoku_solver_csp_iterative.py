@@ -11,7 +11,7 @@ from log_util import logger
 # from slack_alert import AlertSender
 import json
 import ast
-from node_storage import AzureStorageClient
+from mongo_node_storage import MongoStorageClient
 from uuid import uuid4
 # import threading
 
@@ -122,17 +122,17 @@ class NodesMultiProcessor:
         return first_solution.value
 
 
-def load_node_from_json(azure_storage_client, node_id):
-    node_json = azure_storage_client.download_data(f"{node_id}.json")
-    domains = {ast.literal_eval(key): set(value) for key, value in node_json["domains"].items()}
+def load_node_from_json(storage_client, node_id):
+    node_data = storage_client.find_node(node_id)
+    domains = {ast.literal_eval(key): set(value) for key, value in node_data["domains"].items()}
     node = Node(domains)
-    node.assigned_cell = None if node_json["assigned_cell"] is None else tuple(node_json["assigned_cell"])
+    node.assigned_cell = None if node_data["assigned_cell"] is None else tuple(node_data["assigned_cell"])
     # node.cell_filled = node_json["cell_filled"]
-    node.children = node_json["children"]
-    node.id = node_json["id"]
-    node.is_checked = node_json["is_checked"]
-    node.is_expanded = node_json["is_expanded"]
-    node.is_reserved = node_json["is_reserved"]
+    node.children = node_data["children"]
+    node.id = node_data["id"]
+    node.is_checked = node_data["is_checked"]
+    node.is_expanded = node_data["is_expanded"]
+    node.is_reserved = node_data["is_reserved"]
     return node
 
 class SolverExecutionExpiredException(Exception):
@@ -184,7 +184,7 @@ class SudokuSolverCsp:
     def __init__(self, board: List[List[int]] = None) -> None:
         self.alert_sender = AlertSender()
         self.reserved_node_id_stack = []
-        self.azure_storage_client = AzureStorageClient.get_instance()
+        self.storage_client = MongoStorageClient.get_instance()
 
         if board is None:
             # self.node_id_stack = [root]
@@ -205,7 +205,7 @@ class SudokuSolverCsp:
         self.node_id_stack = [first_node.id]
 
     def load_node_from_json(self, node_id):
-        return load_node_from_json(self.azure_storage_client, node_id)
+        return load_node_from_json(self.storage_client, node_id)
 
     def migrate_nodes_to_reserved_stack(self):
         for node_id in self.node_id_stack[1:]:
@@ -351,8 +351,21 @@ class Node:
         self.save()
 
     def save(self):
-        azure_storage_client = AzureStorageClient.get_instance()
-        azure_storage_client.upload_file(f"{self.id}.json", json.dumps(self, cls=NodeEncoder, indent=4))
+        storage_client = MongoStorageClient.get_instance()
+        storage_client.save_data(self.to_dict())
+
+    def to_dict(self):
+        return {
+            "assigned_cell": self.assigned_cell,
+            # "cell_filled": node.cell_filled,
+            "children": list([child_node for child_node in self.children]),
+            "domains": {str(key): list(value) for key, value in self.domains.items()},
+            "id": self.id,
+            "is_checked": self.is_checked,
+            "is_expanded": self.is_expanded,
+            "is_reserved": self.is_reserved,
+        }
+
 
     @classmethod
     def reset(cls):
@@ -410,8 +423,8 @@ class Node:
         return result
 
     def load_node_from_json(self, node_id):
-        azure_storage_client = AzureStorageClient.get_instance()
-        return load_node_from_json(azure_storage_client, node_id)
+        storage_client = MongoStorageClient.get_instance()
+        return load_node_from_json(storage_client, node_id)
 
     def mark_node_as_unreserved(self, node_id):
         node = self.load_node_from_json(node_id)
