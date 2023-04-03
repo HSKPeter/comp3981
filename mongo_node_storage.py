@@ -35,7 +35,7 @@ class MongoStorageClient:
         Create a collection in mongo db
         """
         collection = self.client.get_database(self._db_name).create_collection(self.collection_name)
-        collection.create_index("id")
+        collection.create_index("_id")
 
         logger.info(f"Created Mongo Collection {self.collection_name}")
         self._alert_sender.send(f"Created Mongo Collection {self.collection_name}")
@@ -45,7 +45,7 @@ class MongoStorageClient:
         Update data in Mongo DB
         """
         # Update data with specific ID in Mongo DB
-        query_filter = {"$id": data["id"]}
+        query_filter = {"_id": data["_id"]}
 
         self.client.get_database(self._db_name).get_collection(self.collection_name).update_one(query_filter, {"$set": data}, upsert=True)
 
@@ -55,7 +55,7 @@ class MongoStorageClient:
         """
         Read node data from Mongo DB
         """
-        return self.client.get_database(self._db_name).get_collection(self.collection_name).find_one({"id": node_id})
+        return self.client.get_database(self._db_name).get_collection(self.collection_name).find_one({"_id": node_id})
 
 
 

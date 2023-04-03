@@ -129,7 +129,7 @@ def load_node_from_json(storage_client, node_id):
     node.assigned_cell = None if node_data["assigned_cell"] is None else tuple(node_data["assigned_cell"])
     # node.cell_filled = node_json["cell_filled"]
     node.children = node_data["children"]
-    node.id = node_data["id"]
+    node.id = node_data["_id"]
     node.is_checked = node_data["is_checked"]
     node.is_expanded = node_data["is_expanded"]
     node.is_reserved = node_data["is_reserved"]
@@ -360,7 +360,7 @@ class Node:
             # "cell_filled": node.cell_filled,
             "children": list([child_node for child_node in self.children]),
             "domains": {str(key): list(value) for key, value in self.domains.items()},
-            "id": self.id,
+            "_id": self.id,
             "is_checked": self.is_checked,
             "is_expanded": self.is_expanded,
             "is_reserved": self.is_reserved,
