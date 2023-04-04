@@ -24,6 +24,8 @@ class BenchmarkTestRunner:
             self._algorithm_runners = IterativeCspAlgorithmRunner()
         elif algo_type == AlgorithmType.BRUTE_FORCE:
             self._algorithm_runners = BruteForceAlgorithmRunner()
+        elif algo_type == AlgorithmType.CSP_ITERATIVE_MULTIPROCESS:
+            self._algorithm_runners = IterativeCspAlgorithmRunner(is_parallel=True)
 
     def run_benchmark(self, board, algo_type):
         self.set_algorithm_runners(algo_type)
@@ -92,8 +94,8 @@ def main():
 
     algo_types_to_test = [
         # Algorithm.BRUTE_FORCE,
-        AlgorithmType.CSP_RECURSIVE,
-        AlgorithmType.CSP_ITERATIVE,
+        # AlgorithmType.CSP_RECURSIVE,
+        AlgorithmType.CSP_ITERATIVE_MULTIPROCESS,
     ]
 
     for type_to_test in algo_types_to_test:
