@@ -16,6 +16,7 @@ import asyncio
 app = FastAPI()
 puzzle_loader = PuzzleLoader()
 board = None
+solutions = {}
 
 class BoardPuzzleData(BaseModel):
     board: List[List[int]]
@@ -57,31 +58,32 @@ def convert_seconds_to_formatted_time(seconds):
     return f"{min:02}:{sec:02}.{ms:05}"
 
 @app.post("/brute-force")
-async def solve_brute_force(board_puzzle: BoardPuzzleData):
+def solve_brute_force(board_puzzle: BoardPuzzleData):
     board = board_puzzle.board
-    ref_id = int(time.time()) + uuid4().hex
+    unix_epoch = int(time.time())
+    ref_id = str(unix_epoch) + uuid4().hex
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.submit(save_brute_force_solution, board, ref_id)
             
     return {"ref_id": ref_id}
 
 def save_brute_force_solution(board, ref_id):
-    brute_force_solution = find_brute_force_solution(board, ref_id)
-    with open("tmp/" + ref_id + ".json", "w") as file:
-        file.write(json.dumps(brute_force_solution))
+    solutions[ref_id] = {"result": None, "duration": None, "status": None}
+    result, duration, status, msg = find_brute_force_solution(board)
+    solutions[ref_id] = {"result": result, "duration": duration, "status": status, "msg": msg}
 
 
-def find_brute_force_solution(board, ref_id):
+def find_brute_force_solution(board):
     start_time = time.perf_counter()
     try:
         result = solve_with_brute_force(board)
         end_time = time.perf_counter()
         duration =  end_time - start_time
-        return {"board": result, "duration": convert_seconds_to_formatted_time(duration), "status": "success"}
+        return result, convert_seconds_to_formatted_time(duration), "success", None
     except Exception:
         end_time = time.perf_counter()
         duration =  end_time - start_time
-        return {"duration": convert_seconds_to_formatted_time(duration), "status": "failed"}
+        return None, convert_seconds_to_formatted_time(duration), "failed", "Solution not found within reasonable amount of time."
         
 
 def error_response_with_message(message):
@@ -105,21 +107,15 @@ async def solve_csp(board_puzzle: BoardPuzzleData):
 
 @app.get("/solution/{ref_id}")
 def get_solution(ref_id: str):
-    # Generate the Server-Sent Events
     event_generator = generate_events(ref_id)
-
-    # Return the Server-Sent Events as a StreamingResponse
     return StreamingResponse(event_generator, media_type='text/event-stream')
     
 
 async def generate_events(ref_id: str):
-    filename = "tmp/" + ref_id + ".json"
-
     while True:
-        if os.path.exists(filename):
-            with open(filename) as file:
-                yield f"data: {json.load(file)}\n\n"
-                return
+        if solutions.get(ref_id) is not None:
+            yield f"data: {json.dumps(solutions[ref_id])}\n\n"
+            return            
         else:
             data = {'status': 'loading'}
             yield f"data: {json.dumps(data)}\n\n"
