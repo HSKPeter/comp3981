@@ -112,6 +112,9 @@ def main():
 
             if board_size <= 16:
                 benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.BRUTE_FORCE)
+                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_RECURSIVE)
+                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_ITERATIVE)
+                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_ITERATIVE_MULTIPROCESS)
             elif board_size <= 25:
                 benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_ITERATIVE)
 
