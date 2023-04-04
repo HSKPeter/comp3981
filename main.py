@@ -92,17 +92,34 @@ def error_response_with_message(message):
 
 @app.post("/csp")
 async def solve_csp(board_puzzle: BoardPuzzleData):
+    board = board_puzzle.board
+    unix_epoch = int(time.time())
+    ref_id = str(unix_epoch) + uuid4().hex
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(save_csp_solution, board, ref_id)
+            
+    return {"ref_id": ref_id}
+
+def save_csp_solution(board, ref_id):
+    result, duration, status, msg = find_csp_solution(board)
+    solutions[ref_id] = {"result": result, "duration": duration, "status": status, "msg": msg}
+    print("foobar")
+    print(solutions[ref_id])
+
+
+def find_csp_solution(board):
+    start_time = time.perf_counter()
     try:
-        start_time = time.perf_counter()
-        board = board_puzzle.board
         result = solve_with_csp_iterative(board)
         end_time = time.perf_counter()
         duration =  end_time - start_time
-        return {"board": result, "duration": convert_seconds_to_formatted_time(duration)}
+        return result, convert_seconds_to_formatted_time(duration), "success", None
     except Exception as e:
-        print("error")
         print(e)
-        return error_response_with_message("Solution not found within reasonable amount of time.")
+        end_time = time.perf_counter()
+        duration =  end_time - start_time
+        return None, convert_seconds_to_formatted_time(duration), "failed", "Solution not found within reasonable amount of time."
+
 
 
 @app.get("/solution/{ref_id}")
