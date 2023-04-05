@@ -265,7 +265,8 @@ class Node:
         Initializes a Node object.
 
         Args:
-            domains: A dictionary of domains for each cell in the Sudoku puzzle. A domain of one means that the cell is assigned a value.
+            domains: A dictionary of domains for each cell in the Sudoku puzzle. A domain of one means that the cell is
+                assigned a value.
             assigned_cell: The cell that was assigned a value in the previous node.
             new_value: The value that was assigned to the assigned_cell in the previous node.
         """
@@ -336,7 +337,8 @@ class Node:
         Finds all neighbours for each cell in the Sudoku puzzle.
 
         Returns:
-            a dictionary of all neighbours for each cell in the Sudoku puzzle. key: cell, value: list of neighbours for cell
+            a dictionary of all neighbours for each cell in the Sudoku puzzle. key: cell, value: list of neighbours for
+            cell
 
         """
         return {cell: self.find_cell_neighbours(cell) for cell in self.domains.keys()}
