@@ -1,7 +1,7 @@
-from algo_util import get_sub_square_index
-from mask_board import BoardMaskManager
-from puzzle_loader import PuzzleLoader
 import copy
+
+from algo_util import get_sub_square_index
+from puzzle_loader import PuzzleLoader
 
 
 class PuzzleAnalyzer:

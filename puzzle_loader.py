@@ -1,8 +1,7 @@
+import copy
 import json
 import os
 import random
-import copy
-from algo_util import get_sub_square_index
 
 
 class PuzzleLoader:

@@ -1,7 +1,5 @@
 import time
-
 import numpy as np
-
 from solved_board import get_solved_board
 from datetime import datetime
 from sudoku_solver_csp_recursive import Assignments, Constraints, backtrack
@@ -58,8 +56,6 @@ class BenchmarkTestRunner:
             self._algorithm_runners = IterativeCspAlgorithmRunner(parallel=True)
         elif algo_type == Algorithm.BRUTE_FORCE:
             self._algorithm_runners = BruteForceAlgorithmRunner()
-
-    import numpy as np
 
     def run_benchmark(self, description=None, use_seed=False):
         if description is None:

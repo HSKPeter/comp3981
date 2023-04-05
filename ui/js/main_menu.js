@@ -1,3 +1,5 @@
+"use strict";
+
 const exitButton = document.querySelector("#exit");
 const boardSizeSelectMenu = document.querySelector("#selectBoardSize");
 const fileInput = document.querySelector("#fileInput");
@@ -29,24 +31,25 @@ fileInput.addEventListener('change', (e) => {
     if (file.type !== "text/plain") {
         alert("File must be in txt format");
         e.target.value = null;
-    } else {
-        const reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = () => {
-            const textContent = reader.result;
-            const rows = textContent.trim().split('\n');
-            var board = [];
-            for (let i = 0; i < rows.length; i++) {
-                const rowValues = rows[i].trim().split(',').map(value => parseInt(value));
-                board.push(rowValues);
-            }
-            const size = getBoardSize(board);
-            localStorage.setItem("board", JSON.stringify(board));
-            localStorage.setItem("size", size);
-            console.log("Board: ", localStorage.getItem("board"));
-            console.log("Size: ", localStorage.getItem("size"))
-            window.location.href = "solver_screen.html?source=file"
-        };
+        return
+    }
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = () => {
+        let inputData = reader.result;
+        const [board, isValid] = isValidTextContent(inputData);
+        if (!isValid) {
+            e = null;
+            console.log("The file is invalid!")
+            return
+        }
+        console.log("The file is valid!");
+        const size = getBoardSize(board);
+        localStorage.setItem("board", JSON.stringify(board));
+        localStorage.setItem("size", size);
+        console.log("Board: ", localStorage.getItem("board"));
+        console.log("Size: ", localStorage.getItem("size"))
+        window.location.href = "solver_screen.html?source=file"
     }
 });
 
@@ -55,17 +58,59 @@ const isValidLength = (num) => {
     return acceptableValues.includes(num);
 }
 
-const isValidTextContent = (textContent) => {
+const validCharacters = (boardValues, length) => {
+    var acceptableValues = [];
+    for (let i = 0; i <= length; i++) {
+        acceptableValues.push(i.toString());
+    }
+    console.log("Acceptable Values: ", acceptableValues)
+    console.log("Board Values:", boardValues)
+    for (let i = 0; i < boardValues.length; i++) {
+        for (let j = 0; j < boardValues.length; j++) {
+            if (!acceptableValues.includes(boardValues[i][j])) {
+                alert("The board must only contain numbers 0-9, 0-12, 0-16, 0-25, or 0-100.");
+                console.log("Board Value:", boardValues[i][j]);
+                console.log("Board has invalid characters!");
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+const isValidTextContent = (fileContent) => {
     try {
-        console.log("Inside isValidTextContent!");
-
-        
-
-        
-
-        return isValidLength(rowCount) && rowCount === columnCountOfFirstRow;
+        let lines = fileContent.split("\n");
+        let values = [];
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].replace("\r", "");
+            let lineValues = line.split(",");
+            lineValues = lineValues.filter(function (value) {
+                return value.trim() !== "";
+            });
+            values.push(lineValues);
+        }
+        if (values[values.length-1].length === 0) {
+            values.pop();
+        }
+        console.log("Values: ", values);
+        for (let i = 0; i < values.length; i++) {
+            if (values[i].length !== values.length) {
+                alert("The board must be square (same number of rows and columns).");
+                return [null, false];
+            }
+        }
+        if (!isValidLength(values.length)) {
+            alert("The board must be 9x9, 12x12, 16x16, 25x25, or 100x100.");
+            return [null, false];
+        }
+        if (!validCharacters(values, values.length)) {
+            return [null, false];
+        }
+        return [values, true]
 
     } catch (error) {
+        console.log("Error: ", error);
         return false;
     }
 }
