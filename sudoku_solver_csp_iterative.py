@@ -6,7 +6,7 @@ from typing import List, Tuple
 from utils.benchmark_test.solved_board import get_solved_board
 from sudoku_solver_brute_force import mask_board
 from algo_util import get_sub_square_index
-from log_util import logger
+# from log_util import logger
 from slack_alert import AlertSender
 
 

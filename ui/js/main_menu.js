@@ -80,9 +80,6 @@ const validCharacters = (boardValues, length) => {
 
 const isValidTextContent = (fileContent) => {
     try {
-        console.log("Inside isValidTextContent!");
-        console.log("Text Content:\n", fileContent);
-
         let lines = fileContent.split("\n");
         let values = [];
         for (let i = 0; i < lines.length; i++) {
