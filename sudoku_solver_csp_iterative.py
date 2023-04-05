@@ -2,7 +2,7 @@ import multiprocessing
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Dict, Set
 from utils.benchmark_test.solved_board import get_solved_board
 from sudoku_solver_brute_force import mask_board
 
@@ -37,6 +37,16 @@ FLOOR_SQUARE_ROOTS = {
 
 
 def get_sub_square_index(n, row, col) -> int:
+    """
+    Returns the index of the sub-square that the cell at (row, col) belongs to.
+    Args:
+        n: size of the board
+        row: row index of the cell
+        col: column index of the cell
+
+    Returns:
+        The index of the sub-square that the cell at (row, col) belongs to.
+    """
     sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
     sub_m = n // sub_n  # number of sub-squares in each row or column
     sub_row = row // sub_n
@@ -46,14 +56,30 @@ def get_sub_square_index(n, row, col) -> int:
     return sub_square_index
 
 
-def solve_child(child, max_process_seconds=None):
-    solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
-    solver.stack = [child]  # Set the stack to contain the single child
-    return solver.solve_sequential(max_process_seconds)
-
-
 class SudokuSolverCsp:
-    def __init__(self, board: List[List[int]] = None, root=None) -> None:
+    """
+    A class that solves a Sudoku board using a CSP approach.
+
+    This class can be used to solve a Sudoku board using parallel processing. This is done by creating a SudokuSolverCsp
+    for each child of the root node, and solving each of them in parallel. The first child to find a solution will be
+    returned, and the other children will be discarded.
+
+    Attributes:
+        stack: A list of Node objects representing the search tree
+        reserved_stack: A list of Node objects representing the search tree. Used if the solution is not found after a
+            certain number of nodes have been visited.
+    """
+
+    def __init__(self, board: List[List[int]] = None, root: 'Node' = None) -> None:
+        """
+        Creates a SudokuSolverCsp object from a board or a root node.
+
+        Args:
+            board: A 2D list of integers representing a Sudoku board, can be None if root is not None
+            root: A Node object representing the root node of the search tree, can be None if board is not None
+        """
+
+        # Creating a SudokuSolverCsp object from a board. Used for solving subtrees in parallel.
         if board is None:
             self.stack = [root]
             self.reserved_stack = []
@@ -74,6 +100,12 @@ class SudokuSolverCsp:
         self.reserved_stack = []
 
     def migrate_nodes_to_reserved_stack(self):
+        """
+        Migrates all nodes in the stack to the reserved stack, except for the root node.
+
+        This is used if the solution is not found after a certain number of nodes have been visited. This allows us to
+        search in a different subtree.
+        """
         for node in self.stack[1:]:
             node.reserve()
             self.reserved_stack.append(node)
@@ -81,16 +113,64 @@ class SudokuSolverCsp:
         self.stack = self.stack[:1]
 
     def migrate_nodes_in_reserved_stack(self):
-        self.stack = [Node.mark_node_as_unreserved(node) for node in self.reserved_stack]
+        """
+        Migrates all nodes in the reserved stack to the stack.
+
+        This is used if all the children of the root node have been visited and all the subtrees have been moved to the
+        reserved stack. This allows us to search in the subtrees again.
+        """
+
+        def mark_node_as_unreserved(node):
+            node.unreserve()
+            return node
+
+        self.stack = [mark_node_as_unreserved(node) for node in self.reserved_stack]
         self.reserved_stack = []
 
-    def solve(self, max_process_seconds=None, parallel=False):
+    def solve(self, max_process_seconds: int = None, parallel: bool = False):
+        """
+        Solves the Sudoku puzzle using a backtracking algorithm.
+        Args:
+            max_process_seconds: The maximum number of seconds to run the solver for.
+            parallel: Whether to use a parallelized version of the backtracking algorithm.
+
+        Returns:
+            A Node object representing the solution to the Sudoku puzzle. If no solution is found, returns None.
+        """
         if parallel:
             return self.solve_parallel(max_process_seconds)
         else:
             return self.solve_sequential(max_process_seconds)
 
+    @staticmethod
+    def solve_child(child_node: 'Node', max_process_seconds: int = None):
+        """
+        Helper method for solving a child node. Used for parallelizing the backtracking algorithm.
+
+        Args:
+            child_node: The child node to solve. This will be the root node of the subtree.
+            max_process_seconds: The maximum number of seconds to run the solver for.
+
+        Returns:
+            A Node object representing the solution to the Sudoku puzzle. If no solution is found, returns None.
+        """
+        solver = SudokuSolverCsp()  # Initialize an empty SudokuSolverCsp
+        solver.stack = [child_node]  # Set the stack to contain the single child
+        return solver.solve_sequential(max_process_seconds)
+
     def solve_parallel(self, max_process_seconds):
+        """
+        Solves the Sudoku puzzle using a parallelized version of the backtracking algorithm.
+
+        The parallelization is done by using a process pool to run the backtracking algorithm on each child node of
+        the root node in parallel.
+
+        Args:
+            max_process_seconds: The maximum number of seconds to run the solver for.
+
+        Returns:
+            A Node object representing the solution to the Sudoku puzzle. If no solution is found, returns None.
+        """
         # Generate all possible child nodes from the root node
         root_node = self.stack[0]
         root_node.expand()
@@ -99,22 +179,44 @@ class SudokuSolverCsp:
         # Set up a shared variable to store the first solution found
         first_solution = multiprocessing.Manager().Value("i", None)
 
-        # Define a callback function to handle results from child processes
+        # Define a callback function to update the shared variable when the first solution is found
         def handle_result(result):
             if result is not None and first_solution.value is None:
                 first_solution.value = result
 
         # Initialize the process pool with the number of available processors
         with multiprocessing.Pool() as pool:
+
             # Run the solve_child function for each child node in parallel
             for child in children:
-                pool.apply_async(solve_child, args=(child,), callback=handle_result)
+                pool.apply_async(self.solve_child, args=(child,), callback=handle_result)
 
+            # Wait until the first solution is found
             while first_solution.value is None:
                 pass
+
             return first_solution.value
 
     def solve_sequential(self, max_process_seconds):
+        """
+        Solves the Sudoku puzzle using the backtracking CSP algorithm.
+
+        1. Creates the root node from the first domain in the stack and initializes the stack with the root node.
+        2. Iteratively processes nodes in the stack:
+            a. If the expiry timestamp is reached, raises a SolverExecutionExpiredException.
+            b. Performs forward checking on the current node.
+            c. If the node is not valid, backtracks to the previous node in the stack.
+            d. If the node is a solution, returns the node.
+            e. If the node has children, expands the node and moves to the next child.
+            f. Updates a timeout counter to periodically migrate nodes between stacks.
+        4. If the stack is empty, migrates nodes from the reserved stack and continues processing.
+
+        Args:
+            max_process_seconds: The maximum number of seconds to run the solver for.
+
+        Returns:
+            A Node object representing the solution. If no solution is found, returns None.
+        """
         expiry_timestamp = (datetime.now() + timedelta(
             seconds=max_process_seconds)).timestamp() if max_process_seconds is not None else None
         i = 0
@@ -159,15 +261,39 @@ class SudokuSolverCsp:
 
 
 class Node:
+    """
+    A node in the search tree.
+
+    Attributes:
+        domains: A dictionary of domains for each cell in the Sudoku puzzle.
+        assigned_cell: The cell that was assigned a value in the previous node.
+        children: A list of child nodes.
+        is_checked: A boolean indicating whether the node has been checked.
+        is_expanded: A boolean indicating whether the node has been expanded.
+        is_reserved: A boolean indicating whether the node has been moved to the reserve stack.
+    """
+    # a dictionary of all arcs in the Sudoku puzzle. key: cell, value: list of arcs for cell
     all_arcs = None
+
+    # a dictionary of all neighbours for each cell in the Sudoku puzzle. key: cell, value: list of neighbours for cell
     every_cell_neighbour = None
+
+    # a dictionary of all neighbours seperated by type (row, column, box) for each cell in the Sudoku puzzle.
+    # key: cell, value: dictionary of neighbours seperated by type
     every_cell_neighbour_by_type = None
+
+    # length of the board
     n = None
 
-    def __init__(self, domains,
-                 assigned_cell=None,
-                 new_value=None,
-                 ) -> None:
+    def __init__(self, domains, assigned_cell=None, new_value=None) -> None:
+        """
+        Initializes a Node object.
+
+        Args:
+            domains: A dictionary of domains for each cell in the Sudoku puzzle. A domain of one means that the cell is assigned a value.
+            assigned_cell: The cell that was assigned a value in the previous node.
+            new_value: The value that was assigned to the assigned_cell in the previous node.
+        """
         self.domains = {key: value.copy() for key, value in domains.items()}
         self.assigned_cell = assigned_cell
         if new_value is not None:
@@ -186,16 +312,33 @@ class Node:
 
     @classmethod
     def reset(cls):
+        """
+        Resets the class variables.
+        """
         cls.all_arcs = None
         cls.every_cell_neighbour = None
         cls.every_cell_neighbour_by_type = None
         cls.n = None
-        
+
     @staticmethod
-    def get_arcs(cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
+    def get_arcs(cell: Tuple[int, int, int]) -> set[Tuple[Tuple[int, int, int], Tuple[int, int, int]]]:
+        """
+        Returns the arcs for a given cell. Each arch is a tuple of two cells.
+
+        Args:
+            cell: The cell to find the arcs for.
+
+        Returns: a set of arcs for the given cell.
+        """
         return Node.all_arcs[cell]
 
     def find_all_arcs(self):
+        """
+        Finds all arcs in the Sudoku puzzle.
+
+        Returns:
+            a dictionary of all arcs in the Sudoku puzzle. key: cell, value: list of arcs for cell
+        """
         all_arcs = dict()
         for cell in self.domains.keys():
             cell_arcs = set()
@@ -214,9 +357,25 @@ class Node:
         return all_arcs
 
     def find_every_cell_neighbours(self):
+        """
+        Finds all neighbours for each cell in the Sudoku puzzle.
+
+        Returns:
+            a dictionary of all neighbours for each cell in the Sudoku puzzle. key: cell, value: list of neighbours for cell
+
+        """
         return {cell: self.find_cell_neighbours(cell) for cell in self.domains.keys()}
 
-    def find_cell_neighbours(self, cell):
+    def find_cell_neighbours(self, cell: Tuple[int, int, int]) -> set[Tuple[int, int, int]]:
+        """
+        Finds all neighbours for a given cell.
+
+        Args:
+            cell: The cell to find the neighbours for.
+
+        Returns:
+            a list of neighbours for the given cell.
+        """
         cell_neighbours = set()
         row_index, col_index, sub_square_index = cell
         for counter_cell in self.domains.keys():
@@ -231,25 +390,50 @@ class Node:
 
         return cell_neighbours
 
-    def do_forward_checking(self):
+    def do_forward_checking(self) -> bool:
+        """
+        Does forward checking on the domains of the cells in the Sudoku puzzle.
+
+        Forward checking is done by applying the AC3 algorithm on the arcs of the Sudoku puzzle.
+        Additional forward checking heuristics can also be applied here.
+
+        Returns:
+            True if the domains of the cells in the Sudoku puzzle are consistent, False otherwise.
+        """
         result = self.infer()
+        # Additional forward checking heuristics are commented out because they do not improve the performance of the
+        # algorithm.
         # if result:
         #     self.apply_hidden_single_rule()
         # self.apply_naked_pair_rule()
         return result
 
-    @staticmethod
-    def mark_node_as_unreserved(node):
-        node.unreserve()
-        return node
-
     def reserve(self):
+        """
+        Marks the node as reserved.
+        """
         self.is_reserved = True
 
     def unreserve(self):
+        """
+        Marks the node as unreserved.
+        """
         self.is_reserved = False
 
-    def revise(self, cell_to_revise, cell_to_check):
+    def revise(self, cell_to_revise: Tuple[int, int, int], cell_to_check: Tuple[int, int, int]) -> bool:
+        """
+        Revise the domain of a cell based on the domain of another cell.
+
+        The revision is done by removing a value of the domain of the cell to revise if it the only value remaining in
+        the domain of the cell to check.
+
+        Args:
+            cell_to_revise: The cell to revise.
+            cell_to_check: The cell to check.
+
+        Returns:
+            True if the domain of the cell to revise has been revised, False otherwise.
+        """
         has_revised = False
         domain_of_cell_to_check: set = self.domains[cell_to_check]
         if len(domain_of_cell_to_check) == 1:
@@ -260,16 +444,28 @@ class Node:
                 self.domains[cell_to_revise].remove(domain_value)
         return has_revised
 
-    def infer(self):
+    def infer(self) -> bool:
+        """
+        Infers the domains of the cells in the Sudoku puzzle.
+
+        This function uses the Maintaining Arc Consistency (MAC) heuristic, which is based on the
+        AC-3 algorithm. This helps ensure that the remaining variables maintain their arc consistency
+        after assigning a value to the current variable.
+
+        Returns:
+            True if the domains of the cells in the Sudoku puzzle are consistent, False otherwise.
+        """
         stack = []
         set_for_duplication_check = set()
 
+        # if the node has no assignment (root node), then we need to check all arcs
         if self.assigned_cell is None:
             for _, arc_set in Node.all_arcs.items():
                 for arc in arc_set:
                     stack.append(arc)
                     set_for_duplication_check.add(arc)
         else:
+            # if the node has an assignment, then we only need to check the arcs of the assigned cell
             for arc in self.get_arcs(self.assigned_cell):
                 stack.append(arc)
                 set_for_duplication_check.add(arc)
@@ -293,9 +489,14 @@ class Node:
         return True
 
     def apply_naked_pair_rule(self):
-        # Find if there is a pair of cells that have the same two values
-        # If so, delete those values from the domain of the other cells in the same sub-square, row, and column
+        """
+        Applies the naked pair rule to the domains of the cells in the Sudoku puzzle.
 
+        Find if there is a pair of cells that have the same two values
+        If so, delete those values from the domain of the other cells in the same sub-square, row, and column
+
+        This function is currently not used as it was too computationally expensive.
+        """
         if self.assigned_cell is None:
             return
 
@@ -312,7 +513,16 @@ class Node:
                             self.domains[other_key].discard(value[0])
                             self.domains[other_key].discard(value[1])
 
-    def find_cell_neighbours_by_type(self, cell: (int, int, int), neighbor_type: NeighborType):
+    def find_cell_neighbours_by_type(self, cell: Tuple[int, int, int], neighbor_type: NeighborType):
+        """
+        Finds the neighbours of a cell by type (row, column, or sub-square).
+        Args:
+            cell: The cell to find the neighbours of.
+            neighbor_type: The type of neighbour to find.
+
+        Returns:
+            A set of cells that are neighbours of the given cell.
+        """
         cell_neighbours = set()
         row_index, col_index, sub_square_index = cell
 
@@ -334,7 +544,13 @@ class Node:
 
         return cell_neighbours
 
-    def find_every_cell_neighbours_by_type(self):
+    def find_every_cell_neighbours_by_type(self) -> \
+            Dict[Tuple[int, int, int], Dict[NeighborType, set[Tuple[int, int, int]]]]:
+        """
+        Finds the neighbours of every cell by type (row, column, or sub-square).
+        Returns:
+            A dictionary of cells to a dictionary of neighbour types to a set of cells.
+        """
         result = dict()
         for cell in self.domains.keys():
             row_neighbours = self.find_cell_neighbours_by_type(cell, NeighborType.ROW)
@@ -347,14 +563,27 @@ class Node:
             }
         return result
 
-    def get_cell_neighbours_by_type(self, cell: (int, int, int), neighbor_type: NeighborType):
+    @staticmethod
+    def get_cell_neighbours_by_type(cell: (int, int, int), neighbor_type: NeighborType):
+        """
+        Gets the neighbours of a cell by type (row, column, or sub-square).
+
+        Args:
+            cell: The cell to find the neighbours of.
+            neighbor_type: The type of neighbour to find.
+        Returns: A set of cells that are neighbours of the given cell.
+        """
         return Node.every_cell_neighbour_by_type[cell][neighbor_type]
 
     def apply_hidden_single_rule(self):
-        # Implement the "hidden single" inference rule
-        # If a region contains only one square which can hold a specific number, then that number must go into that square
+        """
+        Implement the "hidden single" inference rule
+        If a region contains only one square which can hold a specific number, then that number must go into that square
+        """
+
         if self.assigned_cell is None:
             return
+
         # Iterate through every unassigned cell in the grid
         for cell_key in Node.every_cell_neighbour[self.assigned_cell]:
             domain_values = self.domains[cell_key]
@@ -385,9 +614,12 @@ class Node:
                     break
 
     def expand(self):
-        if not self.is_expanded:
-            # constraint_domain_copy = {key: value for key, value in self.constraints.domains.items()}
+        """
+        Expand the node by finding all possible values for the next unassigned cell and creating a child node for each
+        possible value.
 
+        """
+        if not self.is_expanded:
             cell_selected = self.select_unassigned_cell()
 
             for value in self.find_ordered_domain_values(cell_selected):
@@ -396,10 +628,28 @@ class Node:
 
             self.is_expanded = True
 
-    def cell_is_empty(self, cell: Tuple[int, int]):
+    def cell_is_empty(self, cell: Tuple[int, int, int]):
+        """
+        Checks if a cell is empty.
+        Args:
+            cell: The cell to check.
+
+        Returns: True if the cell is empty, False otherwise.
+        """
         return len(self.domains[cell]) > 1
 
-    def select_unassigned_cell(self) -> Tuple[int, int]:
+    def select_unassigned_cell(self) -> Tuple[int, int, int]:
+        """
+        Selecting unassigned variables: Use a combination of the Minimum Remaining Values (MRV) and Degree heuristics.
+
+        MRV: Choose the variable with the fewest legal values remaining in its domain. Applied first.
+
+        Degree: Choose the variable involved in the highest number of constraints with other unassigned variables.
+        Applied second if there is a tie for MRV.
+
+        Returns: The cell to be used in assignment.
+
+        """
         unassigned_cells = [cell for cell in self.domains.keys() if self.cell_is_empty(cell)]
 
         # Find the cells with the smallest domain size
@@ -421,30 +671,36 @@ class Node:
 
         return max_degree_cell
 
-    def find_degree(self, cell) -> int:
+    def find_degree(self, cell: Tuple[int, int, int]) -> int:
+        """
+        Find the degree of a cell based on the number of arcs it has to empty cells.
+        Args:
+            cell: The cell to find the degree of.
+
+        Returns: The degree of the cell as an integer.
+        """
         degree = 0
         arcs = self.get_arcs(cell)
         for arc in arcs:
             other_cell = arc[1]
-            if self.cell_is_empty(other_cell) == 0:
+            if self.cell_is_empty(other_cell):
                 degree += 1
         return degree
 
-    def find_ordered_domain_values(self, cell_key):
+    def find_ordered_domain_values(self, cell_key: Tuple[int, int, int]):
         """
-        Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic,
-        which selects the value that imposes the fewest constraints on the remaining variables.
-        The Least Constraining Value (LCV) heuristic is used to order the values of a variable when attempting to assign a value during the search process in a Constraint Satisfaction Problem (CSP). The LCV heuristic aims to minimize the impact of the current assignment on the future assignments of other variables.
+        Find the domain values of a cell in order of least constraining value first.
 
-        The main idea behind the LCV heuristic is to choose a value that imposes the fewest constraints on the remaining unassigned variables. By doing so, you keep more options open for the remaining variables, which can potentially result in fewer backtracks and a more efficient search process.
+        Ordering values of a variable: Use the Least Constraining Value (LCV) heuristic, which selects the value that
+        imposes the fewest constraints on the remaining variables. The Least Constraining Value (LCV) heuristic is used
+        to order the values of a variable when attempting to assign a value during the search process in a Constraint
+        Satisfaction Problem (CSP). The LCV heuristic aims to minimize the impact of the current assignment on the
+        future assignments of other variables.
 
-        To implement the LCV heuristic, you need to perform the following steps:
+        Args:
+            cell_key: The cell to find the domain values of.
 
-        1. For the current variable you are assigning a value to, evaluate each possible value in its domain.
-        2. For each value, count the number of constraints it imposes on the remaining unassigned variables. This typically involves counting how many legal values are eliminated from the domains of neighboring 3. unassigned variables if the current value is assigned to the current variable.
-        4. Order the values by the number of constraints they impose, from least constraining to most constraining.
-        3. Assign the values to the current variable in the order determined by the LCV heuristic.
-        By using the LCV heuristic, you can increase the likelihood of finding a solution without the need for excessive backtracking. This can result in a more efficient search process and, ultimately, a faster solution to the CSP.
+        Returns: The domain values of the cell in order of least constraining value first.
         """
         domain_values = list(self.domains[cell_key])
         if len(domain_values) == 1:
@@ -454,18 +710,33 @@ class Node:
 
         return domain_values
 
-    def count_constraints(self, cell_key, value):
+    def count_constraints(self, cell_key: Tuple[int, int, int], value: int):
+        """
+        Count the number of constraints a value would impose on the domains of the neighbours of a cell.
+        Args:
+            cell_key: The cell to find the neighbours of.
+            value: The value to count the constraints of.
+
+        Returns: The number of constraints the value would impose on the domains of the neighbours of the cell.
+        """
         count = 0
         for neighbor_key in self.every_cell_neighbour[cell_key]:
-            # If the value is in the domain of it's neighbours cells, then increment the count since this would now affect their domains
+            # If the value is in the domain of it's neighbours cells, then increment the count since this would now
+            # affect their domains
             if value in self.domains[neighbor_key]:
                 count += 1
         return count
 
     def check(self):
+        """
+        Mark this node as checked. Checked nodes are exhausted and will not be visited again.
+        """
         self.is_checked = True
 
     def __str__(self):
+        """
+        Print the board in a readable format.
+        """
         sub_square_size = (int(self.n ** 0.5), int(self.n ** 0.5))
 
         if self.n == 12:
@@ -496,9 +767,14 @@ class Node:
 
         return board_str + '\n'
 
-    def is_solution(self):
+    def is_solution(self) -> bool:
         """
-        Check if this set of assignments is a solution to the problem (the whole board is filled and satisfies the constraints)
+        Check if the board is a solution (the whole board is filled and satisfies the constraints).
+
+        Throws:
+            InvalidAssignmentException: If the board is filled but does not satisfy the constraints.
+        Returns:
+            True if the board is a solution, False otherwise.
         """
         for domain_values in self.domains.values():
             if len(domain_values) != 1:
@@ -513,13 +789,25 @@ class Node:
                     f"{cell_one} and {cell_two} were both assigned the same value of {cell_one_value}\n{self}")
         return True
 
-    def get_first_traversable_child(self):
+    def get_first_traversable_child(self) -> Optional['Node']:
+        """
+        Get the first child of this node that is not checked and is not reserved.
+
+        Returns:
+            The first child of this node that is not checked and is not reserved.
+        """
         for node in self.children:
             if not node.is_checked and (node.is_reserved is False):
                 return node
         return None
 
     def to_2d_array(self):
+        """
+        Convert the board to a 2d array.
+
+        Returns:
+            The board as a 2d array.
+        """
         two_d_array = []
 
         for i in range(Node.n):
@@ -535,7 +823,16 @@ class Node:
         return two_d_array
 
 
-def solve_with_csp_iterative(board):
+def solve_with_csp_iterative(board: List[List[int]]) -> List[List[int]]:
+    """
+    Solve a sudoku board using the CSP iterative algorithm.
+
+    Args:
+        board: The board to solve as a 2d array.
+
+    Returns:
+        The solved board as a 2d array.
+    """
     Node.reset()
     solver = SudokuSolverCsp(board)
     if Node.n <= 12:
@@ -546,6 +843,9 @@ def solve_with_csp_iterative(board):
 
 
 def main():
+    """
+    Main function to run the program. Used for testing purposes.
+    """
     board = get_solved_board(12)
     masked_board = mask_board(board)
     print(masked_board)
