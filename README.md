@@ -25,13 +25,7 @@ git clone https://github.com/HSKPeter/comp3981.git
 
 ## Brute Force Algorithm
 
-## Depth First Search
-
-### Recursive DFS
-- TBC
-
-### Iterative DFS
-- TBC
+### Depth First Search (DFS)
 
 ### Design of heuristics
 - (MRV)
