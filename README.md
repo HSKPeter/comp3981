@@ -1,5 +1,9 @@
-# COMP 3981
+# COMP 3981 - Introduction to Artificial Intelligence and Machine Learning
+This is the repository for COMP 3981 (Introduction to Artificial Intelligence and Machine Learning) project. This project is the result of work by [Patrick Cammayo](https://www.linkedin.com/in/patrick-cammayo-8a535026a/), [Peter Ho](https://hskpeter.github.io/), [Sepehr Zohoori Rad](https://sepzie.github.io/), and [Simar Vashisht](https://www.linkedin.com/in/simar-vashisht/).
+This project is a web application that solves Sudoku puzzles. The web application is built with [FastAPI](https://fastapi.tiangolo.com/) and [React.js](https://reactjs.org/).
 
+For the Sudoku solver, we have implemented two algorithms: brute force and constraint satisfaction problem (CSP).  The brute force algorithm is implemented with the depth first search (DFS) approach, and the CSP algorithm is implemented with the backtracking search approach.
+Both algorithms and configured to solve puzzles of size 9x9, 12x12, 16x16, and 25x25.  The CSP algorithm is also configured to solve puzzles of size 100x100.
 ## Getting started 🚀
 
 1. Clone this git repository
