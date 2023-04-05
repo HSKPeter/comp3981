@@ -103,8 +103,6 @@ async def solve_csp(board_puzzle: BoardPuzzleData):
 def save_csp_solution(board, ref_id):
     result, duration, status, msg = find_csp_solution(board)
     solutions[ref_id] = {"result": result, "duration": duration, "status": status, "msg": msg}
-    print("foobar")
-    print(solutions[ref_id])
 
 
 def find_csp_solution(board):
@@ -115,7 +113,6 @@ def find_csp_solution(board):
         duration =  end_time - start_time
         return result, convert_seconds_to_formatted_time(duration), "success", None
     except Exception as e:
-        print(e)
         end_time = time.perf_counter()
         duration =  end_time - start_time
         return None, convert_seconds_to_formatted_time(duration), "failed", "Solution not found within reasonable amount of time."
