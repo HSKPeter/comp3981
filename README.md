@@ -32,10 +32,10 @@ In each iteration, we peak the top node from the stack, and check if the node is
 ### MRV
 During node expansion, we would select the cell with the least number of remaining possible values.  After that, for each possible value of that selected empty cell, we would generate a child node that represents the board state after inserting that value into the selected empty cell.
 
-### Minimum assigned neighbours as as tie-breaking rule
+### Minimum assigned neighbours as tie-breaking rule
 In the case where there are multiple empty cells with the same number of remaining possible values, we would select the cell with the least number of assigned neighbours.  "Neighbour" here refers to the cells that are in the same row, column, or box as the selected cell.  After some experiments, we found that this tie-breaking rule could help to solve the board with less number of guesses.
 
-### Total domain size as heuristic to sort children nodes
+### Prioritize children nodes with smaller total domain size
 For each children node, we would calculate the total domain size of the board, which is the sum of the number of remaining possible values of all the empty cells.  We would then sort the children nodes based on the total domain size, and push the child node with the smallest total domain size into the stack.
 
 ### Backtrack mechanism
