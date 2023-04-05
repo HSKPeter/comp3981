@@ -2,12 +2,11 @@ import multiprocessing
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Tuple, Optional, Dict, Set
-from utils.benchmark_test.solved_board import get_solved_board
-from sudoku_solver_brute_force import mask_board
+from typing import List, Tuple, Optional, Dict
 from algo_util import get_sub_square_index
-# from log_util import logger
 from slack_alert import AlertSender
+from sudoku_solver_brute_force import mask_board
+from utils.benchmark_test.solved_board import get_solved_board
 
 
 class SolverExecutionExpiredException(Exception):
@@ -119,7 +118,7 @@ class SudokuSolverCsp:
             return self.solve_sequential(max_process_seconds)
 
     @staticmethod
-    def solve_child(child_node: 'Node', max_process_seconds: int = None):
+    def solve_child(child_node: "Node", max_process_seconds: int = None):
         """
         Helper method for solving a child node. Used for parallelizing the backtracking algorithm.
 
@@ -266,7 +265,8 @@ class Node:
         Initializes a Node object.
 
         Args:
-            domains: A dictionary of domains for each cell in the Sudoku puzzle. A domain of one means that the cell is assigned a value.
+            domains: A dictionary of domains for each cell in the Sudoku puzzle. A domain of one means that the cell is
+                assigned a value.
             assigned_cell: The cell that was assigned a value in the previous node.
             new_value: The value that was assigned to the assigned_cell in the previous node.
         """
@@ -337,7 +337,8 @@ class Node:
         Finds all neighbours for each cell in the Sudoku puzzle.
 
         Returns:
-            a dictionary of all neighbours for each cell in the Sudoku puzzle. key: cell, value: list of neighbours for cell
+            a dictionary of all neighbours for each cell in the Sudoku puzzle. key: cell, value: list of neighbours for
+            cell
 
         """
         return {cell: self.find_cell_neighbours(cell) for cell in self.domains.keys()}

@@ -1,7 +1,16 @@
-import copy
+"""
+This is a recursive implementation of the backtracking CSP algorithm for solving Sudoku puzzles.
+
+The algorithm is based on the pseudocode from the textbook "Artificial Intelligence: A Modern Approach" by
+Stuart Russell and Peter Norvig.
+
+This code is not used in the final version of the project. It was a stepping stone to developing the iterative
+version of the algorithm.
+"""
+
 import sys
 import time
-import sudoku_solver_brute_force
+
 from algo_util import get_sub_square_index, FLOOR_SQUARE_ROOTS
 
 ROW = 0
@@ -14,17 +23,6 @@ class InvalidAssignmentException(Exception):
 
 class EmptyDomainException(Exception):
     pass
-
-
-# n = length of board
-def get_sub_square_index(n, row, col) -> int:
-    sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
-    sub_m = n // sub_n  # number of sub-squares in each row or column
-    sub_row = row // sub_n
-    sub_col = col // sub_m
-    sub_square_index = sub_row * sub_m + sub_col
-    # sub_square_index starting from 0, counting from top-left to bottom-right of the board
-    return sub_square_index
 
 
 class ArcsCollection:
@@ -167,7 +165,6 @@ class Assignments:
     # # cell is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position
     # # constraints is a dict, where the key is a tuple of integers e.g. (row_index, col_index, sub_square_index) representing the cell position,
     # # and the value would be a set of integers that represent the domain values of that cell
-    # def infer(self, assigned_cell: (int, int, int), constraints: dict[(int, int, int): set[int]]) -> dict[(int, int, int): set[int]]:
     def infer(self, assigned_cell: (int, int, int), constraints):
         """
          Inference function: Use the Maintaining Arc Consistency (MAC) heuristic, which is based on the
@@ -226,11 +223,6 @@ class Assignments:
     def get_arcs(self, cell: (int, int, int)) -> {(int, int, int), (int, int, int)}:
         return self.all_arcs[cell]
 
-    # (int, int, int) = cell
-    # ((int, int, int), (int, int, int)) = binary arc
-    # set(((int, int, int), (int, int, int))) = set of binary arc
-
-    # def compute_arcs(self, cell: (int, int, int)) -> set[((int, int, int), (int, int, int))]:
     def compute_arcs(self, cell: (int, int, int)):
         arcs = set()
         row_index, col_index, sub_square_index = cell
@@ -246,7 +238,6 @@ class Assignments:
 
         return arcs
 
-    # def find_all_arcs(self) -> dict[(int, int, int), set]:
     def find_all_arcs(self):
         all_arcs = dict()
         for cell in self.values.keys():
@@ -272,7 +263,6 @@ class Assignments:
 
         return cell_neighbours
 
-    # Original
     def __str__(self):
         sub_square_size = (int(self.n ** 0.5), int(self.n ** 0.5))
 
@@ -300,29 +290,6 @@ class Assignments:
 
         return board_str + '\n'
 
-    # def __str__(self):
-    #     sub_square_size = (int(self.n ** 0.5 / 3) * 3, int(self.n ** 0.5 / 4) * 4)
-    #     full_row = "+".join(["-" * (sub_square_size[1] * 5 - 1)] * sub_square_size[0])
-    #
-    #     board_str = ''
-    #     for row in range(self.n):
-    #         if row % sub_square_size[0] == 0:
-    #             board_str += full_row + '\n'
-    #         row_str = ' |'
-    #         for col in range(self.n):
-    #             value = self.values[(row, col, self.get_sub_square_index(row, col))]
-    #             if value == 0:
-    #                 row_str += '__'
-    #             else:
-    #                 row_str += f'{value:2}' if value < 10 else f'{value}'
-    #             if (col + 1) % sub_square_size[1] == 0:
-    #                 row_str += '  |'
-    #             row_str += "  "
-    #         board_str += row_str + '\n'
-    #     board_str += full_row
-    #
-    #     return board_str + '\n'
-
     def get_sub_square_index(self, row, col) -> int:
         return get_sub_square_index(self.n, row, col)
 
@@ -336,7 +303,7 @@ class Assignments:
 
         for key, value in self.values.items():
             row_index, col_index, _ = key
-            two_d_array[row_index][col_index] = value
+            two_d_array[row_index][col_index] = next(iter(value))
 
         return two_d_array
 
@@ -405,18 +372,10 @@ class Constraints:
 backtrack_counter = 0
 target_depth = 0
 
+
 def backtrack(constraints: Constraints, assignment: Assignments, depth: int = 0, mute=True):
     global backtrack_counter
     global target_depth
-    # if backtrack_counter > 100000000000:
-    #     if target_depth == 0:
-    #         target_depth = depth/2
-    #     if depth > target_depth:
-    #         return None
-    #     else:
-    #         target_depth = 0
-    #         backtrack_counter = 0
-    # backtrack_counter += 1
 
     if depth % 10 == 0 and not mute:
         print(f"depth {depth}    backtrack_counter {backtrack_counter}")
@@ -476,9 +435,6 @@ def main():
 
     sys.setrecursionlimit(1000000)
 
-    board = [[5, 11, 0, 15, 1, 0, 0, 0, 0, 0, 12, 0, 0, 0, 8, 7], [8, 0, 13, 0, 0, 0, 0, 5, 0, 0, 0, 11, 0, 0, 0, 0], [0, 1, 7, 0, 0, 12, 0, 0, 0, 0, 0, 3, 0, 0, 11, 0], [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 16, 0, 5], [3, 2, 0, 6, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0], [12, 13, 0, 0, 10, 0, 0, 0, 0, 0, 7, 16, 0, 0, 0, 6], [0, 0, 4, 0, 0, 0, 7, 0, 12, 0, 14, 6, 0, 0, 5, 0], [11, 0, 0, 0, 0, 0, 0, 12, 5, 0, 9, 0, 8, 0, 0, 0], [0, 4, 0, 0, 9, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 4, 13, 0, 15], [0, 0, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0], [13, 0, 0, 0, 0, 5, 0, 0, 0, 2, 0, 15, 0, 0, 9, 0], [7, 0, 0, 4, 0, 0, 12, 11, 0, 10, 3, 8, 0, 0, 13, 14], [0, 0, 0, 13, 3, 0, 4, 0, 0, 5, 16, 9, 2, 15, 7, 0], [15, 5, 3, 0, 16, 7, 13, 10, 0, 12, 0, 0, 9, 0, 0, 0], [14, 10, 6, 0, 0, 8, 9, 0, 0, 7, 15, 0, 16, 3, 12, 4]]
-        # [[0,0,0,0,0,0,0,0,10,9,0,14,3,6,0,7],[0,16,13,0,0,0,0,5,0,4,0,0,14,0,0,0],[0,0,0,0,6,0,0,0,0,16,0,0,0,0,11,0],[0,0,9,0,11,0,14,15,1,8,0,0,0,16,0,5],[3,2,0,0,0,0,0,0,0,13,11,0,0,0,15,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,3,0,0,10,0,0,0],[0,0,0,0,13,0,15,12,0,0,0,0,0,0,0,0],[0,0,0,16,0,1,0,13,0,0,0,5,12,0,0,8],[6,0,11,0,0,16,0,0,0,0,8,0,0,0,0,15],[9,3,0,0,4,15,11,14,0,0,13,12,5,0,10,0],[0,0,0,0,8,0,3,0,0,0,4,15,0,11,9,1],[7,0,16,0,15,0,0,0,6,0,3,0,1,0,0,0],[1,0,0,13,0,0,4,6,11,0,0,9,0,0,7,10],[0,5,0,0,16,7,0,0,14,12,1,4,0,0,6,11],[0,0,6,11,0,8,9,0,0,7,0,0,0,0,0,0]]
-        # sudoku_solver.mask_board(sudoku_solver.TWENTY_FIVE_X_TWENTY_FIVE)
     # first algo
     assignments = Assignments(TWELVE_X_TWELVE)
     constraints = Constraints(assignments)
@@ -488,7 +444,6 @@ def main():
     print("Solution")
     print(result)
     print(f"Solved in {end_time - start_time} seconds")
-    # print(result.to_2d_array())
 
 
 if __name__ == '__main__':
