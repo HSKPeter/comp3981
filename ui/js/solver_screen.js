@@ -48,20 +48,38 @@ async function solve(algorithm) {
     const apiRoute = formatAlgorithmNameToApiRoute(algorithm);
     const response = await fetch(`http://localhost:8000/${apiRoute}/`, fetchConfig);
     spinner.style.display = "none"
-    if (response.status === 404) {
-        const { message } = await response.json();
-        alert(message);
+    const data = await response.json();
+    const {ref_id} = data;
 
-        throw Error()
-        
-        // myReject()
-        // return;
-    }
-    const { board, duration } = await response.json();
-    // myResolve()
+    const eventSource = new EventSource(`http://localhost:8000/solution/${ref_id}/`);
 
-    fillBoard(board)
-    stopDynamicTimer({duration, status: SUCCESS})
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const {result, duration, status, msg} = data;
+        if (status == "success") {
+            fillBoard(result)
+            stopDynamicTimer({duration, status: SUCCESS})
+            eventSource.close()
+        } else if (status == "loading") {
+            console.log("Loading solution...")
+        } else if (status == "failed") {
+            stopDynamicTimer({duration, status: FAIL})
+            eventSource.close()
+
+            if (msg) {
+                alert(msg)
+            }
+        } else {
+            stopDynamicTimer({status: FAIL})
+            eventSource.close()
+        }
+    };
+
+    eventSource.onerror = (error) => {
+        console.error('Error occurred:', error);
+        stopDynamicTimer({status: FAIL})
+        eventSource.close();
+    };
 }
 
 function formatAlgorithmNameToApiRoute(algorithmName) {

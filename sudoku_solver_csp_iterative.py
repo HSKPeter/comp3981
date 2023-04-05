@@ -5,6 +5,9 @@ from enum import Enum
 from typing import List, Tuple, Optional, Dict, Set
 from utils.benchmark_test.solved_board import get_solved_board
 from sudoku_solver_brute_force import mask_board
+from algo_util import get_sub_square_index
+from log_util import logger
+from slack_alert import AlertSender
 
 
 class SolverExecutionExpiredException(Exception):
@@ -27,36 +30,10 @@ class NeighborType(Enum):
     SUB_SQUARE = 3
 
 
-FLOOR_SQUARE_ROOTS = {
-    9: 3,
-    12: 3,
-    16: 4,
-    25: 5,
-    100: 10
-}
-
-
-def get_sub_square_index(n, row, col) -> int:
-    """
-    Returns the index of the sub-square that the cell at (row, col) belongs to.
-    Args:
-        n: size of the board
-        row: row index of the cell
-        col: column index of the cell
-
-    Returns:
-        The index of the sub-square that the cell at (row, col) belongs to.
-    """
-    sub_n = FLOOR_SQUARE_ROOTS[n]  # size of each sub-square
-    sub_m = n // sub_n  # number of sub-squares in each row or column
-    sub_row = row // sub_n
-    sub_col = col // sub_m
-    sub_square_index = sub_row * sub_m + sub_col
-    # sub_square_index starting from 0, counting from top-left to bottom-right of the board
-    return sub_square_index
-
-
 class SudokuSolverCsp:
+    def __init__(self, board: List[List[int]] = None, root=None) -> None:
+        self.alert_sender = AlertSender()
+
     """
     A class that solves a Sudoku board using a CSP approach.
 
@@ -818,7 +795,7 @@ class Node:
 
         for key, value in self.domains.items():
             row_index, col_index, _ = key
-            two_d_array[row_index][col_index] = value
+            two_d_array[row_index][col_index] = next(iter(value))
 
         return two_d_array
 

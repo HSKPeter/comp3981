@@ -1,19 +1,11 @@
 import copy
 import sys
 import time
-
 import sudoku_solver_brute_force
+from algo_util import get_sub_square_index, FLOOR_SQUARE_ROOTS
 
 ROW = 0
 COL = 1
-
-FLOOR_SQUARE_ROOTS = {
-    9: 3,
-    12: 3,
-    16: 4,
-    25: 5,
-    100: 10
-}
 
 
 class InvalidAssignmentException(Exception):
