@@ -26,6 +26,12 @@ git clone https://github.com/HSKPeter/comp3981.git
 ## Brute Force Algorithm
 
 ### Depth First Search (DFS)
+We implement the brute force algorithm with the depth first search (DFS) approach, by maintaining a stack to store nodes that are yet to be explored.
+
+In each iteration, we peak the top node from the stack, and check if the node is a goal node.  If it is, we return the node as the solution.  Otherwise, we expand the node by generating the children nodes.  We would then based on certain heuristics (details in following section) to prioritize the children nodes, and push the child node which is unchecked and has the highest heuristic value into the stack.
+
+In this depth first search approach, backtrack would be taken place when we have explored all the children nodes of the node that is at the top of the stack.  We would then pop the that node from the stack, and continue the iteration by exploring the next node in the stack, which is the parent node of the node that we have just popped.
+
 
 ### Design of heuristics
 - (MRV)
