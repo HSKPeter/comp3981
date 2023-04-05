@@ -1,4 +1,7 @@
 import time
+
+import numpy as np
+
 from solved_board import get_solved_board
 from datetime import datetime
 from sudoku_solver_csp_recursive import Assignments, Constraints, backtrack
@@ -56,12 +59,15 @@ class BenchmarkTestRunner:
         elif algo_type == Algorithm.BRUTE_FORCE:
             self._algorithm_runners = BruteForceAlgorithmRunner()
 
+    import numpy as np
+
     def run_benchmark(self, description=None, use_seed=False):
         if description is None:
             description = f"{self._board_size}x{self._board_size} benchmark"
         total_elapsed_time = 0
         failure_count = 0
         total_failure_time = 0
+        successful_elapsed_times = []
 
         for i in range(self._num_runs):
             start_time = time.time()
@@ -78,12 +84,20 @@ class BenchmarkTestRunner:
                 total_failure_time += elapsed_time
             else:
                 total_elapsed_time += elapsed_time
+                successful_elapsed_times.append(elapsed_time)
 
         successful_runs = self._num_runs - failure_count
         average_elapsed_time = total_elapsed_time / successful_runs if successful_runs > 0 else 0
         average_failure_time = total_failure_time / failure_count if failure_count > 0 else 0
+        max_elapsed_time = np.max(successful_elapsed_times) if successful_elapsed_times else 0
+        min_elapsed_time = np.min(successful_elapsed_times) if successful_elapsed_times else 0
+        sd_elapsed_time = np.std(successful_elapsed_times) if successful_elapsed_times else 0
+
         result = f"{self._algo_type_name}\ndescription: {description}\n" \
                  f"average runtime (seconds) over {successful_runs} successful runs: {average_elapsed_time:.6f}\n" \
+                 f"min runtime (seconds) over {successful_runs} successful runs: {min_elapsed_time:.6f}\n" \
+                 f"max runtime (seconds) over {successful_runs} successful runs: {max_elapsed_time:.6f}\n" \
+                 f"standard deviation of runtime (seconds) over {successful_runs} successful runs: {sd_elapsed_time:.6f}\n" \
                  f"failures: {failure_count} (average time for failures: {average_failure_time:.6f})\n\n"
 
         now = datetime.now()
