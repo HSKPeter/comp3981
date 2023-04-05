@@ -39,11 +39,11 @@ In the case where there are multiple empty cells with the same number of remaini
 For each children node, we would calculate the total domain size of the board, which is the sum of the number of remaining possible values of all the empty cells.  We would then sort the children nodes based on the total domain size, and push the child node with the smallest total domain size into the stack.
 
 ### Backtrack mechanism
-In this depth first search implementation, backtrack would be taken place when we have explored all the children nodes of the node that is at the top of the stack.  We would then pop the that node from the stack, and continue the iteration by exploring the next node in the stack, which is the parent node of the node that we have just popped.
+In this depth first search implementation, backtrack would be taken place when we have explored all the children nodes of the node that is at the top of the stack.  We would then pop that node from the stack, and continue the iteration by exploring the next top node in the stack, which is the parent node of the node that we have just popped.
 
 
 ## CSP
-The brute force algorithm might not be able to solve some of the difficult 25x25 boards, and this brings us to the CSP algorithm, which is more powerful and promising to solve difficult 25x25 boards.
+The brute force algorithm might not be able to solve some of the difficult 25x25 boards, and this brings us to the CSP algorithm, which is more powerful to solve sudoku problems, and also more promising to solve difficult 25x25 boards.
 
 ### Degree and MRV
 - TBC
@@ -52,7 +52,7 @@ The brute force algorithm might not be able to solve some of the difficult 25x25
 To determine the order of the values on a variable for which value to attempt first, we use the least constraining value. The idea of this heuristic is to assign a value that imposes the least impact on it's neighbouring cells in order to minimize the impact of the current assignment to the future assignment to other variables. By choosing that value that eliminates the fewest options for other variales, this heuristic helps to avoid unnecessary backtracking and increases the efficiency of the algorithm.
 
 ### MAC heuristics based on AC-3
-- TBC
+We have also used the Maintaining Arc Consistency (MAC) heuristic, which is based on the AC-3 algorithm, to infer the domains of the cells in the Sudoku puzzle.  As such, cells domains would be updated whenever a new value is assigned to a cell, and arc consistency could be always maintained.  This would help to prune the search tree, and make the CSP algorithm more efficient.
 
 ### Multiprocessing
 - TBC
