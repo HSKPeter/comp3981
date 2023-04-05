@@ -46,7 +46,11 @@ In this depth first search implementation, backtrack would be taken place when w
 The brute force algorithm might not be able to solve some of the difficult 25x25 boards, and this brings us to the CSP algorithm, which is more powerful and promising to solve difficult 25x25 boards.
 
 ### Degree and MRV
-- TBC
+In our CSP implementation, we use two heuristics to select unassigned variables: Minimum Remaining Values (MRV) and Degree. MRV is applied first, and it selects the variable with the smallest domain size. The domain size is the number of legal values remaining in the variable's domain. If there are ties for the smallest domain size, we use the Degree heuristic as a tie-breaker.
+
+Degree heuristic is a measure of how many constraints a variable has with other unassigned variables. For example, a board cell [0,0] (top left) is involved in constraints with empty cells in the same row, column, and subsquare. We compute the degree of a variable by counting the number of unassigned variables that share a constraint with it.
+
+We select the variable with the highest degree among the variables with the smallest domain size. This approach balances the exploration of the search space by selecting variables with a small domain, and the exploitation of the problem structure by selecting variables with high degree. The selected cell is returned for assignment.
 
 ### Least Constraining Value (LCV)
 - TBC
