@@ -31,9 +31,6 @@ class NeighborType(Enum):
 
 
 class SudokuSolverCsp:
-    def __init__(self, board: List[List[int]] = None, root=None) -> None:
-        self.alert_sender = AlertSender()
-
     """
     A class that solves a Sudoku board using a CSP approach.
 
@@ -55,6 +52,7 @@ class SudokuSolverCsp:
             board: A 2D list of integers representing a Sudoku board, can be None if root is not None
             root: A Node object representing the root node of the search tree, can be None if board is not None
         """
+        self.alert_sender = AlertSender()
 
         # Creating a SudokuSolverCsp object from a board. Used for solving subtrees in parallel.
         if board is None:
@@ -62,6 +60,7 @@ class SudokuSolverCsp:
             self.reserved_stack = []
             return
 
+        Node.reset()
         Node.n = len(board)
         domains = dict()
         for row in range(Node.n):
@@ -810,7 +809,6 @@ def solve_with_csp_iterative(board: List[List[int]]) -> List[List[int]]:
     Returns:
         The solved board as a 2d array.
     """
-    Node.reset()
     solver = SudokuSolverCsp(board)
     if Node.n <= 12:
         result = solver.solve(parallel=False)
