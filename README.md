@@ -26,11 +26,21 @@ git clone https://github.com/HSKPeter/comp3981.git
 ## Brute Force Algorithm
 
 ### Depth First Search (DFS)
-We implement the brute force algorithm with the depth first search (DFS) approach, by maintaining a stack to store nodes that are yet to be explored.
+We have implemented the brute force algorithm with the depth first search (DFS) approach, by maintaining a stack to store nodes that are yet to be explored.
 
-In each iteration, we peak the top node from the stack, and check if the node is a goal node.  If it is, we return the node as the solution.  Otherwise, we expand the node by generating the children nodes.  We would then based on certain heuristics (details in following section) to prioritize the children nodes, and push the child node which is unchecked and has the highest heuristic value into the stack.
+In each iteration, we peak the top node from the stack, and check if the node is a goal node.  If it is, we return the node as the solution.  Otherwise, we expand the node by generating its children nodes.  
 
-In this depth first search approach, backtrack would be taken place when we have explored all the children nodes of the node that is at the top of the stack.  We would then pop the that node from the stack, and continue the iteration by exploring the next node in the stack, which is the parent node of the node that we have just popped.
+## MRV
+During node expansion, we would select the cell with the least number of remaining possible values.  After that, for each possible value of that selected empty cell, we would generate a child node that represents the board state after inserting that value into the selected empty cell.
+
+## Minimum assigned neighbours as as tie-breaking rule
+In the case where there are multiple empty cells with the same number of remaining possible values, we would select the cell with the least number of assigned neighbours.  "Neighbour" here refers to the cells that are in the same row, column, or box as the selected cell.  After some experiments, we found that this tie-breaking rule could help to solve the board with less number of guesses.
+
+## Total domain size as heuristic to sort children nodes
+For each children node, we would calculate the total domain size of the board, which is the sum of the number of remaining possible values of all the empty cells.  We would then sort the children nodes based on the total domain size, and push the child node with the smallest total domain size into the stack.
+
+## Backtrack mechanism
+In this depth first search implementation, backtrack would be taken place when we have explored all the children nodes of the node that is at the top of the stack.  We would then pop the that node from the stack, and continue the iteration by exploring the next node in the stack, which is the parent node of the node that we have just popped.
 
 
 ### Design of heuristics
