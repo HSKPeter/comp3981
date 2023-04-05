@@ -49,7 +49,7 @@ The brute force algorithm might not be able to solve some of the difficult 25x25
 - TBC
 
 ### Least Constraining Value (LCV)
-- TBC
+To determine the order of the values on a variable for which value to attempt first, we use the least constraining value. The idea of this heuristic is to assign a value that imposes the least impact on it's neighbouring cells in order to minimize the impact of the current assignment to the future assignment to other variables. By choosing that value that eliminates the fewest options for other variales, this heuristic helps to avoid unnecessary backtracking and increases the efficiency of the algorithm.
 
 ### MAC heuristics based on AC-3
 - TBC
