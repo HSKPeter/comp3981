@@ -46,16 +46,20 @@ In this depth first search implementation, backtrack would be taken place when w
 The brute force algorithm might not be able to solve some of the difficult 25x25 boards, and this brings us to the CSP algorithm, which is more powerful and promising to solve difficult 25x25 boards.
 
 ### Degree and MRV
-- TBC
+In the CSP algorithm, we use a combination of the Minimum Remaining Values (MRV) and Degree heuristics to select unassigned variables for assignment.
+
+MRV: The algorithm first applies the MRV heuristic, which chooses the variable with the fewest legal values remaining in its domain. By selecting variables that have fewer possibilities, we can reduce the search space and minimize the chances of backtracking.
+
+Degree: If there is a tie for MRV, the algorithm uses the Degree heuristic as a tiebreaker. The Degree heuristic selects the variable involved in the highest number of constraints with other unassigned variables. By prioritizing variables with higher constraint involvement, we can minimize the impact of current assignments on future ones, further improving the efficiency of the algorithm.
 
 ### Least Constraining Value (LCV)
 To determine the order of the values on a variable for which value to attempt first, we use the least constraining value. The idea of this heuristic is to assign a value that imposes the least impact on it's neighbouring cells in order to minimize the impact of the current assignment to the future assignment to other variables. By choosing that value that eliminates the fewest options for other variales, this heuristic helps to avoid unnecessary backtracking and increases the efficiency of the algorithm.
 
 ### MAC heuristics based on AC-3
-- TBC
+The MAC heuristic, based on the AC-3 algorithm, enforces arc consistency in the CSP algorithm. It ensures that after assigning a value to a variable, remaining variables maintain consistency according to constraints. This reduces the search space by eliminating inconsistent values before further assignments, thus improving efficiency and avoiding unnecessary backtracking. However, it can become computationally expensive for larger boards, like 100x100.
 
 ### Multiprocessing
-- TBC
+To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first soltion that is found, and terminate the other processes.
 
 
 ## Challenge of solving 100x100 Sudoku
