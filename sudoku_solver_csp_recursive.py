@@ -303,7 +303,7 @@ class Assignments:
 
         for key, value in self.values.items():
             row_index, col_index, _ = key
-            two_d_array[row_index][col_index] = value
+            two_d_array[row_index][col_index] = next(iter(value))
 
         return two_d_array
 
