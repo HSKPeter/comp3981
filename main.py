@@ -59,21 +59,15 @@ def convert_seconds_to_formatted_time(seconds):
 
 @app.post("/brute-force")
 def solve_brute_force(board_puzzle: BoardPuzzleData):
-    board = board_puzzle.board
-    unix_epoch = int(time.time())
-    ref_id = str(unix_epoch) + uuid4().hex
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(save_brute_force_solution, board, ref_id)
-            
-    return {"ref_id": ref_id}
+    return solve_board(board_puzzle.board, run_brute_force)
 
-def save_brute_force_solution(board, ref_id):
-    solutions[ref_id] = {"result": None, "duration": None, "status": None}
-    result, duration, status, msg = find_brute_force_solution(board)
-    solutions[ref_id] = {"result": result, "duration": duration, "status": status, "msg": msg}
+@app.post("/csp")
+async def solve_csp(board_puzzle: BoardPuzzleData):
+    return solve_board(board_puzzle.board, run_csp)
 
 
-def find_brute_force_solution(board):
+
+def run_brute_force(board):
     start_time = time.perf_counter()
     try:
         result = solve_with_brute_force(board)
@@ -86,28 +80,28 @@ def find_brute_force_solution(board):
         return None, convert_seconds_to_formatted_time(duration), "failed", "Solution not found within reasonable amount of time."
         
 
-def error_response_with_message(message):
-    return JSONResponse(content={"message": message}, status_code=404)
-
-
-@app.post("/csp")
-async def solve_csp(board_puzzle: BoardPuzzleData):
-    board = board_puzzle.board
+def solve_board(board, algo_callback):
     unix_epoch = int(time.time())
     ref_id = str(unix_epoch) + uuid4().hex
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(save_csp_solution, board, ref_id)
+        executor.submit(save_solution, board, ref_id, algo_callback)
             
     return {"ref_id": ref_id}
 
-def save_csp_solution(board, ref_id):
-    result, duration, status, msg = find_csp_solution(board)
-    solutions[ref_id] = {"result": result, "duration": duration, "status": status, "msg": msg}
-    print("foobar")
-    print(solutions[ref_id])
+def save_solution(board, ref_id, algo_callback):
+    start_time = time.perf_counter()
+    try:
+        result = solve_with_csp_iterative(board)
+        end_time = time.perf_counter()
+        duration =  end_time - start_time
+        solutions[ref_id] = {"result": result, "duration": duration, "status": "success", "msg": None}
+    except Exception as e:
+        end_time = time.perf_counter()
+        duration =  end_time - start_time
+        return None, convert_seconds_to_formatted_time(duration), "failed", "Solution not found within reasonable amount of time."
+    
 
-
-def find_csp_solution(board):
+def run_csp(board):
     start_time = time.perf_counter()
     try:
         result = solve_with_csp_iterative(board)
@@ -115,11 +109,16 @@ def find_csp_solution(board):
         duration =  end_time - start_time
         return result, convert_seconds_to_formatted_time(duration), "success", None
     except Exception as e:
-        print(e)
         end_time = time.perf_counter()
         duration =  end_time - start_time
         return None, convert_seconds_to_formatted_time(duration), "failed", "Solution not found within reasonable amount of time."
 
+def run_algo_with_time_tracking(board, algo_callback):
+    start_time = time.perf_counter()
+    result = algo_callback(board)
+    end_time = time.perf_counter()
+    duration =  end_time - start_time
+    return result, convert_seconds_to_formatted_time(duration)
 
 
 @app.get("/solution/{ref_id}")
