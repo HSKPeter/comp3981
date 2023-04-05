@@ -107,5 +107,6 @@ As such, we believe that our CSP algorithm at the moment is not powerful to solv
 - [A study of Sudoku solving algorithms](https://www.csc.kth.se/utbildning/kth/kurser/DD143X/dkand12/Group6Alexander/report/PATRIK_BERGGREN_DAVID_NILSSON.rapport.pdf) 
 - [Solving Sudoku by Heuristic Search](https://medium.com/@davidcarmel/solving-sudoku-by-heuristic-search-b0c2b2c5346e)
 - [A Sudoku Solver - Mike Schermerhorn](https://www.cs.rochester.edu/u/brown/242/assts/termprojs/Sudoku09.pdf)
-- [Study of Brute Force and Heuristic Approach to
-Solve Sudoku](https://www.ijettcs.org/Volume4Issue5(2)/IJETTCS-2015-10-10-17.pdf)
+- [Study of Brute Force and Heuristic Approach to Solve Sudoku](https://www.ijettcs.org/Volume4Issue5(2)/IJETTCS-2015-10-10-17.pdf)
+- [Sudoku Solver and Generator used for generating solved sudoku puzzles up to 25x25](https://github.com/dangnguyendota/SudokuGeneratorAndSolver)
+- [Code snippet for generating 100x100 sudoku puzzles](https://stackoverflow.com/a/56581709)
