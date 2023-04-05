@@ -3,10 +3,9 @@
 ## Getting started 🚀
 
 1. Clone this git repository
-
-``` sh
-git clone https://github.com/HSKPeter/comp3981.git
-```
+   ``` sh
+   git clone https://github.com/HSKPeter/comp3981.git
+   ```
 
 2. [Optional 👀] Create a Python virtual environment
    - In the project repo, create a virtual environment by running `python -m venv ./venv` or `python3 -m venv ./venv`
@@ -30,28 +29,21 @@ We have implemented the brute force algorithm with the depth first search (DFS) 
 
 In each iteration, we peak the top node from the stack, and check if the node is a goal node.  If it is, we return the node as the solution.  Otherwise, we expand the node by generating its children nodes.  
 
-## MRV
+### MRV
 During node expansion, we would select the cell with the least number of remaining possible values.  After that, for each possible value of that selected empty cell, we would generate a child node that represents the board state after inserting that value into the selected empty cell.
 
-## Minimum assigned neighbours as as tie-breaking rule
+### Minimum assigned neighbours as as tie-breaking rule
 In the case where there are multiple empty cells with the same number of remaining possible values, we would select the cell with the least number of assigned neighbours.  "Neighbour" here refers to the cells that are in the same row, column, or box as the selected cell.  After some experiments, we found that this tie-breaking rule could help to solve the board with less number of guesses.
 
-## Total domain size as heuristic to sort children nodes
+### Total domain size as heuristic to sort children nodes
 For each children node, we would calculate the total domain size of the board, which is the sum of the number of remaining possible values of all the empty cells.  We would then sort the children nodes based on the total domain size, and push the child node with the smallest total domain size into the stack.
 
-## Backtrack mechanism
+### Backtrack mechanism
 In this depth first search implementation, backtrack would be taken place when we have explored all the children nodes of the node that is at the top of the stack.  We would then pop the that node from the stack, and continue the iteration by exploring the next node in the stack, which is the parent node of the node that we have just popped.
 
 
-### Design of heuristics
-- (MRV)
-- (Tie-breaking factor: find cell with less assigned neighbours)
-- (During node expansion, check validity of new insertion)
-
-### Limitation
-- (Limited capability to solve difficult 25x25 boards)
-
 ## CSP
+The brute force algorithm might not be able to solve some of the difficult 25x25 boards, and this brings us to the CSP algorithm, which is more powerful and promising to solve difficult 25x25 boards.
 
 ### Degree and MRV
 - TBC
@@ -70,26 +62,31 @@ In this depth first search implementation, backtrack would be taken place when w
 At the moment, we are unable to solve a 100x100 Sudoku with the CSP algorithm.  In this section, we will discuss the challenges that we have encountered, and the efforts that we have made.
 
 We understand that solving a 100x100 sudoku could be computationally expensive, and thus we have attempted to run the CSP algorithm on Microsoft Azure, by taking the following steps:
+
 1. Apply for [free student credits](https://azure.microsoft.com/en-us/free/students/) from Microsoft Azure
+
 2. Setup a [Linux virtual machine (VM)](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-portal), and store the corresponding `pem` file in a safe place
+
 3. Connect to the VM instance using [SSH](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/ssh-from-windows#connect-to-your-vm)
 ``` txt
 ssh -i <path of pem file> azureuser@<public IP address of VM instance>
 ```
-4. Setup the environment in the VM instance with the following commands:
-``` sh
-git clone https://github.com/HSKPeter/comp3981.git
-cd comp3981
-pip install -r requirements.txt
-```
-5. Run the CSP algorithm with the following command:
-``` sh
-# setup a screen session to run the program, so that it would not be terminated when we disconnect from the VM instance
-screen
 
-# run the CSP algorithm, which is customized to run on Azure
-python3 csp_azure.py 
-```
+4. Setup the environment in the VM instance with the following commands:
+   ``` sh
+   git clone https://github.com/HSKPeter/comp3981.git
+   cd comp3981
+   pip install -r requirements.txt
+   ```
+
+5. Run the CSP algorithm with the following command:
+   ``` sh
+   # setup a screen session to run the program, so that it would not be terminated when we disconnect from the VM instance
+   screen
+
+   # run the CSP algorithm, which is customized to run on Azure
+   python3 csp_azure.py 
+   ```
 
 During the first few attempts of running the CSP algorithm, we kept encountering the **out of memory (OOM)** issue.  It is likely because each node in our CSP algorithm stores a a dictionary that represents the domain of each board cell, and the memory usage increases drastically as the board size increases up to 100x100.  As such, we further refactored the CSP algorithm, so that the nodes are stored as json files in file storage, and the algorithm only loads the nodes that are needed for the current iteration.  
 
