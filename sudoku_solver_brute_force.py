@@ -297,7 +297,7 @@ def main():
 
 def solve_with_brute_force(board):
     solver = SudokuSolver(board)
-    max_process_seconds = 60 * 5
+    max_process_seconds = 5 * 60  # 5 minutes
     solution_node = solver.solve(max_process_seconds=max_process_seconds)
     
     if solution_node is None:

@@ -73,7 +73,7 @@ class BoardSampleManager:
 
     @classmethod
     def save_custom_sample(cls, sample, size, index):
-        file_path = os.path.join("assets", f"solvable_puzzle/{size}x{size}")
+        file_path = os.path.join("assets", f"solvable_puzzle/{size}x{size}_pool")
         filename = f"{size}x{size}_sample_{str(index + 1).zfill(2)}.txt"
         cls.save_board(file_path=file_path,
                        filename=filename,
@@ -94,8 +94,8 @@ def main():
     benchmark_test_runner = BenchmarkTestRunner()
     puzzle_loader = PuzzleLoader()
 
-    board_sizes = [9, 12, 16, 25, 100]
-    puzzles_count_for_each_size = 3
+    board_sizes = [9,12,16,25]
+    puzzles_count_for_each_size =  10
 
     for board_size in board_sizes:
         for i in range(puzzles_count_for_each_size):
@@ -110,13 +110,10 @@ def main():
             print(f"Loaded random puzzle:\n{board_puzzle_in_standard_format}")
             print(f"Empty cell ratio: {empty_cell_ratio}\n\n")
 
-            if board_size <= 16:
-                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.BRUTE_FORCE)
+            if board_size < 16:
                 benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_RECURSIVE)
-                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_ITERATIVE)
-                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_ITERATIVE_MULTIPROCESS)
             elif board_size <= 25:
-                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_ITERATIVE)
+                benchmark_test_runner.run_benchmark(board_puzzle, AlgorithmType.CSP_ITERATIVE_MULTIPROCESS)
 
             if empty_cell_ratio > 0.75:
                 BoardSampleManager.save_custom_sample(board_puzzle, board_size, index=i)

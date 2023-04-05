@@ -24,6 +24,8 @@ class BenchmarkTestRunner:
             self._algorithm_runners = IterativeCspAlgorithmRunner()
         elif algo_type == AlgorithmType.BRUTE_FORCE:
             self._algorithm_runners = BruteForceAlgorithmRunner()
+        elif algo_type == AlgorithmType.CSP_ITERATIVE_MULTIPROCESS:
+            self._algorithm_runners = IterativeCspAlgorithmRunner(is_parallel=True)
 
     def run_benchmark(self, board, algo_type):
         self.set_algorithm_runners(algo_type)
@@ -95,17 +97,17 @@ def main():
 
             report_content = f"Loaded puzzle from {file_path}:\n{raw_content}\n\n"
 
-            print(report_content)
+    print(report_content)
 
-            algo_types_to_test = [
-                AlgorithmType.BRUTE_FORCE,
-                AlgorithmType.CSP_RECURSIVE,
-                AlgorithmType.CSP_ITERATIVE,
-                AlgorithmType.CSP_ITERATIVE_MULTIPROCESS,
-            ]
+    algo_types_to_test = [
+        AlgorithmType.BRUTE_FORCE,
+        AlgorithmType.CSP_RECURSIVE,
+        AlgorithmType.CSP_ITERATIVE,
+        AlgorithmType.CSP_ITERATIVE_MULTIPROCESS,
+    ]
 
-            for type_to_test in algo_types_to_test:
-                report_content += benchmark_test_runner.run_benchmark(board, type_to_test)
+    for type_to_test in algo_types_to_test:
+        report_content += benchmark_test_runner.run_benchmark(board, type_to_test)
 
 
     benchmark_test_runner.write_report(report_content, uuid_in_filename=True)
