@@ -85,18 +85,18 @@ To use all the processing power of the machine, we have implemented multiprocess
 ### CSP Algorithm
 | **Size** | **Average Time** | **Standard Deviation** |
 |----------|------------------|------------------------|
-| 9x9 | 0.073s | 0.144s |
-| 12x12 | 0.331s | 0.598s | 
-| 16x16 | 2.95s | 0.598s |
+| 9x9 (15 solved)  | 0.073s | 0.144s |
+| 12x12 (15 solved)  | 0.331s | 0.598s | 
+| 16x16 (15 solved)  | 2.95s | 0.598s |
 | 25x25 (5 solved) | 61.7s | 51.7s |
 
 ### Brute Force Algorithm
 | **Size** | **Average Time** | **Standard Deviation** |
 |----------|------------------|------------------------|
-| 9x9 | 0.226s | 0.513s |
-| 12x12 | 0.262s | 0.523s | 
-| 16x16 | 1.48s | 1.71s |
-| 25x25 | DNF | DNF |
+| 9x9 (15 solved) | 0.226s | 0.513s |
+| 12x12 (14 solved) | 0.262s | 0.523s | 
+| 16x16 (14 solved) | 1.48s | 1.71s |
+| 25x25 (0 solved) | DNF | DNF |
 
 
 ## Challenges
