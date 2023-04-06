@@ -1,13 +1,14 @@
 
 import SudokuPuzzleGenerator from "./sudoku_generator.js";
+import sudoku_generator from "./sudoku_generator.js";
 
 const timeContainer = document.getElementById("timeContainer");
-const timeText = document.getElementById("time")
 const title = document.getElementById("title")
 const spinner = document.getElementById("spinner")
 const bruteForceButton = document.getElementById("solve-brute-force")
 const cspButton = document.getElementById("solve-csp")
 const clearButton = document.getElementById("clear")
+const clearSolutionButton = document.getElementById("clear-solution")
 
 
 const FAIL = "Fail"
@@ -18,16 +19,22 @@ let intervalId;
 
 bruteForceButton.addEventListener("click", function () {
     displayTime(solveWithBruteForce);
-    document.getElementById("solve-brute-force").remove()
-    document.getElementById("solve-csp").remove()
+    bruteForceButton.disabled = true;
+    // document.getElementById("solve-brute-force").remove()
+    // document.getElementById("solve-csp").remove()
 });
 cspButton.addEventListener("click", function () {
     displayTime(solveWithCSP);
-    document.getElementById("solve-brute-force").remove()
-    document.getElementById("solve-csp").remove()
+    cspButton.disabled = true;
+    // document.getElementById("solve-brute-force").remove()
+    // document.getElementById("solve-csp").remove()
 });
 clearButton.addEventListener("click", function () {
     window.location.href = "main_menu.html";
+});
+clearSolutionButton.addEventListener("click", function () {
+
+    main()
 });
 
 async function solve(algorithm) {
@@ -103,9 +110,6 @@ function displayTime(solveAlgorithm) {
         stopDynamicTimer({status: FAIL})
         enableButtons()
     })
-    // endTime = Date.now();
-    // deltaTime = endTime - startTime;
-    // timeText.innerText = deltaTime;
     timeContainer.style.display = "block";
     let algorithm = localStorage.getItem("Algorithm");
     if (algorithm === "CSP") {
@@ -248,12 +252,14 @@ function disableButtons() {
     cspButton.disabled = true
     bruteForceButton.disabled = true
     clearButton.disabled = true
+    clearSolutionButton.disabled = true
 }
 
 function enableButtons() {
     cspButton.disabled = false
     bruteForceButton.disabled = false
     clearButton.disabled = false
+    clearSolutionButton.disabled = false
 }
 
 main()

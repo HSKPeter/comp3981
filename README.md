@@ -1,5 +1,9 @@
-# COMP 3981
+# COMP 3981 - Introduction to Artificial Intelligence and Machine Learning
+This is the repository for COMP 3981 (Introduction to Artificial Intelligence and Machine Learning) project. This project is the result of work by [Patrick Cammayo](https://www.linkedin.com/in/patrick-cammayo-8a535026a/), [Peter Ho](https://hskpeter.github.io/), [Sepehr Zohoori Rad](https://sepzie.github.io/), and [Simar Vashisht](https://www.linkedin.com/in/simar-vashisht/).
+This project is a web application that solves Sudoku puzzles. The web application is built with [FastAPI](https://fastapi.tiangolo.com/) and [React.js](https://reactjs.org/).
 
+For the Sudoku solver, we have implemented two algorithms: brute force and constraint satisfaction problem (CSP).  The brute force algorithm is implemented with the depth first search (DFS) approach, and the CSP algorithm is implemented with the backtracking search approach.
+Both algorithms and configured to solve puzzles of size 9x9, 12x12, 16x16, and 25x25.  The CSP algorithm is also configured to solve puzzles of size 100x100.
 ## Getting started 🚀
 
 1. Clone this git repository
@@ -46,7 +50,11 @@ In this depth first search implementation, backtrack would be taken place when w
 The brute force algorithm might not be able to solve some of the difficult 25x25 boards, and this brings us to the CSP algorithm, which is more powerful to solve sudoku problems, and also more promising to solve difficult 25x25 boards.
 
 ### Degree and MRV
-- TBC
+In the CSP algorithm, we use a combination of the Minimum Remaining Values (MRV) and Degree heuristics to select unassigned variables for assignment.
+
+MRV: The algorithm first applies the MRV heuristic, which chooses the variable with the fewest legal values remaining in its domain. By selecting variables that have fewer possibilities, we can reduce the search space and minimize the chances of backtracking.
+
+Degree: If there is a tie for MRV, the algorithm uses the Degree heuristic as a tiebreaker. The Degree heuristic selects the variable involved in the highest number of constraints with other unassigned variables. By prioritizing variables with higher constraint involvement, we can minimize the impact of current assignments on future ones, further improving the efficiency of the algorithm.
 
 ### Least Constraining Value (LCV)
 To determine the order of the values on a variable for which value to attempt first, we use the least constraining value. The idea of this heuristic is to assign a value that imposes the least impact on it's neighbouring cells in order to minimize the impact of the current assignment to the future assignment to other variables. By choosing that value that eliminates the fewest options for other variales, this heuristic helps to avoid unnecessary backtracking and increases the efficiency of the algorithm.
@@ -55,7 +63,7 @@ To determine the order of the values on a variable for which value to attempt fi
 We have also used the Maintaining Arc Consistency (MAC) heuristic, which is based on the AC-3 algorithm, to infer the domains of the cells in the Sudoku puzzle.  As such, cells domains would be updated whenever a new value is assigned to a cell, and arc consistency could be always maintained.  This would help to prune the search tree, and make the CSP algorithm more efficient.
 
 ### Multiprocessing
-- TBC
+To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first soltion that is found, and terminate the other processes.
 
 
 ## Challenge of solving 100x100 Sudoku
@@ -99,5 +107,6 @@ As such, we believe that our CSP algorithm at the moment is not powerful to solv
 - [A study of Sudoku solving algorithms](https://www.csc.kth.se/utbildning/kth/kurser/DD143X/dkand12/Group6Alexander/report/PATRIK_BERGGREN_DAVID_NILSSON.rapport.pdf) 
 - [Solving Sudoku by Heuristic Search](https://medium.com/@davidcarmel/solving-sudoku-by-heuristic-search-b0c2b2c5346e)
 - [A Sudoku Solver - Mike Schermerhorn](https://www.cs.rochester.edu/u/brown/242/assts/termprojs/Sudoku09.pdf)
-- [Study of Brute Force and Heuristic Approach to
-Solve Sudoku](https://www.ijettcs.org/Volume4Issue5(2)/IJETTCS-2015-10-10-17.pdf)
+- [Study of Brute Force and Heuristic Approach to Solve Sudoku](https://www.ijettcs.org/Volume4Issue5(2)/IJETTCS-2015-10-10-17.pdf)
+- [Sudoku Solver and Generator used for generating solved sudoku puzzles up to 25x25](https://github.com/dangnguyendota/SudokuGeneratorAndSolver)
+- [Code snippet for generating 100x100 sudoku puzzles](https://stackoverflow.com/a/56581709)
