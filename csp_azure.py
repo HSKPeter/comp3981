@@ -478,11 +478,9 @@ class Node:
             True if the domains of the cells in the Sudoku puzzle are consistent, False otherwise.
         """
         result = self.infer()
-        # Additional forward checking heuristics are commented out because they do not improve the performance of the
-        # algorithm.
-        # if result:
-        #     self.apply_hidden_single_rule()
-        # self.apply_naked_pair_rule()
+        if result:
+            self.apply_hidden_single_rule()
+            self.apply_naked_pair_rule()
         return result
 
     def reserve(self):
