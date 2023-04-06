@@ -76,7 +76,7 @@ To use all the processing power of the machine, we have implemented multiprocess
 | 9x9 | 0.2s | 2.3s |
 | 12x12 | 2.3s | 2.3s | 
 | 16x16 | 2.3s | 2.3s |
-| 25x25 | 63.2s | 42.8s |
+| 25x25 (5 solved) | 63.2s | 42.8s |
 
 
 ## Challenges
