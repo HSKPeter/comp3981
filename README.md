@@ -73,10 +73,10 @@ To use all the processing power of the machine, we have implemented multiprocess
 ## Table Results (All Samples)
 | **Size** | **Average Time** | **Standard Deviation** |
 |----------|------------------|------------------------|
-| 9x9 | 0.2s | 2.3s |
-| 12x12 | 2.3s | 2.3s | 
-| 16x16 | 2.3s | 2.3s |
-| 25x25 (5 solved) | 63.2s | 42.8s |
+| 9x9 | 0.073s | 0.144s |
+| 12x12 | 0.331s | 0.598s | 
+| 16x16 | 2.95s | 0.598s |
+| 25x25 (5 solved) | 61.7s | 51.7s |
 
 
 ## Challenges
