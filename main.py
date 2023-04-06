@@ -46,7 +46,7 @@ async def extend_sse_timeout(request, call_next):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"up": True}
 
 
 @app.get("/board/{size}")
