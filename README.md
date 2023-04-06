@@ -67,6 +67,16 @@ To determine the order of the values on a variable for which value to attempt fi
 ### MAC heuristics based on AC-3
 We have also used the Maintaining Arc Consistency (MAC) heuristic, which is based on the AC-3 algorithm, to infer the domains of the cells in the Sudoku puzzle.  As such, cells domains would be updated whenever a new value is assigned to a cell, and arc consistency could be always maintained.  This would help to prune the search tree, and make the CSP algorithm more efficient.
 
+
+### Sudoku Specific Heuristics
+We have also implemented additional Sudoku specific heuristics to improve the efficiency of the CSP algorithm when solving large board puzzles of 25x25.
+
+#### Hidden Single Rule
+"Hidden Single" is a technique in Sudoku.  With this rule, we could determine the value of a cell, by evaluating its domain values, and the domain values of its neighbours.  For example, if a cell has the value 9 in its domain, and neither of its neighbours have the value 9 in their domain, then the cell must have a value of 9.
+
+#### Naked Pair Rule
+"Naked Pair" is another technique in Sudoku.  If there are two cells that have the same two values in their domains, then those two values must be in those two cells.  Therefore, we could remove those two values from the domains of their neighboring cells.
+
 ### Multiprocessing
 To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first solution that is found, and terminate the other processes.
 
