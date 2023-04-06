@@ -6,10 +6,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Tuple, Optional, Dict
 from algo_util import get_sub_square_index
-from slack_alert import AlertSender
 from sudoku_solver_brute_force import mask_board
-from utils.benchmark_test.solved_board import get_solved_board
-
 
 class SolverExecutionExpiredException(Exception):
     def __init__(self, *args: object) -> None:
@@ -53,8 +50,6 @@ class SudokuSolverCsp:
             board: A 2D list of integers representing a Sudoku board, can be None if root is not None
             root: A Node object representing the root node of the search tree, can be None if board is not None
         """
-        self.alert_sender = AlertSender()
-
         # Creating a SudokuSolverCsp object from a board. Used for solving subtrees in parallel.
         if board is None:
             self.stack = [root]
@@ -857,22 +852,3 @@ def solve_with_csp_iterative(board: List[List[int]]) -> List[List[int]]:
         result = solver.solve(parallel=False)
     return result.to_2d_array()
 
-
-def main():
-    """
-    Main function to run the program. Used for testing purposes.
-    """
-    board = get_solved_board(12)
-    masked_board = mask_board(board)
-    print(masked_board)
-    start_time = time.time()
-    sudoku_solver = SudokuSolverCsp(masked_board)
-    result = sudoku_solver.solve(parallel=True)
-    end_time = time.time()
-    print("Solution")
-    print(result)
-    print(f"Solved in {end_time - start_time} seconds")
-
-
-if __name__ == '__main__':
-    main()

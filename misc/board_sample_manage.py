@@ -1,8 +1,8 @@
 import os
 
-from algo import AlgorithmType
+from misc.algo import AlgorithmType
 from benchmark import BenchmarkTestRunner
-from puzzle_analysis import PuzzleAnalyzer
+from misc.puzzle_analysis import PuzzleAnalyzer
 from puzzle_loader import PuzzleLoader
 
 
