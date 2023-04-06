@@ -81,12 +81,22 @@ We have also implemented additional Sudoku specific heuristics to improve the ef
 To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first solution that is found, and terminate the other processes.
 
 ## Table Results (All Samples)
+
+### CSP Algorithm
 | **Size** | **Average Time** | **Standard Deviation** |
 |----------|------------------|------------------------|
 | 9x9 | 0.073s | 0.144s |
 | 12x12 | 0.331s | 0.598s | 
 | 16x16 | 2.95s | 0.598s |
 | 25x25 (5 solved) | 61.7s | 51.7s |
+
+### Brute Force Algorithm
+| **Size** | **Average Time** | **Standard Deviation** |
+|----------|------------------|------------------------|
+| 9x9 | 0.226s | 0.513s |
+| 12x12 | 0.262s | 0.523s | 
+| 16x16 | 1.48s | 1.71s |
+| 25x25 | DNF | DNF |
 
 
 ## Challenges
