@@ -71,7 +71,7 @@ def solve_brute_force(board_puzzle: BoardPuzzleData):
     unix_epoch = int(time.time())
     ref_id = str(unix_epoch) + uuid4().hex
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(save_brute_force_solution, board, ref_id)
+        executor.submit(save_csp_solution, board, ref_id)
 
     return {"ref_id": ref_id}
 
@@ -107,7 +107,6 @@ async def solve_csp(board_puzzle: BoardPuzzleData):
     ref_id = str(unix_epoch) + uuid4().hex
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.submit(save_csp_solution, board, ref_id)
-
     return {"ref_id": ref_id}
 
 
@@ -123,7 +122,7 @@ def find_csp_solution(board):
         end_time = time.perf_counter()
         duration = end_time - start_time
         return result, convert_seconds_to_formatted_time(duration), "success", None
-    except Exception as e:
+    except Exception:
         end_time = time.perf_counter()
         duration = end_time - start_time
         return None, convert_seconds_to_formatted_time(

@@ -1,9 +1,10 @@
 # COMP 3981 - Introduction to Artificial Intelligence and Machine Learning
-This is the repository for COMP 3981 (Introduction to Artificial Intelligence and Machine Learning) project. This project is the result of work by [Patrick Cammayo](https://www.linkedin.com/in/patrick-cammayo-8a535026a/), [Peter Ho](https://hskpeter.github.io/), [Sepehr Zohoori Rad](https://sepzie.github.io/), and [Simar Vashisht](https://www.linkedin.com/in/simar-vashisht/).
-This project is a web application that solves Sudoku puzzles. The web application is built with [FastAPI](https://fastapi.tiangolo.com/) and [React.js](https://reactjs.org/).
+This is the repository for COMP 3981 (Introduction to Artificial Intelligence and Machine Learning) project. This project is the result of work by [Patrick Cammayo](https://www.linkedin.com/in/patrick-cammayo-8a535026a/), [Peter Hui](https://www.linkedin.com/in/peter-h-84316221b/), [Sepehr Zohoori Rad](https://sepzie.github.io/), and [Simar Vashisht](https://www.linkedin.com/in/simar-vashisht/).
+This project is a web application that solves Sudoku puzzles. The web application is built with HTML, CSS, JavaScript and [FastAPI](https://fastapi.tiangolo.com/).
 
 For the Sudoku solver, we have implemented two algorithms: brute force and constraint satisfaction problem (CSP).  The brute force algorithm is implemented with the depth first search (DFS) approach, and the CSP algorithm is implemented with the backtracking search approach.
 Both algorithms and configured to solve puzzles of size 9x9, 12x12, 16x16, and 25x25.  The CSP algorithm is also configured to solve puzzles of size 100x100.
+
 ## Getting started 🚀
 
 1. Clone this git repository
@@ -26,6 +27,8 @@ Both algorithms and configured to solve puzzles of size 9x9, 12x12, 16x16, and 2
 
 5. Host the frontend with the [live server extension](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) in VS code
 
+6. Visit http://127.0.0.1:5500/ui/html/main_menu.html to go to the UI of the sudoku solver.
+
 ## Brute Force Algorithm
 
 ### Depth First Search (DFS)
@@ -37,7 +40,7 @@ In each iteration, we peak the top node from the stack, and check if the node is
 During node expansion, we would select the cell with the least number of remaining possible values.  After that, for each possible value of that selected empty cell, we would generate a child node that represents the board state after inserting that value into the selected empty cell.
 
 ### Minimum assigned neighbours as tie-breaking rule
-In the case where there are multiple empty cells with the same number of remaining possible values, we would select the cell with the least number of assigned neighbours.  "Neighbour" here refers to the cells that are in the same row, column, or box as the selected cell.  After some experiments, we found that this tie-breaking rule could help to solve the board with less number of guesses.
+In the case where there are multiple empty cells with the same number of remaining possible values, we would select the cell with the least number of assigned neighbours.  "Neighbour" here refers to the cells that are in the same row, column, or sub-square as the selected cell.  After some experiments, we found that this tie-breaking rule could help to solve the board with less number of guesses.
 
 ### Prioritize children nodes with smaller total domain size
 For each children node, we would calculate the total domain size of the board, which is the sum of the number of remaining possible values of all the empty cells.  We would then sort the children nodes based on the total domain size, and push the child node with the smallest total domain size into the stack.
@@ -45,9 +48,11 @@ For each children node, we would calculate the total domain size of the board, w
 ### Backtrack mechanism
 In this depth first search implementation, backtrack would be taken place when we have explored all the children nodes of the node that is at the top of the stack.  We would then pop that node from the stack, and continue the iteration by exploring the next top node in the stack, which is the parent node of the node that we have just popped.
 
+### Reserved stack
+One of the challenges of the brute force algorithm is that it might get stuck in a local minimum.  To address this issue, we have set a custom timeout counter.  When it reaches a certain time limit, the algorithm would stop the current search, and migrate all the current nodes into a reserved stack.  Then, the algorithm would continue the search, starting from one of the child node of the root node.  If all the children nodes of the root node has been visited, then all nodes in the reserved stack would be migrated back to the main stack, the search would go on until a solution is found or all nodes has been evaluated. 
 
 ## CSP
-The brute force algorithm might not be able to solve some of the difficult 25x25 boards, and this brings us to the CSP algorithm, which is more powerful to solve sudoku problems, and also more promising to solve difficult 25x25 boards.
+The brute force algorithm has its limitation in solving large and difficult boards, and this brings us to the CSP algorithm, which is more powerful to solve sudoku problems, and also more promising to solve difficult 25x25 boards.
 
 ### Degree and MRV
 In the CSP algorithm, we use a combination of the Minimum Remaining Values (MRV) and Degree heuristics to select unassigned variables for assignment.
@@ -63,7 +68,15 @@ To determine the order of the values on a variable for which value to attempt fi
 We have also used the Maintaining Arc Consistency (MAC) heuristic, which is based on the AC-3 algorithm, to infer the domains of the cells in the Sudoku puzzle.  As such, cells domains would be updated whenever a new value is assigned to a cell, and arc consistency could be always maintained.  This would help to prune the search tree, and make the CSP algorithm more efficient.
 
 ### Multiprocessing
-To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first soltion that is found, and terminate the other processes.
+To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first solution that is found, and terminate the other processes.
+
+## Table Results (All Samples)
+| **Size** | **Average Time** | **Standard Deviation** |
+|----------|------------------|------------------------|
+| 9x9 | 0.2s | 2.3s |
+| 12x12 | 2.3s | 2.3s | 
+| 16x16 | 2.3s | 2.3s |
+| 25x25 | 63.2s | 42.8s |
 
 
 ## Challenge of solving 100x100 Sudoku

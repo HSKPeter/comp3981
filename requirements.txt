@@ -11,3 +11,5 @@ uvicorn==0.20.0
 loguru~=0.6.0
 requests~=2.28.2
 numpy~=1.24.2
+azure-core==1.26.3
+azure-storage-blob==12.15.0
