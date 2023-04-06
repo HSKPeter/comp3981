@@ -63,7 +63,15 @@ To determine the order of the values on a variable for which value to attempt fi
 We have also used the Maintaining Arc Consistency (MAC) heuristic, which is based on the AC-3 algorithm, to infer the domains of the cells in the Sudoku puzzle.  As such, cells domains would be updated whenever a new value is assigned to a cell, and arc consistency could be always maintained.  This would help to prune the search tree, and make the CSP algorithm more efficient.
 
 ### Multiprocessing
-To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first soltion that is found, and terminate the other processes.
+To use all the processing power of the machine, we have implemented multiprocessing in the CSP algorithm. The multiprocessing is done by first expanding the root node, and then running the CSP algorithm on each of the children nodes in parallel. The algorithm would then return the first solution that is found, and terminate the other processes.
+
+## Table Results (All Samples)
+| **Size** | **Average Time** | **Standard Deviation** |
+|----------|------------------|------------------------|
+| 9x9 | 0.2s | 2.3s |
+| 12x12 | 2.3s | 2.3s | 
+| 16x16 | 2.3s | 2.3s |
+| 25x25 | 63.2s | 42.8s |
 
 
 ## Challenge of solving 100x100 Sudoku
