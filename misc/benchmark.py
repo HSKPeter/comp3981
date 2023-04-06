@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from puzzle_loader import PuzzleLoader
-from algo import *
+from misc.algo import *
 import os
 import uuid
 

@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Tuple, Optional, Dict
 from algo_util import get_sub_square_index
-from slack_alert import AlertSender
 from sudoku_solver_brute_force import mask_board
 from utils.benchmark_test.solved_board import get_solved_board
 
@@ -51,8 +50,6 @@ class SudokuSolverCsp:
             board: A 2D list of integers representing a Sudoku board, can be None if root is not None
             root: A Node object representing the root node of the search tree, can be None if board is not None
         """
-        self.alert_sender = AlertSender()
-
         # Creating a SudokuSolverCsp object from a board. Used for solving subtrees in parallel.
         if board is None:
             self.stack = [root]
