@@ -478,7 +478,7 @@ def solve_with_brute_force(board):
         PuzzleUnsolvedException: if the puzzle cannot be solved within the given time limit
     """
     solver = SudokuSolver(board)
-    max_process_seconds = 10 * 60  # 5 minutes
+    max_process_seconds = 10 * 60  # 10 minutes
     solution_node = solver.solve(max_process_seconds=max_process_seconds)
 
     if solution_node is None:
