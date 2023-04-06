@@ -96,7 +96,7 @@ We understand that solving a 100x100 sudoku could be computationally expensive, 
 
 1. Apply for [free student credits](https://azure.microsoft.com/en-us/free/students/) from Microsoft Azure
 
-2. Setup a [Linux virtual machine (VM)](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-portal), and store the corresponding `pem` file in a safe place
+2. Setup a [Linux virtual machine (VM)](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-portal), and store the corresponding `pem` file in a safe place.  (We have chosen to use [Standard E4s v3 (4 vcpus, 32 GiB memory)](https://learn.microsoft.com/en-us/azure/virtual-machines/ev4-esv4-series))
 
 3. Connect to the VM instance using [SSH](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/ssh-from-windows#connect-to-your-vm)
 ``` txt
