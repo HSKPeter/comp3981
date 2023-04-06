@@ -3,6 +3,9 @@ import os
 import time
 from sudoku_solver_csp_iterative import solve_with_csp_iterative as solve_sudoku
 
+SOLVED_PUZZLES = ["25x25_sample1_grp1.txt", "25x25_sample1_grp2.txt", "25x25_sample1_grp3.txt", "25x25_sample1_grp4.txt", "25x25_sample1_grp5.txt"]
+# SOLVED_PUZZLES = []
+
 
 def read_sudoku_from_file(file_path):
     with open(file_path, 'r') as file:
@@ -28,10 +31,12 @@ def solve_and_time(sudoku, solve_sudoku, n=1):
 def process_sudoku_files(folder_path, solve_sudoku, n=1):
     results = []
     for file_name in os.listdir(folder_path):
-        if file_name.endswith('.txt'):
+        if file_name.endswith('.txt') and file_name not in SOLVED_PUZZLES:
+            print("Solving", file_name, "...")
             file_path = os.path.join(folder_path, file_name)
             sudoku = read_sudoku_from_file(file_path)
             avg_time = solve_and_time(sudoku, solve_sudoku, n)
+            print(f"Solved in {avg_time:.3f} seconds")
             results.append((file_name, avg_time))
     return results
 
@@ -52,18 +57,15 @@ def process_folders(folder_paths, solve_sudoku, n=1):
 
 
 def main():
-    # folder_paths = [
-    #     r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-9x9",
-    #     r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-12x12",
-    #     r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-16x16",
-    #     r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-25x25",
-    # ]
-    # n = 1
-    # process_folders(folder_paths, solve_sudoku, n)
+    folder_paths = [
+        r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-25x25",
+    ]
+    n = 1
+    process_folders(folder_paths, solve_sudoku, n)
 
-    sample = r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-25x25\25x25_sample1_grp1.txt"
-    board = read_sudoku_from_file(sample)
-    results = solve_sudoku(board)
+    # sample = r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-25x25\25x25_sample1_grp1.txt"
+    # board = read_sudoku_from_file(sample)
+    # results = solve_sudoku(board)
 
 
 if __name__ == "__main__":

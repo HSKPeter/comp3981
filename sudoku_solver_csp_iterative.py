@@ -1,3 +1,5 @@
+import copy
+import math
 import multiprocessing
 import time
 from datetime import datetime, timedelta
@@ -118,7 +120,7 @@ class SudokuSolverCsp:
             return self.solve_sequential(max_process_seconds)
 
     @staticmethod
-    def solve_child(child_node: "Node", max_process_seconds: int = None):
+    def solve_from_new_root(child_node: "Node", max_process_seconds: int = None):
         """
         Helper method for solving a child node. Used for parallelizing the backtracking algorithm.
 
@@ -146,10 +148,23 @@ class SudokuSolverCsp:
         Returns:
             A Node object representing the solution to the Sudoku puzzle. If no solution is found, returns None.
         """
+        num_processes = 6
+
+
         # Generate all possible child nodes from the root node
         root_node = self.stack[0]
         root_node.expand()
         children = root_node.children
+
+        # Divide the children into n equal parts
+        child_per_process = math.ceil(len(children) / num_processes)
+        divided_children = [children[i:i + child_per_process] for i in range(0, len(children), child_per_process)]
+
+        divisioned_roots = []
+        for childs in divided_children:
+            new_root = copy.deepcopy(root_node)
+            new_root.children = childs
+            divisioned_roots.append(new_root)
 
         # Set up a shared variable to store the first solution found
         first_solution = multiprocessing.Manager().Value("i", None)
@@ -160,11 +175,11 @@ class SudokuSolverCsp:
                 first_solution.value = result
 
         # Initialize the process pool with the number of available processors
-        with multiprocessing.Pool() as pool:
+        with multiprocessing.Pool(processes=num_processes) as pool:
 
             # Run the solve_child function for each child node in parallel
-            for child in children:
-                pool.apply_async(self.solve_child, args=(child,), callback=handle_result)
+            for root in divisioned_roots:
+                pool.apply_async(self.solve_from_new_root, args=(root,), callback=handle_result)
 
             # Wait until the first solution is found
             while first_solution.value is None:
@@ -174,6 +189,8 @@ class SudokuSolverCsp:
 
     def solve_sequential(self, max_process_seconds):
         """
+        MAIN SEARCH ALGORITHM
+
         Solves the Sudoku puzzle using the backtracking CSP algorithm.
 
         1. Creates the root node from the first domain in the stack and initializes the stack with the root node.
@@ -216,7 +233,7 @@ class SudokuSolverCsp:
             if current_node.is_solution():
                 return current_node
 
-            current_node.expand()
+            # current_node.expand()
             next_node = current_node.get_first_traversable_child()
 
             if next_node is None:
@@ -260,7 +277,7 @@ class Node:
     # length of the board
     n = None
 
-    def __init__(self, domains, assigned_cell=None, new_value=None) -> None:
+    def __init__(self, domains, assigned_cell=None, new_value=None, parent=None) -> None:
         """
         Initializes a Node object.
 
@@ -270,11 +287,13 @@ class Node:
             assigned_cell: The cell that was assigned a value in the previous node.
             new_value: The value that was assigned to the assigned_cell in the previous node.
         """
+        self.parent = parent
         self.domains = {key: value.copy() for key, value in domains.items()}
         self.assigned_cell = assigned_cell
         if new_value is not None:
             self.domains[assigned_cell] = {new_value}
         self.children = []
+        self.child_generator = None
         self.is_checked = False
         self.is_expanded = False
         self.is_reserved = False
@@ -594,9 +613,10 @@ class Node:
         """
         Expand the node by finding all possible values for the next unassigned cell and creating a child node for each
         possible value.
-
         """
         if not self.is_expanded:
+            self.child_generator = None
+
             cell_selected = self.select_unassigned_cell()
 
             for value in self.find_ordered_domain_values(cell_selected):
@@ -604,6 +624,12 @@ class Node:
                 self.children.append(new_node)
 
             self.is_expanded = True
+
+    def create_child_generator(self):
+        cell_selected = self.select_unassigned_cell()
+        for value in self.find_ordered_domain_values(cell_selected):
+            new_node = Node(self.domains, cell_selected, value)
+            yield new_node
 
     def cell_is_empty(self, cell: Tuple[int, int, int]):
         """
@@ -709,6 +735,7 @@ class Node:
         Mark this node as checked. Checked nodes are exhausted and will not be visited again.
         """
         self.is_checked = True
+        # self.parent.children.remove(self)
 
     def __str__(self):
         """
@@ -773,10 +800,23 @@ class Node:
         Returns:
             The first child of this node that is not checked and is not reserved.
         """
-        for node in self.children:
-            if not node.is_checked and (node.is_reserved is False):
-                return node
-        return None
+        if self.children:
+            for node in self.children:
+                if not node.is_checked and (node.is_reserved is False):
+                    return node
+            return None
+
+        if not self.is_expanded:
+            self.is_expanded = True
+            self.child_generator = self.create_child_generator()
+
+        try:
+            next_child = next(self.child_generator)
+            while next_child.is_checked or next_child.is_reserved:
+                next_child = next(self.child_generator)
+            return next_child
+        except StopIteration:
+            return None
 
     def to_2d_array(self):
         """
@@ -811,10 +851,10 @@ def solve_with_csp_iterative(board: List[List[int]]) -> List[List[int]]:
         The solved board as a 2d array.
     """
     solver = SudokuSolverCsp(board)
-    if Node.n <= 12:
-        result = solver.solve(parallel=False)
-    else:
+    if Node.n >= 12:
         result = solver.solve(parallel=True)
+    else:
+        result = solver.solve(parallel=False)
     return result.to_2d_array()
 
 
