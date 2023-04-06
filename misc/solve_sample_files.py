@@ -4,7 +4,6 @@ import time
 from sudoku_solver_csp_iterative import solve_with_csp_iterative as solve_sudoku
 
 SOLVED_PUZZLES = ["25x25_sample1_grp1.txt", "25x25_sample1_grp2.txt", "25x25_sample1_grp3.txt", "25x25_sample1_grp4.txt", "25x25_sample1_grp5.txt"]
-# SOLVED_PUZZLES = []
 
 
 def read_sudoku_from_file(file_path):
@@ -57,15 +56,10 @@ def process_folders(folder_paths, solve_sudoku, n=1):
 
 
 def main():
-    folder_paths = [
-        r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-25x25",
-    ]
+    # NOTE: Specify your folder paths here
+    folder_paths = []
     n = 1
     process_folders(folder_paths, solve_sudoku, n)
-
-    # sample = r"C:\Users\zohoo\Downloads\AllSamples\Sudoku-25x25\25x25_sample1_grp1.txt"
-    # board = read_sudoku_from_file(sample)
-    # results = solve_sudoku(board)
 
 
 if __name__ == "__main__":
