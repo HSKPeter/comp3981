@@ -1,5 +1,5 @@
 """
-This module houses the CSP solver customized for execution on Azure VM instance.
+This module houses the CSP solver and relevant classes that are customized for execution on Azure VM instance.
 Customizations are made to improve logging and monitoring, considering the execution would take a longer time.
 Also, Azure storage is used to externalize the memory to avoid out-of-memory issue.
 """
