@@ -79,8 +79,8 @@ To use all the processing power of the machine, we have implemented multiprocess
 | 25x25 | 63.2s | 42.8s |
 
 
-## Challenge of solving 100x100 Sudoku
-At the moment, we are unable to solve a 100x100 Sudoku with the CSP algorithm.  In this section, we will discuss the challenges that we have encountered, and the efforts that we have made.
+## Challenges
+At the moment, we are not guaranteed to solve all 25x25 Sudoku with the CSP algorithm.  We are also unable to solve a 100x100 Sudoku.  In this section, we will discuss the challenges that we have encountered, and the efforts that we have made to solve a 100x100 board.
 
 We understand that solving a 100x100 sudoku could be computationally expensive, and thus we have attempted to run the CSP algorithm on Microsoft Azure, by taking the following steps:
 
@@ -93,14 +93,14 @@ We understand that solving a 100x100 sudoku could be computationally expensive, 
 ssh -i <path of pem file> azureuser@<public IP address of VM instance>
 ```
 
-4. Setup the environment in the VM instance with the following commands:
+1. Setup the environment in the VM instance with the following commands:
    ``` sh
    git clone https://github.com/HSKPeter/comp3981.git
    cd comp3981
    pip install -r requirements.txt
    ```
 
-5. Run the CSP algorithm with the following command:
+2. Run the CSP algorithm with the following command:
    ``` sh
    # setup a screen session to run the program, so that it would not be terminated when we disconnect from the VM instance
    screen
