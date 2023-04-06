@@ -10,9 +10,6 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Tuple, Optional, Dict
 from algo_util import get_sub_square_index
-from slack_alert import AlertSender
-from sudoku_solver_brute_force import mask_board
-from log_util import logger, log_format
 import threading
 import os
 import ast
@@ -20,6 +17,21 @@ from uuid import uuid4
 from azure.storage.blob import BlobServiceClient
 import json
 import os
+import requests
+from loguru import logger
+
+
+class AlertSender:
+    """
+    This class is used to send alerts to Slack channel for monitoring purposes.
+    """
+    def __init__(self):
+        self.webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+
+    def send(self, message):
+        if self.webhook_url is not None:
+            slack_payload = {"text": message}
+            requests.post(self.webhook_url, data=json.dumps(slack_payload), headers={'Content-Type': 'application/json'})
 
 
 class AzureStorageClient:
@@ -955,6 +967,7 @@ def main():
 
     package_directory = os.path.dirname(os.path.abspath(__file__))
     log_file_path = os.path.join(package_directory, "log", f"{formatted_date_time}_exploration_{uuid4().hex}.log")
+    log_format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n<level>{message}</level>\n\n"
     logger.add(log_file_path, format=log_format)
 
     # NOTE: Put the board puzzle here
