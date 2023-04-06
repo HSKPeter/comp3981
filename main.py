@@ -58,13 +58,6 @@ def load_board(size: int):
     return {"board": masked_board}
 
 
-def convert_seconds_to_formatted_time(seconds):
-    minutes = int(seconds // 60)
-    sec = int(seconds % 60)
-    ms = int((seconds % 1) * 1000)
-    return f"{minutes:02}:{sec:02}.{ms:05}"
-
-
 @app.post("/brute-force")
 def solve_brute_force(board_puzzle: BoardPuzzleData):
     board = board_puzzle.board
@@ -74,6 +67,30 @@ def solve_brute_force(board_puzzle: BoardPuzzleData):
         executor.submit(save_csp_solution, board, ref_id)
 
     return {"ref_id": ref_id}
+
+
+
+@app.post("/csp")
+async def solve_csp(board_puzzle: BoardPuzzleData):
+    board = board_puzzle.board
+    unix_epoch = int(time.time())
+    ref_id = str(unix_epoch) + uuid4().hex
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(save_csp_solution, board, ref_id)
+    return {"ref_id": ref_id}
+
+
+@app.get("/solution/{ref_id}")
+def get_solution(ref_id: str):
+    event_generator = generate_events(ref_id)
+    return StreamingResponse(event_generator, media_type='text/event-stream')
+
+
+def convert_seconds_to_formatted_time(seconds):
+    minutes = int(seconds // 60)
+    sec = int(seconds % 60)
+    ms = int((seconds % 1) * 1000)
+    return f"{minutes:02}:{sec:02}.{ms:05}"
 
 
 def save_brute_force_solution(board, ref_id):
@@ -96,20 +113,6 @@ def find_brute_force_solution(board):
             duration), "failed", "Solution not found within reasonable amount of time."
 
 
-def error_response_with_message(message):
-    return JSONResponse(content={"message": message}, status_code=404)
-
-
-@app.post("/csp")
-async def solve_csp(board_puzzle: BoardPuzzleData):
-    board = board_puzzle.board
-    unix_epoch = int(time.time())
-    ref_id = str(unix_epoch) + uuid4().hex
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(save_csp_solution, board, ref_id)
-    return {"ref_id": ref_id}
-
-
 def save_csp_solution(board, ref_id):
     result, duration, status, msg = find_csp_solution(board)
     solutions[ref_id] = {"result": result, "duration": duration, "status": status, "msg": msg}
@@ -127,12 +130,6 @@ def find_csp_solution(board):
         duration = end_time - start_time
         return None, convert_seconds_to_formatted_time(
             duration), "failed", "Solution not found within reasonable amount of time."
-
-
-@app.get("/solution/{ref_id}")
-def get_solution(ref_id: str):
-    event_generator = generate_events(ref_id)
-    return StreamingResponse(event_generator, media_type='text/event-stream')
 
 
 async def generate_events(ref_id: str):

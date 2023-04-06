@@ -904,9 +904,15 @@ class Node:
         return two_d_array
     
     def save(self):
+        """
+        Save the node as json file in Azure Storage.
+        """
         self.storage_client.upload_file(f"{self.id}.json", self.to_dict())
 
     def to_dict(self):
+        """
+        Convert the node to a dictionary.
+        """
         return {
             "assigned_cell": self.assigned_cell,
             "children": list([child_node for child_node in self.children]),
