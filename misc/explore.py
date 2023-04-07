@@ -1,4 +1,4 @@
-from misc.algo import *
+from misc.algo_runner import *
 import copy
 from puzzle_loader import PuzzleLoader
 from misc.log_util import logger, log_format
@@ -58,8 +58,6 @@ class SolvableSamplesExplorer:
 
 
 def main():
-    # board_size = 100
-
     board_puzzle_loader = PuzzleLoader()
     _, _, board_puzzle = board_puzzle_loader.load_unsolved_puzzle(size=9, sample_index=1)
     alert_sender = AlertSender()

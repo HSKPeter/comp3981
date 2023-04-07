@@ -12,6 +12,15 @@ class PuzzleLoader:
     def read_file(filename):
         with open(filename, 'r') as file:
             return file.read()
+        
+    @staticmethod
+    def standard_text_format_to_2d_array(text):
+        rows = text.split("\n")
+        result = []
+        for row in rows:
+            nums = [int(num) for num in row.split(",")]
+            result.append(nums)
+        return result
 
     def load_unsolved_9x9_puzzle_from_standard_samples(self, is_easy=True):
         """
@@ -21,12 +30,7 @@ class PuzzleLoader:
         difficulty_level = "easy" if is_easy else "hard"
         file_path = f"assets/standard_samples/9x9/{difficulty_level}/{difficulty_level}_sample_{str(sample_index).zfill(2)}.txt"
         file_text_content = self.read_file(file_path)
-        rows = file_text_content.split("\n")
-        result = []
-        for row in rows:
-            nums = [int(num) for num in row.split(",")]
-            result.append(nums)
-        return result
+        return self.standard_text_format_to_2d_array(file_text_content)
 
     def load_txt_file_in_standard_format(self, size, sample_index=None, is_easy=False):
         """
@@ -55,11 +59,11 @@ class PuzzleLoader:
         file_text_content = self.read_file(file_path)
         return json.loads(file_text_content)
 
-    # def load_unsolved_puzzle(self, size):
-    #     return self.load_unsolved_9x9_puzzle_from_standard_samples()
-    #     # solved_board = self.load_from_2d_array_txt_file(size)
-    #     # masked_board = self.mask_puzzle(solved_board)
-    #     # return masked_board
+    def load_predefined_puzzle(self, size):
+        sample = random.randint(1, 10)
+        file_path = 'assets/solved_sudoku/sudoku{0}x{0}/{0}x{0}_sample_{1}.txt'.format(size, sample)
+        file_text_content = self.read_file(file_path)
+        return self.standard_text_format_to_2d_array(file_text_content)
 
     def load_random_unsolved_puzzle(self, size):
         solved_board_sample = self.load_from_2d_array_txt_file(size)
